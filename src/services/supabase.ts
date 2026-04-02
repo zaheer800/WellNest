@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import type { User, UserProfile } from '@/types/user.types'
+import type { VisitPreparation } from '@/types/appointment.types'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
@@ -171,6 +172,9 @@ export async function addSymptomLog(log: {
   severity: number
   notes?: string
   metadata?: Record<string, unknown>
+  onset_date?: string | null
+  is_backdated?: boolean
+  environment?: Record<string, unknown>
 }) {
   const { data, error } = await supabase
     .from('symptom_logs')
@@ -298,4 +302,268 @@ export async function upsertDailyScore(score: {
     .single()
   if (error) throw error
   return data
+}
+
+// ─── Injection Courses ─────────────────────────────────────────────────────────
+
+export async function getInjectionCourses(patientId: string) {
+  const { data, error } = await supabase
+    .from('injection_courses')
+    .select('*')
+    .eq('patient_id', patientId)
+    .eq('is_active', true)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function addInjectionCourse(course: {
+  patient_id: string
+  medication_id: string
+  total_doses: number
+  frequency: 'daily' | 'alternate_days' | 'weekly'
+  start_date: string
+  notes?: string
+}) {
+  const { data, error } = await supabase.from('injection_courses').insert(course).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function updateInjectionCourse(
+  id: string,
+  updates: Partial<{ doses_completed: number; is_active: boolean; end_date: string }>,
+) {
+  const { data, error } = await supabase
+    .from('injection_courses')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+// ─── Injection Course Logs ─────────────────────────────────────────────────────
+
+export async function getInjectionCourseLogs(courseId: string) {
+  const { data, error } = await supabase
+    .from('injection_course_logs')
+    .select('*')
+    .eq('course_id', courseId)
+    .order('dose_number', { ascending: true })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function addInjectionCourseLog(log: {
+  course_id: string
+  patient_id: string
+  dose_number: number
+  scheduled_date: string
+}) {
+  const { data, error } = await supabase.from('injection_course_logs').insert(log).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function markDoseAdministered(
+  logId: string,
+  updates: {
+    administered_at: string
+    administered_by: 'self' | 'nurse' | 'doctor' | 'family'
+    site?: string
+    side_effects_noted?: string
+  },
+) {
+  const { data, error } = await supabase
+    .from('injection_course_logs')
+    .update({ ...updates, administered: true })
+    .eq('id', logId)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+// ─── Medication Side Effect Logs ───────────────────────────────────────────────
+
+export async function getSideEffectLogs(patientId: string) {
+  const { data, error } = await supabase
+    .from('medication_side_effect_logs')
+    .select('*')
+    .eq('patient_id', patientId)
+    .order('logged_at', { ascending: false })
+    .limit(50)
+  if (error) throw error
+  return data ?? []
+}
+
+export async function addSideEffectLog(log: {
+  patient_id: string
+  medication_id: string
+  side_effect: string
+  severity: 'mild' | 'moderate' | 'severe' | 'critical'
+  source: 'experienced' | 'read_about'
+  guidance?: string
+}) {
+  const { data, error } = await supabase
+    .from('medication_side_effect_logs')
+    .insert({ ...log, logged_at: new Date().toISOString() })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function resolveSideEffect(id: string) {
+  const { data, error } = await supabase
+    .from('medication_side_effect_logs')
+    .update({ resolved: true, resolved_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+// ─── Symptom Progression ───────────────────────────────────────────────────────
+
+export async function getSymptomProgressions(patientId: string) {
+  const { data, error } = await supabase
+    .from('symptom_progressions')
+    .select('*')
+    .eq('patient_id', patientId)
+    .order('last_logged_at', { ascending: false })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function upsertSymptomProgression(progressionData: {
+  patient_id: string
+  symptom_name: string
+  first_onset_date?: string | null
+  current_severity: number
+  baseline_severity?: number | null
+  trend: 'improving' | 'stable' | 'worsening' | 'resolved' | 'new' | null
+  total_episodes?: number
+}) {
+  const { data, error } = await supabase
+    .from('symptom_progressions')
+    .upsert(
+      { ...progressionData, last_logged_at: new Date().toISOString() },
+      { onConflict: 'patient_id,symptom_name' },
+    )
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+// ─── Appointments ──────────────────────────────────────────────────────────────
+
+export async function getAppointments(patientId: string) {
+  const { data, error } = await supabase
+    .from('appointments')
+    .select('*')
+    .eq('patient_id', patientId)
+    .order('appointment_date', { ascending: true })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function addAppointment(appt: {
+  patient_id: string
+  doctor_id?: string | null
+  appointment_date: string
+  appointment_type?: string | null
+  notes?: string | null
+}) {
+  const { data, error } = await supabase.from('appointments').insert(appt).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function updateAppointment(
+  id: string,
+  updates: Partial<{
+    completed: boolean
+    post_visit_notes: string
+    follow_up_tasks: unknown[]
+    pre_visit_report_generated: boolean
+  }>,
+) {
+  const { data, error } = await supabase
+    .from('appointments')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteAppointment(id: string) {
+  const { error } = await supabase.from('appointments').delete().eq('id', id)
+  if (error) throw error
+}
+
+// ─── Visit Preparations ────────────────────────────────────────────────────────
+
+export async function getVisitPreparation(appointmentId: string) {
+  const { data, error } = await supabase
+    .from('visit_preparations')
+    .select('*')
+    .eq('appointment_id', appointmentId)
+    .maybeSingle()
+  if (error) throw error
+  return data
+}
+
+export async function upsertVisitPreparation(prep: Omit<VisitPreparation, 'id' | 'generated_at'>) {
+  const { data, error } = await supabase
+    .from('visit_preparations')
+    .upsert({ ...prep, generated_at: new Date().toISOString() }, { onConflict: 'appointment_id' })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function markPrepViewed(id: string) {
+  const { data, error } = await supabase
+    .from('visit_preparations')
+    .update({ viewed_by_patient: true })
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+// ─── Family Engagement ─────────────────────────────────────────────────────────
+
+export async function logFamilyEngagement(log: {
+  patient_id: string
+  family_member_id: string
+  engagement_type: string
+}) {
+  const { data, error } = await supabase
+    .from('family_engagement_logs')
+    .insert({ ...log, logged_at: new Date().toISOString() })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function getFamilyImpactScores(patientId: string, limit = 30) {
+  const { data, error } = await supabase
+    .from('family_impact_scores')
+    .select('*')
+    .eq('patient_id', patientId)
+    .order('score_date', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return data ?? []
 }

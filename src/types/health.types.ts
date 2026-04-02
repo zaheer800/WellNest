@@ -12,6 +12,8 @@ export interface Medication {
   notes: string | null
   refill_reminder_days: number
   created_at: string
+  is_injection: boolean
+  known_side_effects: string[]
 }
 
 export interface MedicationLog {
@@ -46,6 +48,12 @@ export type SymptomCategory =
   | 'general'
   | 'other'
 
+export interface EnvironmentData {
+  temperature?: 'cold_ac' | 'room_temp' | 'hot'
+  location?: 'home' | 'office' | 'outdoor' | 'travel'
+  activity?: 'sitting' | 'walking' | 'post_meal' | 'resting'
+}
+
 export interface SymptomLog {
   id: string
   patient_id: string
@@ -56,6 +64,9 @@ export interface SymptomLog {
   metadata: Record<string, unknown>
   linked_finding_id: string | null
   logged_at: string
+  onset_date: string | null
+  is_backdated: boolean
+  environment: EnvironmentData
 }
 
 export interface ExerciseLog {
@@ -147,4 +158,16 @@ export interface Streak {
   longest_streak: number
   last_logged_date: string | null
   updated_at: string
+}
+
+export interface SymptomProgression {
+  id: string
+  patient_id: string
+  symptom_name: string
+  first_onset_date: string | null
+  current_severity: number | null
+  baseline_severity: number | null
+  trend: 'improving' | 'stable' | 'worsening' | 'resolved' | 'new' | null
+  total_episodes: number
+  last_logged_at: string
 }
