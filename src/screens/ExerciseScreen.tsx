@@ -6,7 +6,6 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import { today, formatTime } from '@/utils/dateHelpers'
-import { getSeverityColor } from '@/utils/formatters'
 
 const EXERCISE_TYPES = ['Walking', 'Running', 'Swimming', 'Cycling', 'Yoga', 'Stretching', 'Physiotherapy', 'Weight training', 'Other']
 

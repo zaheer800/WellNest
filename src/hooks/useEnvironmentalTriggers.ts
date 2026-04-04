@@ -23,7 +23,6 @@ function computeCorrelations(logs: SymptomLog[]): EnvCorrelation[] {
   if (logs.length === 0) return []
 
   const totalLogs = logs.length
-  const baselineRate = 1 // one episode per log entry by definition; used for relative comparison
 
   // Group by env_key + env_value and count episodes + average severity
   const buckets: Record<string, { count: number; totalSeverity: number }> = {}

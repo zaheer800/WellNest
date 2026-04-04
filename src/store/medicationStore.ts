@@ -23,7 +23,7 @@ interface MedicationActions {
 
 type MedicationStore = MedicationState & MedicationActions
 
-export const useMedicationStore = create<MedicationStore>((set, get) => ({
+export const useMedicationStore = create<MedicationStore>((set) => ({
   medications: [],
   loading: false,
   error: null,
@@ -65,8 +65,16 @@ export const useMedicationStore = create<MedicationStore>((set, get) => ({
   },
 
   addMedication: async (med) => {
-    const newMed = await dbAddMedication(med as Parameters<typeof dbAddMedication>[0])
-    set((state) => ({ medications: [...state.medications, { ...(newMed as Medication), log: undefined }] }))
+    set({ loading: true, error: null })
+    try {
+      const newMed = await dbAddMedication(med as Parameters<typeof dbAddMedication>[0])
+      set((state) => ({ medications: [...state.medications, { ...(newMed as Medication), log: undefined }] }))
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : 'Failed to add medication' })
+      throw err // Re-throw so the UI can handle it
+    } finally {
+      set({ loading: false })
+    }
   },
 
   removeMedication: async (id) => {

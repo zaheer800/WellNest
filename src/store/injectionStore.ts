@@ -4,9 +4,8 @@ import {
   getInjectionCourses,
   addInjectionCourse as dbAddInjectionCourse,
   updateInjectionCourse as dbUpdateInjectionCourse,
-  getInjectionCourseLogs,
-  addInjectionCourseLog as dbAddInjectionCourseLog,
   markDoseAdministered as dbMarkDoseAdministered,
+  addInjectionCourseLog as dbAddInjectionCourseLog,
   getSideEffectLogs,
   addSideEffectLog as dbAddSideEffectLog,
   resolveSideEffect as dbResolveSideEffect,
@@ -47,6 +46,7 @@ interface InjectionActions {
     start_date: string
     notes?: string
   }) => Promise<void>
+  markDoseToday: (course: InjectionCourseWithProgress) => Promise<void>
   markDose: (
     logId: string,
     courseId: string,
@@ -79,6 +79,11 @@ export const useInjectionStore = create<InjectionStore>((set, get) => ({
   error: null,
 
   fetchCourses: async (patientId) => {
+    if (!patientId) {
+      set({ courses: [], error: null })
+      return
+    }
+
     set({ loading: true, error: null })
     try {
       const rawCourses = await getInjectionCourses(patientId)
@@ -92,20 +97,73 @@ export const useInjectionStore = create<InjectionStore>((set, get) => ({
       }))
       set({ courses })
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Failed to load injection courses' })
+      set({ courses: [], error: err instanceof Error ? err.message : 'Failed to load injection courses' })
     } finally {
       set({ loading: false })
     }
   },
 
   addCourse: async (course) => {
-    const newCourse = await dbAddInjectionCourse(course)
-    const withProgress: InjectionCourseWithProgress = {
-      ...(newCourse as InjectionCourseWithProgress),
-      progress_pct: 0,
-      next_dose_date: calculateNextDoseDate(course.start_date, course.frequency, 0),
+    set({ loading: true, error: null })
+    try {
+      const newCourse = await dbAddInjectionCourse(course)
+      const withProgress: InjectionCourseWithProgress = {
+        ...(newCourse as InjectionCourseWithProgress),
+        progress_pct: 0,
+        next_dose_date: calculateNextDoseDate(course.start_date, course.frequency, 0),
+      }
+      set((state) => ({ courses: [...state.courses, withProgress] }))
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : 'Failed to save injection course' })
+      throw err
+    } finally {
+      set({ loading: false })
     }
-    set((state) => ({ courses: [...state.courses, withProgress] }))
+  },
+
+  markDoseToday: async (course) => {
+    set({ loading: true, error: null })
+    try {
+      const today = new Date().toISOString().split('T')[0]
+      const doseNumber = course.doses_completed + 1
+      const scheduled_date = course.next_dose_date ?? today
+
+      const newLog = await dbAddInjectionCourseLog({
+        course_id: course.id,
+        patient_id: course.patient_id,
+        dose_number: doseNumber,
+        scheduled_date,
+      })
+
+      await dbMarkDoseAdministered(newLog.id, {
+        administered_at: new Date().toISOString(),
+        administered_by: 'self',
+      })
+
+      const newDosesCompleted = course.doses_completed + 1
+      await dbUpdateInjectionCourse(course.id, { doses_completed: newDosesCompleted })
+
+      set((state) => ({
+        courses: state.courses.map((c) =>
+          c.id !== course.id
+            ? c
+            : {
+                ...c,
+                doses_completed: newDosesCompleted,
+                progress_pct: calculateProgressPct(newDosesCompleted, c.total_doses),
+                next_dose_date:
+                  newDosesCompleted < c.total_doses
+                    ? calculateNextDoseDate(c.start_date, c.frequency, newDosesCompleted)
+                    : null,
+              },
+        ),
+      }))
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : 'Failed to mark injection dose' })
+      throw err
+    } finally {
+      set({ loading: false })
+    }
   },
 
   markDose: async (logId, courseId, data) => {

@@ -84,7 +84,7 @@ export default function AppointmentsScreen() {
     }
   }
 
-  const handleCompleteVisit = async (id: string, notes: string, tasks: string[]) => {
+  const handleCompleteVisit = async (id: string, notes: string) => {
     setSavingLog(true)
     try {
       await completeAppointment(id, notes)
@@ -216,7 +216,7 @@ export default function AppointmentsScreen() {
                         </div>
                         <PostVisitLogger
                           appointment={appt}
-                          onSave={(notes, tasks) => handleCompleteVisit(appt.id, notes, tasks)}
+                          onSave={(notes) => handleCompleteVisit(appt.id, notes)}
                           loading={savingLog}
                         />
                       </div>

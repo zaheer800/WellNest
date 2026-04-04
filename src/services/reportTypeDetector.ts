@@ -24,7 +24,6 @@ export async function detectReportType(fileUrl: string): Promise<ReportTypeDetec
   })
 
   if (error) {
-    console.error('[reportTypeDetector] detectReportType error:', error.message)
     throw error
   }
 

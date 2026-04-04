@@ -46,8 +46,7 @@ export function getCriticalAction(
 
 // Returns true if parameter requires emergency action
 export function isEmergencyValue(
-  parameterName: string,
-  status: 'critical_low' | 'critical_high'
+  parameterName: string
 ): boolean {
   const key = parameterName.toLowerCase().replace(/\s+/g, '_')
   const normalised = EMERGENCY_PARAMETERS.has(key) ? key : parameterName

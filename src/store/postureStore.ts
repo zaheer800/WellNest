@@ -1,6 +1,8 @@
 import { create } from 'zustand'
 import type { PostureLog } from '@/types/health.types'
 import { getPostureLogs, addPostureLog, updatePostureLog } from '@/services/supabase'
+import { useMedicationStore } from '@/store/medicationStore'
+import { useHealthStore } from '@/store/healthStore'
 
 interface PostureState {
   postureLogs: PostureLog[]
@@ -60,9 +62,14 @@ export const usePostureStore = create<PostureStore>((set, get) => ({
       activeSession: updated as PostureLog,
       lastStandBreak: now,
     })
+
+    // Recompute health score after recording break
+    const meds = useMedicationStore.getState().medications
+    const pLogs = get().postureLogs
+    await useHealthStore.getState().recomputeScore(patientId, meds, pLogs, get().standBreakGoal)
   },
 
-  endSession: async (patientId) => {
+  endSession: async () => {
     const { activeSession, sittingStartTime } = get()
     if (!activeSession) return
 

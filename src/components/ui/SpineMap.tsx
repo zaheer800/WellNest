@@ -8,6 +8,7 @@ export interface SpineLevelData {
   region: SpineRegion
   severity: SpineSeverity
   findings: string[]
+  nerves_affected: string[]
 }
 
 interface SpineMapProps {

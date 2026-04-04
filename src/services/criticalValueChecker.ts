@@ -24,7 +24,6 @@ export async function checkCriticalValues(
   })
 
   if (error) {
-    console.error('[criticalValueChecker] checkCriticalValues error:', error.message)
     throw error
   }
 

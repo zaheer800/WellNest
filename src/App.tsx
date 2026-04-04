@@ -13,6 +13,13 @@ import SymptomsScreen from '@/screens/SymptomsScreen'
 import ExerciseScreen from '@/screens/ExerciseScreen'
 import PostureScreen from '@/screens/PostureScreen'
 import AppointmentsScreen from '@/screens/AppointmentsScreen'
+import ReportsScreen from '@/screens/ReportsScreen'
+import ImagingScreen from '@/screens/ImagingScreen'
+import ConditionsScreen from '@/screens/ConditionsScreen'
+import ProgressScreen from '@/screens/ProgressScreen'
+import FamilyScreen from '@/screens/FamilyScreen'
+import DoctorScreen from '@/screens/DoctorScreen'
+import DietScreen from '@/screens/DietScreen'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, initialized } = useAuthStore()
@@ -43,25 +50,18 @@ export default function App() {
         <Route path="/symptoms" element={<ProtectedRoute><SymptomsScreen /></ProtectedRoute>} />
         <Route path="/exercise" element={<ProtectedRoute><ExerciseScreen /></ProtectedRoute>} />
         <Route path="/posture" element={<ProtectedRoute><PostureScreen /></ProtectedRoute>} />
+        <Route path="/diet" element={<ProtectedRoute><DietScreen /></ProtectedRoute>} />
         <Route path="/appointments" element={<ProtectedRoute><AppointmentsScreen /></ProtectedRoute>} />
-
-        {/* Fallback stubs for nav links not yet implemented */}
-        <Route path="/reports" element={<ProtectedRoute><PlaceholderScreen title="Reports" icon="📋" /></ProtectedRoute>} />
-        <Route path="/progress" element={<ProtectedRoute><PlaceholderScreen title="Progress" icon="📈" /></ProtectedRoute>} />
+        <Route path="/reports" element={<ProtectedRoute><ReportsScreen /></ProtectedRoute>} />
+        <Route path="/imaging" element={<ProtectedRoute><ImagingScreen /></ProtectedRoute>} />
+        <Route path="/conditions" element={<ProtectedRoute><ConditionsScreen /></ProtectedRoute>} />
+        <Route path="/progress" element={<ProtectedRoute><ProgressScreen /></ProtectedRoute>} />
+        <Route path="/family" element={<ProtectedRoute><FamilyScreen /></ProtectedRoute>} />
+        <Route path="/doctor" element={<ProtectedRoute><DoctorScreen /></ProtectedRoute>} />
 
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
-  )
-}
-
-function PlaceholderScreen({ title, icon }: { title: string; icon: string }) {
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 pb-20">
-      <p className="text-5xl mb-4">{icon}</p>
-      <h1 className="text-xl font-bold text-gray-700">{title}</h1>
-      <p className="text-gray-400 text-sm mt-2">Coming in Phase 2</p>
-    </div>
   )
 }

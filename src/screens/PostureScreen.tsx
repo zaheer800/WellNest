@@ -25,6 +25,8 @@ export default function PostureScreen() {
 
   const [sittingMins, setSittingMins] = useState(0)
   const [checklist, setChecklist] = useState<Record<string, boolean>>({ lumbar: false, screen: false, feet: false })
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const patientId = user?.id ?? ''
   const date = today()
@@ -48,18 +50,52 @@ export default function PostureScreen() {
 
   const toggleCheck = (key: string) => setChecklist((prev) => ({ ...prev, [key]: !prev[key] }))
 
-  const handleStandBreak = async () => {
-    if (!patientId) return
-    if (!isTracking) {
-      await startSitting(patientId)
+  const handleStartSitting = async () => {
+    if (!patientId) {
+      setError('User not authenticated')
+      return
     }
-    await recordStandBreak(patientId)
-    setSittingMins(0)
+    setIsLoading(true)
+    setError(null)
+    try {
+      await startSitting(patientId)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to start posture tracking')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleStandBreak = async () => {
+    if (!patientId) {
+      setError('User not authenticated')
+      return
+    }
+    setIsLoading(true)
+    setError(null)
+    try {
+      if (!isTracking) {
+        await startSitting(patientId)
+      }
+      await recordStandBreak(patientId)
+      setSittingMins(0)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to record stand break')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
     <PageWrapper title="Posture Tracker">
       <div className="px-4 pt-4 space-y-5">
+        {/* Error alert */}
+        {error && (
+          <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+
         {/* Main timer card */}
         <Card className="text-center py-6 space-y-4">
           <div className="text-5xl">{isTracking ? '🪑' : '🧘'}</div>
@@ -89,7 +125,7 @@ export default function PostureScreen() {
 
           <div className="flex gap-3">
             {!isTracking ? (
-              <Button variant="primary" fullWidth onClick={() => patientId && startSitting(patientId)}>
+              <Button variant="primary" fullWidth onClick={handleStartSitting} loading={isLoading}>
                 Start Sitting
               </Button>
             ) : (
@@ -103,10 +139,15 @@ export default function PostureScreen() {
         {/* Stand break button */}
         <button
           onClick={handleStandBreak}
-          className="w-full bg-green-500 hover:bg-green-600 active:scale-95 text-white rounded-2xl py-5 font-bold text-lg shadow-sm transition flex items-center justify-center gap-3"
+          disabled={isLoading}
+          className={`w-full text-white rounded-2xl py-5 font-bold text-lg shadow-sm transition flex items-center justify-center gap-3 ${
+            isLoading
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-green-500 hover:bg-green-600 active:scale-95'
+          }`}
         >
-          <span className="text-2xl">🚶</span>
-          I Just Stood Up!
+          <span className="text-2xl">{isLoading ? '⏳' : '🚶'}</span>
+          {isLoading ? 'Recording break...' : 'I Just Stood Up!'}
         </button>
 
         {/* Breaks progress */}

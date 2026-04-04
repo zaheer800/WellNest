@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react'
 import Card from '@/components/ui/Card'
-import Button from '@/components/ui/Button'
 import ReportTypeDetector from './ReportTypeDetector'
 import { detectReportType } from '@/services/reportTypeDetector'
 import { supabase } from '@/services/supabase'

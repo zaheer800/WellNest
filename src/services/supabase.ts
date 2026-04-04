@@ -25,7 +25,6 @@ export async function getUser(uid: string): Promise<User | null> {
     .maybeSingle()
 
   if (error) {
-    console.error('[supabase] getUser error:', error.message)
     throw error
   }
 
@@ -33,8 +32,10 @@ export async function getUser(uid: string): Promise<User | null> {
 }
 
 /**
- * Insert or update a user profile row. Uses upsert so it works for both
- * first-time creation (after sign-up) and subsequent updates.
+ * Insert or update a user profile row.
+ * 
+ * On first sign-up: Creates a row with the provided profile + email.
+ * On subsequent updates: Updates only the fields provided, preserving existing values.
  */
 export async function upsertUser(
   uid: string,
@@ -42,25 +43,63 @@ export async function upsertUser(
 ): Promise<User> {
   const now = new Date().toISOString()
 
-  const { data, error } = await supabase
+  // First check if user exists
+  const { data: existing, error: fetchError } = await supabase
     .from('users')
-    .upsert(
-      {
-        id: uid,
-        ...profile,
-        updated_at: now,
-      },
-      { onConflict: 'id' }
-    )
-    .select('*')
-    .single()
+    .select('id')
+    .eq('id', uid)
+    .maybeSingle()
 
-  if (error) {
-    console.error('[supabase] upsertUser error:', error.message)
-    throw error
+  if (fetchError) {
+    throw fetchError
   }
 
-  return data as User
+  if (existing) {
+    // User exists: update only provided fields
+    const updateData: any = { updated_at: now }
+    
+    if (profile.email) updateData.email = profile.email
+    if (profile.name !== undefined && profile.name !== '') updateData.name = profile.name
+    if (profile.date_of_birth !== undefined) updateData.date_of_birth = profile.date_of_birth
+    if (profile.gender !== undefined) updateData.gender = profile.gender
+    if (profile.height_cm !== undefined) updateData.height_cm = profile.height_cm
+    if (profile.weight_kg !== undefined) updateData.weight_kg = profile.weight_kg
+
+    const { data, error } = await supabase
+      .from('users')
+      .update(updateData)
+      .eq('id', uid)
+      .select('*')
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    return data as User
+  } else {
+    // User doesn't exist: create with all provided fields
+    const insertData: any = { id: uid, updated_at: now }
+    
+    if (profile.email) insertData.email = profile.email
+    if (profile.name !== undefined) insertData.name = profile.name || ''
+    if (profile.date_of_birth !== undefined) insertData.date_of_birth = profile.date_of_birth
+    if (profile.gender !== undefined) insertData.gender = profile.gender
+    if (profile.height_cm !== undefined) insertData.height_cm = profile.height_cm
+    if (profile.weight_kg !== undefined) insertData.weight_kg = profile.weight_kg
+
+    const { data, error } = await supabase
+      .from('users')
+      .insert(insertData)
+      .select('*')
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    return data as User
+  }
 }
 
 // ─── Medications ───────────────────────────────────────────────────────────────
@@ -84,6 +123,8 @@ export async function addMedication(med: {
   frequency?: string
   notes?: string
   start_date?: string
+  is_injection?: boolean
+  known_side_effects?: string[]
 }) {
   const { data, error } = await supabase.from('medications').insert(med).select().single()
   if (error) throw error
@@ -270,51 +311,46 @@ export async function addActivityRestriction(r: {
   if (error) throw error
   return data
 }
-
-// ─── Daily Scores ──────────────────────────────────────────────────────────────
-
-export async function getDailyScore(patientId: string, date: string) {
-  const { data, error } = await supabase
-    .from('daily_scores')
-    .select('*')
-    .eq('patient_id', patientId)
-    .eq('score_date', date)
-    .maybeSingle()
-  if (error) throw error
-  return data
-}
-
-export async function upsertDailyScore(score: {
-  patient_id: string
-  score_date: string
-  total_score: number
-  water_score: number
-  medication_score: number
-  exercise_score: number
-  diet_score: number
-  sleep_score: number
-  posture_score: number
-}) {
-  const { data, error } = await supabase
-    .from('daily_scores')
-    .upsert(score, { onConflict: 'patient_id,score_date' })
-    .select()
-    .single()
-  if (error) throw error
-  return data
-}
-
-// ─── Injection Courses ─────────────────────────────────────────────────────────
-
-export async function getInjectionCourses(patientId: string) {
-  const { data, error } = await supabase
+// Debug function to test injection courses access
+export async function debugInjectionCoursesAccess() {
+  // Check if user can access injection_courses table at all
+  const { data: tableData } = await supabase
     .from('injection_courses')
     .select('*')
-    .eq('patient_id', patientId)
-    .eq('is_active', true)
-    .order('created_at', { ascending: false })
-  if (error) throw error
-  return data ?? []
+    .limit(1)
+
+  // Check medications table access
+  const { data: medsData } = await supabase
+    .from('medications')
+    .select('*')
+    .limit(1)
+
+  return { tableData, medsData }
+}
+
+export async function getInjectionCourses(patientId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('injection_courses')
+      .select(`
+        *,
+        medication:medications!medication_id(name)
+      `)
+      .eq('patient_id', patientId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      if (error.message.includes('permission denied') || error.message.includes('policy')) {
+        throw new Error(`RLS policy blocking access to injection_courses. Check Row Level Security policies. Error: ${error.message}`)
+      }
+      throw new Error(`Database query failed: ${error.message}`)
+    }
+
+    return data ?? []
+  } catch (err) {
+    throw err
+  }
 }
 
 export async function addInjectionCourse(course: {
@@ -325,20 +361,38 @@ export async function addInjectionCourse(course: {
   start_date: string
   notes?: string
 }) {
-  const { data, error } = await supabase.from('injection_courses').insert(course).select().single()
+  const { data, error } = await supabase
+    .from('injection_courses')
+    .insert(course)
+    .select(`
+      *,
+      medication:medications!medication_id(name)
+    `)
+    .single()
   if (error) throw error
   return data
 }
 
 export async function updateInjectionCourse(
   id: string,
-  updates: Partial<{ doses_completed: number; is_active: boolean; end_date: string }>,
+  updates: Partial<{
+    total_doses: number
+    frequency: 'daily' | 'alternate_days' | 'weekly'
+    end_date: string
+    is_active: boolean
+    doses_completed: number
+    post_course_medication_id: string
+    notes: string
+  }>
 ) {
   const { data, error } = await supabase
     .from('injection_courses')
     .update(updates)
     .eq('id', id)
-    .select()
+    .select(`
+      *,
+      medication:medications!medication_id(name)
+    `)
     .single()
   if (error) throw error
   return data
@@ -380,6 +434,38 @@ export async function markDoseAdministered(
     .from('injection_course_logs')
     .update({ ...updates, administered: true })
     .eq('id', logId)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+// ─── Daily Scores ──────────────────────────────────────────────────────────────
+
+export async function getDailyScore(patientId: string, date: string) {
+  const { data, error } = await supabase
+    .from('daily_scores')
+    .select('*')
+    .eq('patient_id', patientId)
+    .eq('score_date', date)
+    .maybeSingle()
+  if (error) throw error
+  return data
+}
+
+export async function upsertDailyScore(score: {
+  patient_id: string
+  score_date: string
+  total_score: number
+  water_score: number
+  medication_score: number
+  exercise_score: number
+  diet_score: number
+  sleep_score: number
+  posture_score: number
+}) {
+  const { data, error } = await supabase
+    .from('daily_scores')
+    .upsert(score, { onConflict: 'patient_id,score_date' })
     .select()
     .single()
   if (error) throw error
@@ -564,6 +650,49 @@ export async function getFamilyImpactScores(patientId: string, limit = 30) {
     .eq('patient_id', patientId)
     .order('score_date', { ascending: false })
     .limit(limit)
+  if (error) throw error
+  return data ?? []
+}
+// ─── Lab Reports ───────────────────────────────────────────────────────────────
+
+export async function getLabReports(patientId: string) {
+  const { data, error } = await supabase
+    .from('lab_reports')
+    .select('*')
+    .eq('patient_id', patientId)
+    .order('report_date', { ascending: false })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function getLabParameters(reportId: string) {
+  const { data, error } = await supabase
+    .from('lab_parameters')
+    .select('*')
+    .eq('report_id', reportId)
+    .order('parameter_name', { ascending: true })
+  if (error) throw error
+  return data ?? []
+}
+
+// ─── Imaging Reports ───────────────────────────────────────────────────────────
+
+export async function getImagingReports(patientId: string) {
+  const { data, error } = await supabase
+    .from('imaging_reports')
+    .select('*')
+    .eq('patient_id', patientId)
+    .order('report_date', { ascending: false })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function getImagingFindings(reportId: string) {
+  const { data, error } = await supabase
+    .from('imaging_findings')
+    .select('*')
+    .eq('report_id', reportId)
+    .order('finding', { ascending: true })
   if (error) throw error
   return data ?? []
 }

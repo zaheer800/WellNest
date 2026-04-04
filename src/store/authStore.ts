@@ -85,7 +85,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         }
       })
     } catch (err) {
-      console.error('[authStore] initialize error:', err)
       set({ initialized: true })
     }
   },

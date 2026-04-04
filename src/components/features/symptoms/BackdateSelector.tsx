@@ -25,8 +25,9 @@ const BackdateSelector: React.FC<BackdateSelectorProps> = ({ value, onChange }) 
     onChange(dateVal)
   }
 
-  const validationError = value ? validateOnsetDate(value) : null
-  const duration = value && mode === 'earlier' && !validationError ? getOnsetDuration(value) : null
+  const validation = value ? validateOnsetDate(value) : { valid: true }
+  const validationError = validation?.error
+  const duration = value && mode === 'earlier' && validation?.valid ? getOnsetDuration(value) : null
 
   return (
     <div className="space-y-2">

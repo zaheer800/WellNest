@@ -29,7 +29,7 @@ const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
     <div className="space-y-5">
       {/* Score + message */}
       <div className="flex items-center gap-5">
-        <CircularProgress value={todayScore} max={100} size={80} strokeWidth={7} />
+        <CircularProgress value={todayScore} size={80} strokeWidth={7} />
         <div className="flex-1">
           <p className="text-base font-semibold text-gray-800">{firstName} {getEncouragement(todayScore)}</p>
           <p className="text-sm text-gray-400 mt-0.5">Today's health score: {todayScore}/100</p>

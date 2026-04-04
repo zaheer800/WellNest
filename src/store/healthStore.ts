@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import type { WaterLog, SymptomLog, ExerciseLog, ActivityRestriction, HealthScoreBreakdown } from '@/types/health.types'
+import { usePostureStore } from '@/store/postureStore'
+import { useMedicationStore } from '@/store/medicationStore'
 import {
   getWaterLogs,
   addWaterLog as dbAddWater,
@@ -56,6 +58,7 @@ export const useHealthStore = create<HealthStore>((set, get) => ({
       ])
 
       const state = get()
+      const activeBreaks = usePostureStore.getState().activeSession?.stand_breaks_taken ?? 0
       const score = calcHealthScore({
         medications,
         waterLogs: water as WaterLog[],
@@ -63,6 +66,8 @@ export const useHealthStore = create<HealthStore>((set, get) => ({
         exerciseLogs: exercise as ExerciseLog[],
         postureLogs,
         postureGoalBreaks: 8,
+        activePostureBreaks: activeBreaks,
+        dietLogs: [], // Diet tracking not yet implemented
       })
 
       set({
@@ -85,7 +90,7 @@ export const useHealthStore = create<HealthStore>((set, get) => ({
         posture_score: score.posture,
       })
     } catch (err) {
-      console.error('[healthStore] fetchTodayData:', err)
+      // Error silently handled
     } finally {
       set({ loading: false })
     }
@@ -94,6 +99,11 @@ export const useHealthStore = create<HealthStore>((set, get) => ({
   addWater: async (patientId, amountMl, fluidType = 'water') => {
     const newLog = await dbAddWater({ patient_id: patientId, amount_ml: amountMl, fluid_type: fluidType })
     set((state) => ({ waterLogs: [...state.waterLogs, newLog as WaterLog] }))
+
+    // Recompute health score after adding water
+    const meds = useMedicationStore.getState().medications
+    const pLogs = usePostureStore.getState().postureLogs
+    await get().recomputeScore(patientId, meds, pLogs, 8)
   },
 
   removeWater: async (id) => {
@@ -115,6 +125,7 @@ export const useHealthStore = create<HealthStore>((set, get) => ({
 
   recomputeScore: async (patientId, medications, postureLogs, postureGoalBreaks) => {
     const state = get()
+    const activeBreaks = usePostureStore.getState().activeSession?.stand_breaks_taken ?? 0
     const score = calcHealthScore({
       medications,
       waterLogs: state.waterLogs,
@@ -122,6 +133,7 @@ export const useHealthStore = create<HealthStore>((set, get) => ({
       exerciseLogs: state.exerciseLogs,
       postureLogs,
       postureGoalBreaks,
+      activePostureBreaks: activeBreaks,
     })
     set({ dailyScore: score })
 

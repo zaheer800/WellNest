@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useAuthStore } from '@/store/authStore'
@@ -9,12 +9,19 @@ interface Step2Data { height_cm: number; weight_kg: number }
 
 export default function OnboardingScreen() {
   const navigate = useNavigate()
-  const { updateProfile, loading } = useAuthStore()
+  const { user, updateProfile, loading } = useAuthStore()
   const [step, setStep] = useState(1)
   const [step1Data, setStep1Data] = useState<Step1Data | null>(null)
 
   const form1 = useForm<Step1Data>()
-  const form2 = useForm<Step2Data>()
+  const form2 = useForm<Step2Data>({ mode: 'onBlur' })
+
+  // If profile is already complete, skip to dashboard
+  useEffect(() => {
+    if (user?.name && user?.height_cm && user?.weight_kg) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [user, navigate])
 
   const handleStep1 = (data: Step1Data) => {
     setStep1Data(data)
@@ -30,7 +37,7 @@ export default function OnboardingScreen() {
       })
       setStep(3)
     } catch (e) {
-      console.error(e)
+      // Error handled by store
     }
   }
 
@@ -103,12 +110,37 @@ export default function OnboardingScreen() {
 
             <div>
               <label className={labelClass}>Height (cm)</label>
-              <input type="number" className={inputClass} placeholder="170" {...form2.register('height_cm')} />
+              <input
+                type="number"
+                className={inputClass}
+                placeholder="170"
+                {...form2.register('height_cm', {
+                  required: 'Height is required',
+                  min: { value: 50, message: 'Height must be at least 50 cm' },
+                  max: { value: 300, message: 'Height must be less than 300 cm' }
+                })}
+              />
+              {form2.formState.errors.height_cm && (
+                <p className="text-red-500 text-xs mt-1">{form2.formState.errors.height_cm.message}</p>
+              )}
             </div>
 
             <div>
               <label className={labelClass}>Weight (kg)</label>
-              <input type="number" step="0.1" className={inputClass} placeholder="70" {...form2.register('weight_kg')} />
+              <input
+                type="number"
+                step="0.1"
+                className={inputClass}
+                placeholder="70"
+                {...form2.register('weight_kg', {
+                  required: 'Weight is required',
+                  min: { value: 10, message: 'Weight must be at least 10 kg' },
+                  max: { value: 500, message: 'Weight must be less than 500 kg' }
+                })}
+              />
+              {form2.formState.errors.weight_kg && (
+                <p className="text-red-500 text-xs mt-1">{form2.formState.errors.weight_kg.message}</p>
+              )}
             </div>
 
             <div className="pt-4 space-y-3">

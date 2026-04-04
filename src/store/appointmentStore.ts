@@ -4,7 +4,6 @@ import {
   getAppointments,
   addAppointment as dbAddAppointment,
   updateAppointment as dbUpdateAppointment,
-  deleteAppointment as dbDeleteAppointment,
   getVisitPreparation,
   markPrepViewed as dbMarkPrepViewed,
 } from '@/services/supabase'
