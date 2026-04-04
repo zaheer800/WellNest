@@ -105,10 +105,13 @@ alter table public.family_engagement_logs enable row level security;
 create policy "Patients manage own family engagement logs"
   on public.family_engagement_logs for all
   using (patient_id = auth.uid());
+-- Family members can see their own engagement entries (matched by email)
 create policy "Family members view own engagement logs"
   on public.family_engagement_logs for select
   using (family_member_id in (
-    select id from public.family_members where patient_id = auth.uid()
+    select id from public.family_members
+    where email = auth.jwt() ->> 'email'
+    and is_active = true
   ));
 
 -- ─────────────────────────────────────────────
@@ -147,14 +150,20 @@ create table if not exists public.visit_preparations (
   viewed_by_patient     boolean default false
 );
 
+-- Unique constraint required for upsert onConflict: 'appointment_id'
+alter table public.visit_preparations
+  add constraint visit_preparations_appointment_id_unique unique (appointment_id);
+
 alter table public.visit_preparations enable row level security;
 create policy "Patients manage own visit preparations"
   on public.visit_preparations for all
   using (patient_id = auth.uid());
+-- Doctors can view preparations for appointments they are linked to
 create policy "Doctors view linked visit preparations"
   on public.visit_preparations for select
   using (doctor_id in (
-    select id from public.doctors where patient_id = auth.uid()
+    select id from public.doctors
+    where email = auth.jwt() ->> 'email'
   ));
 
 -- ─────────────────────────────────────────────
@@ -228,8 +237,34 @@ alter table public.medications
   add column if not exists known_side_effects  jsonb default '[]';
 
 -- ─────────────────────────────────────────────
--- ALTER: notifications — add acknowledgment fields
+-- ALTER: notifications — add acknowledgment fields + 'critical' priority
 -- ─────────────────────────────────────────────
 alter table public.notifications
   add column if not exists requires_acknowledgment boolean default false,
   add column if not exists acknowledged_at         timestamptz;
+
+-- Expand priority CHECK to include 'critical' (v2.2 bidirectional critical alerts)
+alter table public.notifications
+  drop constraint if exists notifications_priority_check;
+
+alter table public.notifications
+  add constraint notifications_priority_check
+  check (priority in ('low','normal','high','urgent','critical'));
+
+-- ─────────────────────────────────────────────
+-- ALTER: sleep_logs — fix position values + add recommended_position
+-- ─────────────────────────────────────────────
+-- Drop the old restrictive CHECK so v2.2 position IDs are accepted
+alter table public.sleep_logs
+  drop constraint if exists sleep_logs_sleep_position_check;
+
+-- Add recommended_position (system-generated from patient conditions)
+alter table public.sleep_logs
+  add column if not exists recommended_position text;
+
+-- ─────────────────────────────────────────────
+-- ALTER: symptom_logs — add resolution tracking
+-- ─────────────────────────────────────────────
+alter table public.symptom_logs
+  add column if not exists resolved    boolean default false,
+  add column if not exists resolved_at date;
