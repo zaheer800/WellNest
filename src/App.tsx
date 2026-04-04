@@ -12,6 +12,7 @@ import WaterScreen from '@/screens/WaterScreen'
 import SymptomsScreen from '@/screens/SymptomsScreen'
 import ExerciseScreen from '@/screens/ExerciseScreen'
 import PostureScreen from '@/screens/PostureScreen'
+import AppointmentsScreen from '@/screens/AppointmentsScreen'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, initialized } = useAuthStore()
@@ -42,6 +43,7 @@ export default function App() {
         <Route path="/symptoms" element={<ProtectedRoute><SymptomsScreen /></ProtectedRoute>} />
         <Route path="/exercise" element={<ProtectedRoute><ExerciseScreen /></ProtectedRoute>} />
         <Route path="/posture" element={<ProtectedRoute><PostureScreen /></ProtectedRoute>} />
+        <Route path="/appointments" element={<ProtectedRoute><AppointmentsScreen /></ProtectedRoute>} />
 
         {/* Fallback stubs for nav links not yet implemented */}
         <Route path="/reports" element={<ProtectedRoute><PlaceholderScreen title="Reports" icon="📋" /></ProtectedRoute>} />
