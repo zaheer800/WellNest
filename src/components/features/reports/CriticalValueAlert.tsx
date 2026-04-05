@@ -22,7 +22,11 @@ const CriticalValueAlert: React.FC<CriticalValueAlertProps> = ({
   const direction = parameter.status === 'critical_high' ? 'critically high' : 'critically low'
 
   return (
-    <div className={`rounded-2xl border-2 overflow-hidden ${acknowledged ? 'border-green-200' : 'border-red-400'}`}>
+    <div
+      className={`rounded-2xl border-2 overflow-hidden ${acknowledged ? 'border-green-200' : 'border-red-400'}`}
+      role={acknowledged ? undefined : 'alert'}
+      aria-live={acknowledged ? undefined : 'assertive'}
+    >
       {/* Header banner */}
       <div className={`px-4 py-2 flex items-center gap-2 ${acknowledged ? 'bg-green-500' : 'bg-red-500'}`}>
         <span className="text-white text-sm">{acknowledged ? '✓' : '🔴'}</span>

@@ -540,6 +540,441 @@ Logic lives in `src/utils/healthScore.ts`.
 
 ---
 
+## Claude API Prompt Templates
+
+Use these exact prompts in the corresponding Edge Functions. Do not paraphrase or shorten them — precision matters for medical data extraction.
+
+### Report Type Detection Prompt
+
+```
+You are a medical report type detector.
+Identify what type of medical report this is.
+
+Return JSON only — no other text:
+{
+  "detected_type": string,
+  "confidence": number,
+  "key_indicators": string[],
+  "suggested_label": string,
+  "pipeline": "lab" | "imaging"
+}
+
+Valid detected_type values:
+"blood_test", "urine_analysis", "mri_lumbar", "mri_cervical",
+"mri_thoracic", "mri_whole_spine", "mri_brain", "mri_joint",
+"ct_scan", "ultrasound_abdomen", "ultrasound_pelvis",
+"xray_chest", "xray_spine", "echo_cardiac", "ecg",
+"endoscopy_upper_gi", "endoscopy_lower_gi", "uroflowmetry",
+"ncs_emg", "dexa", "other_lab", "other_imaging"
+
+confidence: 0.0 to 1.0 — how certain you are.
+key_indicators: 2–5 words or phrases that led to your decision.
+suggested_label: human-readable label e.g. "MRI Lumbar Spine — March 2026".
+pipeline: "lab" if the report contains numeric values to extract;
+          "imaging" if the report contains descriptive findings.
+
+Patient context: Age {age}, Gender {gender}
+```
+
+### Lab Report Extraction Prompt
+
+```
+You are a medical lab report parser.
+Extract all numeric parameters from this report.
+
+For each parameter return an object in this exact shape:
+{
+  "parameter_name": string,
+  "value": number,
+  "unit": string,
+  "reference_min": number | null,
+  "reference_max": number | null,
+  "status": "normal" | "borderline_low" | "borderline_high" |
+            "abnormal_low" | "abnormal_high" |
+            "critical_low" | "critical_high",
+  "plain_language": string,
+  "category": "kidney" | "liver" | "blood" | "lipids" |
+              "diabetes" | "thyroid" | "vitamins" | "cardiac" |
+              "electrolytes" | "urine" | "hormones" | "other"
+}
+
+Status rules:
+- normal: within reference range
+- borderline_low / borderline_high: within 10% of the limit
+- abnormal_low / abnormal_high: outside range but not critical
+- critical_low / critical_high: dangerously outside range
+  (e.g. sodium < 125, potassium > 6.5, glucose < 50)
+
+plain_language: one sentence in simple non-clinical English
+  explaining what this value means for the patient.
+
+parameter_name: use the standardised English name
+  (e.g. "Creatinine", "eGFR", "Vitamin D", "Hemoglobin").
+
+Patient context: Age {age}, Gender {gender}
+Return a JSON array only. No preamble, no explanation.
+```
+
+### Imaging Report Extraction Prompt
+
+```
+You are a medical imaging report parser.
+Extract all findings from this report.
+
+Return a single JSON object in this exact shape — no other text:
+{
+  "imaging_type": string,
+  "body_region": string,
+  "normal_findings": string[],
+  "abnormal_findings": [
+    {
+      "location": string,
+      "spinal_level": string | null,
+      "spinal_region": "cervical" | "thoracic" | "lumbar" | "sacral" | null,
+      "finding_type": string,
+      "severity": "mild" | "moderate" | "severe",
+      "laterality": "left" | "right" | "bilateral" | "central" | "not_applicable",
+      "description": string,
+      "plain_language": string,
+      "nerves_affected": string[],
+      "linked_symptoms": string[],
+      "surgical_urgency": boolean
+    }
+  ],
+  "critical_findings": string[],
+  "surgical_urgency": boolean,
+  "follow_up_recommended": boolean,
+  "follow_up_timeline": string | null,
+  "overall_summary": string
+}
+
+spinal_level: use standard notation e.g. "L4-L5", "C5-C6", "D8-D9".
+  Null if not a spinal finding.
+finding_type: short descriptor e.g. "disc_bulge", "disc_protrusion",
+  "nerve_compression", "osteophyte", "facet_arthrosis", "polyp", "cyst",
+  "fatty_liver", "hiatus_hernia", "cord_compression", "schmorls_node".
+description: radiologist's exact words from the report.
+plain_language: one sentence in simple non-clinical English.
+nerves_affected: list nerve levels e.g. ["L4", "L5", "S1"].
+linked_symptoms: list symptoms this finding may cause
+  e.g. ["leg_pain", "urinary_frequency", "numbness", "back_pain"].
+surgical_urgency: true only if report contains language such as
+  "cauda equina", "cord compression with signal change",
+  "complete canal stenosis", "malignant", "metastasis", "urgent surgical".
+overall_summary: 2–3 sentences plain-language summary for the patient.
+
+Patient context: Age {age}, Gender {gender}
+Return JSON only. No preamble, no explanation.
+```
+
+### Condition Connection Prompt
+
+```
+You are a medical knowledge engine.
+Given a patient's health findings, identify meaningful
+causal or correlational connections between them.
+
+Patient findings:
+{all_findings_json}
+
+For each meaningful connection return:
+{
+  "source_condition": string,
+  "source_label": string,
+  "target_condition": string,
+  "target_label": string,
+  "connection_type": "causes" | "worsens" | "correlates" | "compounds",
+  "plain_language": string,
+  "evidence_source": "lab_report" | "imaging" | "symptom_pattern" | "clinical"
+}
+
+source_condition / target_condition: short code e.g. "low_b12",
+  "l4_l5_disc_bulge", "peripheral_neuropathy", "urinary_frequency".
+source_label / target_label: human-readable e.g. "Low Vitamin B12".
+plain_language: one simple sentence e.g.
+  "Low B12 damages the protective myelin sheath around nerves,
+  slowing their conduction speed."
+
+Only include connections that are clinically meaningful and
+supported by the patient's actual findings.
+Do not invent connections not supported by the data.
+
+Patient context: Age {age}, Gender {gender}
+Return a JSON array only. No preamble, no explanation.
+```
+
+---
+
+## Error Handling Conventions
+
+Apply these patterns consistently across all services, hooks, and components.
+
+### Supabase Errors
+
+```typescript
+// Standard pattern for all Supabase calls
+try {
+  const { data, error } = await supabase
+    .from('table_name')
+    .select('*')
+    .eq('patient_id', patientId)
+
+  if (error) throw error
+  return data
+} catch (err) {
+  // Log type and code only — never log PHI or raw data
+  console.error('[Supabase error]', {
+    code: (err as any)?.code,
+    message: (err as any)?.message,
+  })
+  // Surface a safe, generic message to the UI
+  throw new Error('Unable to load data. Please try again.')
+}
+```
+
+Rules:
+- RLS violations (`PGRST301`) — treat as "not found", never reveal why.
+- Network errors — show retry UI, never show raw error message to user.
+- Never log PHI or query result contents to console.
+- Log only in development (`import.meta.env.DEV`).
+
+### Claude API / Edge Function Errors
+
+```typescript
+// Standard pattern for Edge Function calls
+try {
+  const response = await fetch('/functions/v1/process-lab-report', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reportId }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`Edge Function error: ${response.status}`)
+  }
+
+  return await response.json()
+} catch (err) {
+  // Mark report as failed in database
+  await supabase
+    .from('lab_reports')
+    .update({ processing_status: 'failed' })
+    .eq('id', reportId)
+
+  // Show fallback UI — always offer manual entry
+  throw new Error('REPORT_PROCESSING_FAILED')
+}
+```
+
+Rules:
+- Retry once automatically before marking as failed.
+- Always provide manual entry fallback when report processing fails.
+- Show user: "We could not read this report automatically. You can enter values manually."
+- Never silently swallow a Claude API failure.
+
+### Critical Value Errors
+
+- If the `check-critical-values` Edge Function fails — log the failure but still display the raw value to the user with a note to review with their doctor.
+- Never suppress a potentially critical value due to a processing error.
+- Queue failed critical alerts for retry — do not discard.
+
+### Network Offline
+
+```typescript
+// In App.tsx — global offline detection
+window.addEventListener('offline', () => {
+  useHealthStore.getState().setOffline(true)
+})
+window.addEventListener('online', () => {
+  useHealthStore.getState().setOffline(false)
+  useHealthStore.getState().syncPendingLogs()
+})
+```
+
+Rules:
+- Show persistent offline banner when `navigator.onLine === false`.
+- Accept all user log actions (medication, water, symptom, exercise) while offline — queue locally.
+- Sync silently on reconnection — no user action required.
+- Never block the user from logging due to network state.
+- Report upload and Claude API calls require connectivity — show clear message if attempted offline.
+
+### Form Validation
+
+- Use React Hook Form validation exclusively — no manual DOM validation.
+- Show inline errors immediately on blur, not on submit.
+- Never clear a form on a failed submission — preserve user input.
+- Medical date fields (onset date, appointment date) must validate against logical ranges — no future dates for onset, no past dates for appointments.
+
+---
+
+## Supabase Realtime Pattern
+
+Use this exact pattern for all realtime subscriptions. Deviating from it causes memory leaks and stale subscriptions.
+
+```typescript
+// Example: useFamilyDashboard.ts
+import { useEffect } from 'react'
+import { supabase } from '@/services/supabase'
+
+export function useFamilyDashboard(patientId: string) {
+  useEffect(() => {
+    if (!patientId) return
+
+    const channel = supabase
+      .channel(`family-dashboard-${patientId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'daily_scores',
+          filter: `patient_id=eq.${patientId}`,
+        },
+        (payload) => {
+          // Handle the incoming change
+          // Update local Zustand store — do not call API again
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR') {
+          // Log and attempt reconnect after delay
+          setTimeout(() => channel.subscribe(), 5000)
+        }
+      })
+
+    // Critical: always clean up on unmount
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [patientId])
+}
+```
+
+Rules:
+- Channel names must be unique and descriptive: `{feature}-{patientId}`.
+- Never subscribe to a table without a `filter` scoped to `patient_id`.
+- Always clean up in the `useEffect` return function — no exceptions.
+- Handle `CHANNEL_ERROR` with exponential backoff, not infinite retry.
+- Family members subscribe only to their linked patient's data — enforce via RLS, not just filter.
+- Realtime is used for: `daily_scores`, `messages`, `notifications`, `family_engagement_logs`.
+- Realtime is NOT used for: reports (processed async), lab parameters (polled after upload).
+
+---
+
+## PWA and Offline Strategy
+
+### Offline-Capable Features (queue locally, sync on reconnect)
+
+| Feature | Local Storage Key | Sync Priority |
+|---|---|---|
+| Medication logs | `pending_medication_logs` | High |
+| Water intake logs | `pending_water_logs` | High |
+| Symptom logs | `pending_symptom_logs` | High |
+| Exercise logs | `pending_exercise_logs` | Medium |
+| Posture logs | `pending_posture_logs` | Medium |
+| Sleep logs | `pending_sleep_logs` | Medium |
+| Diet logs | `pending_diet_logs` | Low |
+
+### Requires Connectivity
+
+- Report upload and Claude API processing
+- Family dashboard realtime updates
+- Doctor visit preparation generation
+- Push notification delivery
+- Initial authentication
+
+### Offline UI Rules
+
+- Show a persistent top banner when offline: "You're offline — logs will sync when reconnected."
+- Pending items show a `⏳` indicator until synced.
+- Never block the user from logging — always accept locally.
+- On reconnect: sync silently in background, replace `⏳` with `✓`.
+- Conflict resolution: server wins for read data; latest `created_at` timestamp wins for user logs.
+- Do not cache health data in the Service Worker — only cache the app shell, static assets, and fonts.
+
+### Service Worker Strategy
+
+```javascript
+// vite.config.ts — VitePWA plugin config
+VitePWA({
+  registerType: 'prompt', // Ask user before updating — do not auto-update health apps silently
+  workbox: {
+    globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+    runtimeCaching: [
+      {
+        urlPattern: /^https:\/\/fonts\.googleapis\.com/,
+        handler: 'CacheFirst',
+      },
+    ],
+    // Do NOT cache Supabase API calls or Edge Function responses
+  },
+})
+```
+
+---
+
+## Accessibility Standards
+
+WellNest serves patients who may be unwell, elderly family members, and busy doctors. Accessibility is not optional.
+
+### Requirements
+
+- **Touch targets:** Minimum 44 × 44 px on all interactive elements.
+- **Color independence:** Never use color as the only indicator of status. Always pair color with an icon and text label (e.g., critical values use red + ⚠️ + "Critical Low" — not just red).
+- **Focus visibility:** All interactive elements must have a visible focus ring. Do not use `outline: none` without a custom focus style.
+- **Font sizes:** Minimum 14px for body text, 12px for secondary labels. Never go below 11px for any visible text.
+- **Contrast:** WCAG AA minimum (4.5:1 for normal text, 3:1 for large text).
+- **ARIA labels:** All icon-only buttons must have `aria-label`. All status indicators must have `aria-live` if they update dynamically.
+- **Health score ring:** Must include `role="meter"`, `aria-valuenow`, `aria-valuemin={0}`, `aria-valuemax={100}`, `aria-label="Daily health score"`.
+- **Critical alerts:** Must be announced by screen readers immediately — use `role="alert"` or `aria-live="assertive"`.
+- **Forms:** All inputs must have associated `<label>` elements — not just placeholders.
+- **Images:** All non-decorative images and SVGs must have descriptive `alt` text. Spine map SVG regions must have `aria-label` for each clickable level.
+
+### Screen Reader Priority Flows (test these)
+
+1. Logging a medication as taken
+2. Uploading a report and receiving the result
+3. Viewing a critical value alert and acknowledging it
+4. Reading the daily health score
+
+---
+
+## Medical Status Badge Standard
+
+All lab parameter and imaging finding statuses use a single consistent visual system. Never create inline status styling — always use `src/components/ui/Badge.tsx`.
+
+### Lab Parameter Status
+
+| Status | Color | Icon | Text Label | Badge Variant |
+|---|---|---|---|---|
+| `normal` | Green | ✓ | Normal | `success` |
+| `borderline_low` | Amber | ↓ | Watch | `warning` |
+| `borderline_high` | Amber | ↑ | Watch | `warning` |
+| `abnormal_low` | Orange | ↓↓ | Low | `caution` |
+| `abnormal_high` | Orange | ↑↑ | High | `caution` |
+| `critical_low` | Red + pulse | ⚠️ | Critical Low | `critical` |
+| `critical_high` | Red + pulse | ⚠️ | Critical High | `critical` |
+
+### Imaging Finding Severity
+
+| Severity | Color | Spine Map Dot |
+|---|---|---|
+| `normal` | Grey | ○ |
+| `mild` | Green | 🟢 |
+| `moderate` | Amber | 🟡 |
+| `severe` | Orange | 🟠 |
+| `critical` | Red + pulse | 🔴 |
+
+### Rules
+
+- `critical` badges always animate with a subtle pulse (`animate-pulse` in Tailwind).
+- `critical` notifications require explicit user acknowledgment before they can be dismissed.
+- Color is always paired with an icon and text — never color alone.
+- Import the `Badge` component: `import { Badge } from '@/components/ui/Badge'`.
+- Pass `variant` prop — do not override colors with inline styles.
+
+---
+
 ## Key Files for AI Assistants
 
 | File | Purpose |

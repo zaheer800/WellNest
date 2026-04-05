@@ -135,6 +135,67 @@ export default function DashboardScreen() {
           </div>
         </div>
 
+        {/* My Circle */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-gray-700">My Circle</h2>
+            <span className="text-xs text-indigo-500 font-medium">Your support network</span>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => navigate('/family')}
+              className="flex flex-col items-start gap-2 p-4 rounded-2xl bg-pink-50 border border-pink-100 transition active:scale-95 text-left"
+            >
+              <span className="text-2xl">👨‍👩‍👧</span>
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Family</p>
+                <p className="text-xs text-gray-500 mt-0.5">Invite & share updates</p>
+              </div>
+            </button>
+            <button
+              onClick={() => navigate('/doctor')}
+              className="flex flex-col items-start gap-2 p-4 rounded-2xl bg-blue-50 border border-blue-100 transition active:scale-95 text-left"
+            >
+              <span className="text-2xl">👨‍⚕️</span>
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Doctors</p>
+                <p className="text-xs text-gray-500 mt-0.5">Grant record access</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Medical Records */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-gray-700">Medical Records</h2>
+            <span className="text-xs text-indigo-500 font-medium">AI-powered insights</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              onClick={() => navigate('/reports')}
+              className="flex flex-col items-center gap-2 py-4 px-2 rounded-2xl bg-violet-50 border border-violet-100 transition active:scale-95"
+            >
+              <span className="text-2xl">🧪</span>
+              <p className="text-xs font-semibold text-gray-800 text-center">Lab Reports</p>
+            </button>
+            <button
+              onClick={() => navigate('/imaging')}
+              className="flex flex-col items-center gap-2 py-4 px-2 rounded-2xl bg-purple-50 border border-purple-100 transition active:scale-95"
+            >
+              <span className="text-2xl">🫀</span>
+              <p className="text-xs font-semibold text-gray-800 text-center">Imaging</p>
+            </button>
+            <button
+              onClick={() => navigate('/conditions')}
+              className="flex flex-col items-center gap-2 py-4 px-2 rounded-2xl bg-indigo-50 border border-indigo-100 transition active:scale-95"
+            >
+              <span className="text-2xl">🔗</span>
+              <p className="text-xs font-semibold text-gray-800 text-center">Conditions</p>
+            </button>
+          </div>
+        </div>
+
         {/* Active Restrictions */}
         {activityRestrictions.length > 0 && (
           <div>

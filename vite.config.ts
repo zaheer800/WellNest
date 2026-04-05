@@ -12,7 +12,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt', // Ask user before updating — do not auto-update health apps silently
       includeAssets: ['icons/*.png'],
       manifest: {
         name: 'WellNest',
@@ -37,7 +37,14 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com/,
+            handler: 'CacheFirst',
+          },
+        ],
+        // Do NOT cache Supabase API calls or Edge Function responses
       },
     }),
   ],

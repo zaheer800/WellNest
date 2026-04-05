@@ -7,6 +7,7 @@ interface CircularProgressProps {
   color?: string;
   trackColor?: string;
   label?: React.ReactNode;
+  'aria-label'?: string;
 }
 
 const CircularProgress: React.FC<CircularProgressProps> = ({
@@ -16,6 +17,7 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
   color = '#6366f1',
   trackColor = '#e5e7eb',
   label,
+  'aria-label': ariaLabel,
 }) => {
   const clamped = Math.min(100, Math.max(0, value));
 
@@ -30,6 +32,11 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
     <div
       className="relative inline-flex items-center justify-center"
       style={{ width: size, height: size }}
+      role="meter"
+      aria-valuenow={clamped}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={ariaLabel}
     >
       <svg
         width={size}

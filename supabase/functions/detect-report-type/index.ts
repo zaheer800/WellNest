@@ -49,7 +49,38 @@ serve(async (req) => {
       text = await fileResponse.text()
     }
 
-    const prompt = `You are a medical report classifier. Analyse this medical report text and determine its type. Return JSON with: detected_type (one of: lab_blood, lab_urine, mri, ct, ultrasound, ncs, xray, ecg, echo, other), detection_confidence (0-1), suggested_label (short human-readable label). Report text: ${text}`
+    const { age, gender } = body as { file_url?: string; raw_text?: string; age?: number; gender?: string }
+
+    const prompt = `You are a medical report type detector.
+Identify what type of medical report this is.
+
+Return JSON only — no other text:
+{
+  "detected_type": string,
+  "confidence": number,
+  "key_indicators": string[],
+  "suggested_label": string,
+  "pipeline": "lab" | "imaging"
+}
+
+Valid detected_type values:
+"blood_test", "urine_analysis", "mri_lumbar", "mri_cervical",
+"mri_thoracic", "mri_whole_spine", "mri_brain", "mri_joint",
+"ct_scan", "ultrasound_abdomen", "ultrasound_pelvis",
+"xray_chest", "xray_spine", "echo_cardiac", "ecg",
+"endoscopy_upper_gi", "endoscopy_lower_gi", "uroflowmetry",
+"ncs_emg", "dexa", "other_lab", "other_imaging"
+
+confidence: 0.0 to 1.0 — how certain you are.
+key_indicators: 2–5 words or phrases that led to your decision.
+suggested_label: human-readable label e.g. "MRI Lumbar Spine — March 2026".
+pipeline: "lab" if the report contains numeric values to extract;
+          "imaging" if the report contains descriptive findings.
+
+Patient context: Age ${age ?? 'unknown'}, Gender ${gender ?? 'unknown'}
+
+Report text:
+${text}`
 
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
@@ -78,9 +109,16 @@ serve(async (req) => {
       )
     }
 
-    const result: DetectReportTypeResult = JSON.parse(jsonMatch[1])
+    const parsed = JSON.parse(jsonMatch[1])
 
-    return new Response(JSON.stringify(result), {
+    // Normalise response — Claude returns `confidence`, DB expects `detection_confidence`
+    const result: DetectReportTypeResult = {
+      detected_type: parsed.detected_type,
+      detection_confidence: parsed.confidence ?? parsed.detection_confidence ?? 0,
+      suggested_label: parsed.suggested_label,
+    }
+
+    return new Response(JSON.stringify({ ...parsed, ...result }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {

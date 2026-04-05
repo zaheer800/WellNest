@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(sleep:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(wc:*)",
+      "Bash(mkdir:*)",
+      "Bash(ls:*)"
     ]
   }
 }

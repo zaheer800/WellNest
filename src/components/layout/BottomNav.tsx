@@ -102,7 +102,7 @@ const navItems: NavItem[] = [
   { label: 'Track', path: '/water', icon: DropletIcon },
   { label: 'Reports', path: '/reports', icon: FileIcon },
   { label: 'Appointments', path: '/appointments', icon: CalendarIcon },
-  { label: 'More', path: '/progress', icon: ChartIcon },
+  { label: 'More', path: '/more', icon: ChartIcon },
 ];
 
 const BottomNav: React.FC = () => {
@@ -113,7 +113,10 @@ const BottomNav: React.FC = () => {
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-100 pb-safe">
       <div className="max-w-md mx-auto flex items-stretch">
         {navItems.map(({ label, path, icon: Icon }) => {
-          const isActive = location.pathname === path;
+          const moreRoutes = ['/symptoms', '/exercise', '/posture', '/diet', '/family', '/doctor', '/imaging', '/conditions', '/progress', '/more']
+          const isActive = path === '/more'
+            ? moreRoutes.includes(location.pathname)
+            : location.pathname === path;
           return (
             <button
               key={path}

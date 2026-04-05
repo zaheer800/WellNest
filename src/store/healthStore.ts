@@ -24,6 +24,7 @@ interface HealthState {
   activityRestrictions: ActivityRestriction[]
   dailyScore: HealthScoreBreakdown | null
   loading: boolean
+  isOffline: boolean
 }
 
 interface HealthActions {
@@ -34,6 +35,8 @@ interface HealthActions {
   logExercise: (log: { patient_id: string; exercise_type: string; is_physiotherapy?: boolean; duration_minutes?: number; notes?: string }) => Promise<void>
   setWaterGoal: (ml: number) => void
   recomputeScore: (patientId: string, medications: import('@/types/health.types').MedicationWithLog[], postureLogs: import('@/types/health.types').PostureLog[], postureGoalBreaks: number) => Promise<void>
+  setOffline: (offline: boolean) => void
+  syncPendingLogs: () => Promise<void>
 }
 
 type HealthStore = HealthState & HealthActions
@@ -46,6 +49,7 @@ export const useHealthStore = create<HealthStore>((set, get) => ({
   activityRestrictions: [],
   dailyScore: null,
   loading: false,
+  isOffline: false,
 
   fetchTodayData: async (patientId, date, medications = [], postureLogs = []) => {
     set({ loading: true })
@@ -122,6 +126,14 @@ export const useHealthStore = create<HealthStore>((set, get) => ({
   },
 
   setWaterGoal: (ml) => set({ waterGoalMl: ml }),
+
+  setOffline: (offline) => set({ isOffline: offline }),
+
+  syncPendingLogs: async () => {
+    // Sync any locally queued logs when connectivity is restored.
+    // Pending logs are stored in localStorage under keys like 'pending_water_logs'.
+    // This is a no-op placeholder until offline queuing is implemented.
+  },
 
   recomputeScore: async (patientId, medications, postureLogs, postureGoalBreaks) => {
     const state = get()

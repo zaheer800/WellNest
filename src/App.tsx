@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
+import { useHealthStore } from '@/store/healthStore'
 
 // Screens
 import SplashScreen from '@/screens/SplashScreen'
@@ -20,6 +21,7 @@ import ProgressScreen from '@/screens/ProgressScreen'
 import FamilyScreen from '@/screens/FamilyScreen'
 import DoctorScreen from '@/screens/DoctorScreen'
 import DietScreen from '@/screens/DietScreen'
+import MoreScreen from '@/screens/MoreScreen'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, initialized } = useAuthStore()
@@ -34,6 +36,20 @@ export default function App() {
   useEffect(() => {
     initialize()
   }, [initialize])
+
+  useEffect(() => {
+    const handleOffline = () => useHealthStore.getState().setOffline(true)
+    const handleOnline = () => {
+      useHealthStore.getState().setOffline(false)
+      useHealthStore.getState().syncPendingLogs()
+    }
+    window.addEventListener('offline', handleOffline)
+    window.addEventListener('online', handleOnline)
+    return () => {
+      window.removeEventListener('offline', handleOffline)
+      window.removeEventListener('online', handleOnline)
+    }
+  }, [])
 
   return (
     <BrowserRouter>
@@ -58,6 +74,7 @@ export default function App() {
         <Route path="/progress" element={<ProtectedRoute><ProgressScreen /></ProtectedRoute>} />
         <Route path="/family" element={<ProtectedRoute><FamilyScreen /></ProtectedRoute>} />
         <Route path="/doctor" element={<ProtectedRoute><DoctorScreen /></ProtectedRoute>} />
+        <Route path="/more" element={<ProtectedRoute><MoreScreen /></ProtectedRoute>} />
 
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />
