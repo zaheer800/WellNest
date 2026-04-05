@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useAuthStore } from '@/store/authStore'
 import Button from '@/components/ui/Button'
+import { HeartPulse } from 'lucide-react'
 
 interface EmailForm { email: string }
 interface OtpForm { otp: string }
 
 export default function LoginScreen() {
   const navigate = useNavigate()
-  const { signInWithOtp, verifyOtp, signInWithGoogle, loading, user } = useAuthStore()
+  const { signInWithOtp, verifyOtp, signInWithGoogle, loading } = useAuthStore()
   const [step, setStep] = useState<'email' | 'otp'>('email')
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
@@ -32,11 +33,9 @@ export default function LoginScreen() {
     setError('')
     try {
       await verifyOtp(email, data.otp)
-      if (user?.name) {
-        navigate('/dashboard', { replace: true })
-      } else {
-        navigate('/onboarding', { replace: true })
-      }
+      // Navigation happens in App.tsx based on user profile status
+      // Always go to onboarding to check if profile is complete
+      navigate('/onboarding', { replace: true })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Invalid OTP. Please try again.')
     }
@@ -47,7 +46,11 @@ export default function LoginScreen() {
       <div className="w-full max-w-sm space-y-8">
         {/* Logo */}
         <div className="text-center">
-          <div className="text-5xl mb-3">🪺</div>
+          <div className="flex items-center justify-center mb-3">
+            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-[1.5rem] shadow-xl flex items-center justify-center">
+              <HeartPulse className="w-8 h-8 text-white" />
+            </div>
+          </div>
           <h1 className="text-2xl font-bold text-gray-900">WellNest</h1>
           <p className="text-gray-500 text-sm mt-1">Your health. Your circle. Your journey.</p>
         </div>
@@ -55,8 +58,8 @@ export default function LoginScreen() {
         {step === 'email' ? (
           <form onSubmit={emailForm.handleSubmit(handleSendOtp)} className="space-y-4">
             <div>
-              <h2 className="text-xl font-semibold text-gray-800 mb-1">Sign in</h2>
-              <p className="text-gray-500 text-sm">We'll send a one-time code to your email.</p>
+              <h2 className="text-xl font-semibold text-gray-800 mb-1">Welcome to WellNest</h2>
+              <p className="text-gray-500 text-sm">Sign in or create an account. We'll send a one-time code to your email.</p>
             </div>
 
             <div>

@@ -1,0 +1,92 @@
+export const COMMON_SIDE_EFFECTS = [
+  {
+    name: 'Nausea',
+    category: 'Gastrointestinal',
+    severity_hint: 'mild' as const,
+    action_guidance: 'Take medication with food. Contact your doctor if nausea is persistent or severe.',
+  },
+  {
+    name: 'Dizziness',
+    category: 'Neurological',
+    severity_hint: 'mild' as const,
+    action_guidance: 'Avoid driving or operating machinery. Sit or lie down until it passes. Contact your doctor if it persists.',
+  },
+  {
+    name: 'Headache',
+    category: 'Neurological',
+    severity_hint: 'mild' as const,
+    action_guidance: 'Stay hydrated and rest. Contact your doctor if headaches are severe or persistent.',
+  },
+  {
+    name: 'Fatigue',
+    category: 'General',
+    severity_hint: 'mild' as const,
+    action_guidance: 'Rest as needed. Avoid strenuous activity. Contact your doctor if fatigue is debilitating.',
+  },
+  {
+    name: 'Rash',
+    category: 'Dermatological',
+    severity_hint: 'moderate' as const,
+    action_guidance: 'Stop the medication and contact your doctor promptly. Seek emergency care if rash is accompanied by breathing difficulty.',
+  },
+  {
+    name: 'Stomach Pain',
+    category: 'Gastrointestinal',
+    severity_hint: 'moderate' as const,
+    action_guidance: 'Take medication with food or milk. Contact your doctor if pain is severe or persistent.',
+  },
+  {
+    name: 'Diarrhea',
+    category: 'Gastrointestinal',
+    severity_hint: 'mild' as const,
+    action_guidance: 'Stay hydrated. Contact your doctor if diarrhea is severe, bloody, or lasts more than two days.',
+  },
+  {
+    name: 'Constipation',
+    category: 'Gastrointestinal',
+    severity_hint: 'mild' as const,
+    action_guidance: 'Increase water and fibre intake. Contact your doctor if constipation persists beyond three days.',
+  },
+  {
+    name: 'Insomnia',
+    category: 'Sleep',
+    severity_hint: 'mild' as const,
+    action_guidance: 'Take the medication earlier in the day if possible. Maintain a consistent sleep routine. Discuss with your doctor if sleep is severely impacted.',
+  },
+  {
+    name: 'Weight Gain',
+    category: 'Metabolic',
+    severity_hint: 'moderate' as const,
+    action_guidance: 'Monitor weight weekly. Discuss dietary adjustments with your doctor. Report significant or rapid weight gain.',
+  },
+  {
+    name: 'Muscle Pain',
+    category: 'Musculoskeletal',
+    severity_hint: 'moderate' as const,
+    action_guidance: 'Rest and apply heat or cold. Contact your doctor if muscle pain is severe, widespread, or accompanied by dark urine.',
+  },
+  {
+    name: 'Joint Pain',
+    category: 'Musculoskeletal',
+    severity_hint: 'moderate' as const,
+    action_guidance: 'Rest the affected joint. Contact your doctor if pain is severe or limits daily activities.',
+  },
+  {
+    name: 'Dark Urine',
+    category: 'Urinary',
+    severity_hint: 'severe' as const,
+    action_guidance: 'Increase fluid intake and contact your doctor immediately. Dark urine may indicate liver or kidney effects.',
+  },
+  {
+    name: 'Shortness of Breath',
+    category: 'Respiratory',
+    severity_hint: 'severe' as const,
+    action_guidance: 'Stop activity and rest. Seek emergency care if breathing difficulty is sudden or severe.',
+  },
+  {
+    name: 'Palpitations',
+    category: 'Cardiac',
+    severity_hint: 'severe' as const,
+    action_guidance: 'Sit or lie down. Avoid caffeine. Seek emergency care if palpitations are accompanied by chest pain, dizziness, or fainting.',
+  },
+] as const

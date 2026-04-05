@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sleep:*)",
+      "Bash(cd:*)",
+      "Bash(wc:*)",
+      "Bash(mkdir:*)",
+      "Bash(ls:*)",
+      "Bash(npm run:*)",
+      "Bash(node -e \"const l = require\\('./node_modules/lucide-react'\\); console.log\\(Object.keys\\(l\\).filter\\(k => ['Sparkles','Salad','Armchair','FlaskConical','HeartPulse','Link2','UserRoundCog'].includes\\(k\\)\\)\\)\")",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(npx tsc:*)",
+      "Bash(curl -s http://localhost:5174)"
+    ]
+  }
+}

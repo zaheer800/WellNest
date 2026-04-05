@@ -1,20 +1,28 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useAuthStore } from '@/store/authStore'
 import Button from '@/components/ui/Button'
+import { PartyPopper, Check } from 'lucide-react'
 
 interface Step1Data { name: string; date_of_birth: string; gender: 'male' | 'female' | 'other' }
 interface Step2Data { height_cm: number; weight_kg: number }
 
 export default function OnboardingScreen() {
   const navigate = useNavigate()
-  const { updateProfile, loading } = useAuthStore()
+  const { user, updateProfile, loading } = useAuthStore()
   const [step, setStep] = useState(1)
   const [step1Data, setStep1Data] = useState<Step1Data | null>(null)
 
   const form1 = useForm<Step1Data>()
-  const form2 = useForm<Step2Data>()
+  const form2 = useForm<Step2Data>({ mode: 'onBlur' })
+
+  // If profile is already complete, skip to dashboard
+  useEffect(() => {
+    if (user?.name && user?.height_cm && user?.weight_kg) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [user, navigate])
 
   const handleStep1 = (data: Step1Data) => {
     setStep1Data(data)
@@ -30,7 +38,7 @@ export default function OnboardingScreen() {
       })
       setStep(3)
     } catch (e) {
-      console.error(e)
+      // Error handled by store
     }
   }
 
@@ -103,12 +111,37 @@ export default function OnboardingScreen() {
 
             <div>
               <label className={labelClass}>Height (cm)</label>
-              <input type="number" className={inputClass} placeholder="170" {...form2.register('height_cm')} />
+              <input
+                type="number"
+                className={inputClass}
+                placeholder="170"
+                {...form2.register('height_cm', {
+                  required: 'Height is required',
+                  min: { value: 50, message: 'Height must be at least 50 cm' },
+                  max: { value: 300, message: 'Height must be less than 300 cm' }
+                })}
+              />
+              {form2.formState.errors.height_cm && (
+                <p className="text-red-500 text-xs mt-1">{form2.formState.errors.height_cm.message}</p>
+              )}
             </div>
 
             <div>
               <label className={labelClass}>Weight (kg)</label>
-              <input type="number" step="0.1" className={inputClass} placeholder="70" {...form2.register('weight_kg')} />
+              <input
+                type="number"
+                step="0.1"
+                className={inputClass}
+                placeholder="70"
+                {...form2.register('weight_kg', {
+                  required: 'Weight is required',
+                  min: { value: 10, message: 'Weight must be at least 10 kg' },
+                  max: { value: 500, message: 'Weight must be less than 500 kg' }
+                })}
+              />
+              {form2.formState.errors.weight_kg && (
+                <p className="text-red-500 text-xs mt-1">{form2.formState.errors.weight_kg.message}</p>
+              )}
             </div>
 
             <div className="pt-4 space-y-3">
@@ -122,7 +155,9 @@ export default function OnboardingScreen() {
 
         {step === 3 && (
           <div className="flex flex-col items-center text-center space-y-6 pt-8">
-            <div className="text-7xl">🎉</div>
+            <div className="w-24 h-24 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mb-2">
+              <PartyPopper className="w-12 h-12 text-indigo-600" />
+            </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900">You're all set!</h2>
               <p className="text-gray-500 text-sm mt-2">
@@ -133,7 +168,7 @@ export default function OnboardingScreen() {
               <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide">What's next</p>
               {['Log your first medication', 'Set your water goal', 'Track your posture today'].map((item) => (
                 <div key={item} className="flex items-center gap-2 text-sm text-indigo-900">
-                  <span className="text-indigo-400">✓</span> {item}
+                  <Check className="w-4 h-4 text-indigo-500 flex-shrink-0" /> {item}
                 </div>
               ))}
             </div>

@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
+import { useHealthStore } from '@/store/healthStore'
 
 // Screens
 import SplashScreen from '@/screens/SplashScreen'
@@ -12,11 +13,51 @@ import WaterScreen from '@/screens/WaterScreen'
 import SymptomsScreen from '@/screens/SymptomsScreen'
 import ExerciseScreen from '@/screens/ExerciseScreen'
 import PostureScreen from '@/screens/PostureScreen'
+import AppointmentsScreen from '@/screens/AppointmentsScreen'
+import ReportsScreen from '@/screens/ReportsScreen'
+import ImagingScreen from '@/screens/ImagingScreen'
+import ConditionsScreen from '@/screens/ConditionsScreen'
+import ProgressScreen from '@/screens/ProgressScreen'
+import FamilyScreen from '@/screens/FamilyScreen'
+import DoctorScreen from '@/screens/DoctorScreen'
+import DietScreen from '@/screens/DietScreen'
+import MoreScreen from '@/screens/MoreScreen'
+import JoinScreen from '@/screens/JoinScreen'
+import JoinDoctorScreen from '@/screens/JoinDoctorScreen'
+import FamilyDashboardScreen from '@/screens/FamilyDashboardScreen'
+import DoctorDashboardScreen from '@/screens/DoctorDashboardScreen'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, initialized } = useAuthStore()
   if (!initialized) return null
   if (!session) return <Navigate to="/login" replace />
+  return <>{children}</>
+}
+
+/** Only accessible to users who have the family role */
+function FamilyRoute({ children }: { children: React.ReactNode }) {
+  const { session, roles, initialized } = useAuthStore()
+  if (!initialized) return null
+  if (!session) return <Navigate to="/login" replace />
+  if (!roles.includes('family')) return <Navigate to="/dashboard" replace />
+  return <>{children}</>
+}
+
+/** Only accessible to users who have the doctor role */
+function DoctorRoute({ children }: { children: React.ReactNode }) {
+  const { session, roles, initialized } = useAuthStore()
+  if (!initialized) return null
+  if (!session) return <Navigate to="/login" replace />
+  if (!roles.includes('doctor')) return <Navigate to="/dashboard" replace />
+  return <>{children}</>
+}
+
+/** Only accessible to users who have the patient role */
+function PatientRoute({ children }: { children: React.ReactNode }) {
+  const { session, roles, initialized } = useAuthStore()
+  if (!initialized) return null
+  if (!session) return <Navigate to="/login" replace />
+  if (!roles.includes('patient')) return <Navigate to="/family-dashboard" replace />
   return <>{children}</>
 }
 
@@ -27,6 +68,20 @@ export default function App() {
     initialize()
   }, [initialize])
 
+  useEffect(() => {
+    const handleOffline = () => useHealthStore.getState().setOffline(true)
+    const handleOnline = () => {
+      useHealthStore.getState().setOffline(false)
+      useHealthStore.getState().syncPendingLogs()
+    }
+    window.addEventListener('offline', handleOffline)
+    window.addEventListener('online', handleOnline)
+    return () => {
+      window.removeEventListener('offline', handleOffline)
+      window.removeEventListener('online', handleOnline)
+    }
+  }, [])
+
   return (
     <BrowserRouter>
       <Routes>
@@ -34,32 +89,35 @@ export default function App() {
         <Route path="/" element={<SplashScreen />} />
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/onboarding" element={<OnboardingScreen />} />
+        <Route path="/join" element={<JoinScreen />} />
+        <Route path="/join-doctor" element={<JoinDoctorScreen />} />
 
-        {/* Protected */}
-        <Route path="/dashboard" element={<ProtectedRoute><DashboardScreen /></ProtectedRoute>} />
-        <Route path="/medications" element={<ProtectedRoute><MedicationsScreen /></ProtectedRoute>} />
-        <Route path="/water" element={<ProtectedRoute><WaterScreen /></ProtectedRoute>} />
-        <Route path="/symptoms" element={<ProtectedRoute><SymptomsScreen /></ProtectedRoute>} />
-        <Route path="/exercise" element={<ProtectedRoute><ExerciseScreen /></ProtectedRoute>} />
-        <Route path="/posture" element={<ProtectedRoute><PostureScreen /></ProtectedRoute>} />
+        {/* Family member portal */}
+        <Route path="/family-dashboard" element={<FamilyRoute><FamilyDashboardScreen /></FamilyRoute>} />
 
-        {/* Fallback stubs for nav links not yet implemented */}
-        <Route path="/reports" element={<ProtectedRoute><PlaceholderScreen title="Reports" icon="📋" /></ProtectedRoute>} />
-        <Route path="/progress" element={<ProtectedRoute><PlaceholderScreen title="Progress" icon="📈" /></ProtectedRoute>} />
+        {/* Doctor portal */}
+        <Route path="/doctor-dashboard" element={<DoctorRoute><DoctorDashboardScreen /></DoctorRoute>} />
+
+        {/* Patient-only routes */}
+        <Route path="/dashboard" element={<PatientRoute><DashboardScreen /></PatientRoute>} />
+        <Route path="/medications" element={<PatientRoute><MedicationsScreen /></PatientRoute>} />
+        <Route path="/water" element={<PatientRoute><WaterScreen /></PatientRoute>} />
+        <Route path="/symptoms" element={<PatientRoute><SymptomsScreen /></PatientRoute>} />
+        <Route path="/exercise" element={<PatientRoute><ExerciseScreen /></PatientRoute>} />
+        <Route path="/posture" element={<PatientRoute><PostureScreen /></PatientRoute>} />
+        <Route path="/diet" element={<PatientRoute><DietScreen /></PatientRoute>} />
+        <Route path="/appointments" element={<PatientRoute><AppointmentsScreen /></PatientRoute>} />
+        <Route path="/reports" element={<PatientRoute><ReportsScreen /></PatientRoute>} />
+        <Route path="/imaging" element={<PatientRoute><ImagingScreen /></PatientRoute>} />
+        <Route path="/conditions" element={<PatientRoute><ConditionsScreen /></PatientRoute>} />
+        <Route path="/progress" element={<PatientRoute><ProgressScreen /></PatientRoute>} />
+        <Route path="/family" element={<PatientRoute><FamilyScreen /></PatientRoute>} />
+        <Route path="/doctor" element={<PatientRoute><DoctorScreen /></PatientRoute>} />
+        <Route path="/more" element={<PatientRoute><MoreScreen /></PatientRoute>} />
 
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
-  )
-}
-
-function PlaceholderScreen({ title, icon }: { title: string; icon: string }) {
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 pb-20">
-      <p className="text-5xl mb-4">{icon}</p>
-      <h1 className="text-xl font-bold text-gray-700">{title}</h1>
-      <p className="text-gray-400 text-sm mt-2">Coming in Phase 2</p>
-    </div>
   )
 }
