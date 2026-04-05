@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { PostureLog } from '@/types/health.types'
-import { getPostureLogs, addPostureLog, updatePostureLog } from '@/services/supabase'
+import { getPostureLogs, addPostureLog, updatePostureLog, deleteTodayPostureLogs } from '@/services/supabase'
 import { useMedicationStore } from '@/store/medicationStore'
 import { useHealthStore } from '@/store/healthStore'
 
@@ -18,6 +18,7 @@ interface PostureActions {
   recordStandBreak: (patientId: string) => Promise<void>
   endSession: (patientId: string) => Promise<void>
   fetchTodayLogs: (patientId: string, date: string) => Promise<void>
+  resetTodayBreaks: (patientId: string, date: string) => Promise<void>
   getSittingDurationMinutes: () => number
 }
 
@@ -61,6 +62,7 @@ export const usePostureStore = create<PostureStore>((set, get) => ({
     set({
       activeSession: updated as PostureLog,
       lastStandBreak: now,
+      sittingStartTime: now, // Reset the clock so the next sitting period starts from 0
     })
 
     // Recompute health score after recording break
@@ -98,6 +100,17 @@ export const usePostureStore = create<PostureStore>((set, get) => ({
   fetchTodayLogs: async (patientId, date) => {
     const logs = await getPostureLogs(patientId, date)
     set({ postureLogs: logs as PostureLog[] })
+  },
+
+  resetTodayBreaks: async (patientId, date) => {
+    await deleteTodayPostureLogs(patientId, date)
+    set({
+      postureLogs: [],
+      activeSession: null,
+      sittingStartTime: null,
+      lastStandBreak: null,
+      isTracking: false,
+    })
   },
 
   getSittingDurationMinutes: () => {

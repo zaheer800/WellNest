@@ -8,6 +8,8 @@ import { usePostureStore } from '@/store/postureStore'
 import { useSymptomProgressionStore } from '@/store/symptomProgressionStore'
 import { useReportStore } from '@/store/reportStore'
 import { today } from '@/utils/dateHelpers'
+import { shouldTakeMedicationToday } from '@/utils/healthScore'
+import { Pill, CupSoda, Activity, UserCheck, Zap, Check, X } from 'lucide-react'
 
 export default function ProgressScreen() {
   const { user } = useAuthStore()
@@ -55,16 +57,11 @@ export default function ProgressScreen() {
 
   const streaks = calculateStreaks()
 
-  // Calculate medication compliance
-  const calculateMedicationCompliance = () => {
-    if (medications.length === 0) return 0
-    const activeMeds = medications.filter(m => m.is_active)
-    if (activeMeds.length === 0) return 0
-    const takenCount = activeMeds.filter(m => m.log?.taken).length
-    return Math.round((takenCount / activeMeds.length) * 100)
-  }
-
-  const medicationCompliance = calculateMedicationCompliance()
+  const todayDate = new Date(date)
+  const dueTodayMeds = medications.filter(m => m.is_active && shouldTakeMedicationToday(m, todayDate))
+  const medicationCompliance = dueTodayMeds.length > 0
+    ? Math.round((dueTodayMeds.filter(m => m.log?.taken).length / dueTodayMeds.length) * 100)
+    : 100
 
   if (!user) return null
 
@@ -183,15 +180,15 @@ export default function ProgressScreen() {
           <h3 className="font-semibold text-gray-800 mb-4">Streaks</h3>
           <div className="space-y-2">
             {[
-              { name: 'Medications', streak: streaks.medications, icon: '💊' },
-              { name: 'Water Intake', streak: streaks.water, icon: '🥤' },
-              { name: 'Exercise', streak: streaks.exercise, icon: '🏃' },
-              { name: 'Posture', streak: streaks.posture, icon: '🧘' },
-              { name: 'Physiotherapy', streak: streaks.physiotherapy, icon: '⚡' },
+              { name: 'Medications', streak: streaks.medications, icon: <Pill className="w-5 h-5 text-indigo-500" /> },
+              { name: 'Water Intake', streak: streaks.water, icon: <CupSoda className="w-5 h-5 text-blue-500" /> },
+              { name: 'Exercise', streak: streaks.exercise, icon: <Activity className="w-5 h-5 text-green-500" /> },
+              { name: 'Posture', streak: streaks.posture, icon: <UserCheck className="w-5 h-5 text-teal-500" /> },
+              { name: 'Physiotherapy', streak: streaks.physiotherapy, icon: <Zap className="w-5 h-5 text-yellow-500" /> },
             ].map((item) => (
               <div key={item.name} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">{item.icon}</span>
+                  <div className="w-8 flex items-center justify-center">{item.icon}</div>
                   <span className="text-sm font-medium text-gray-700">{item.name}</span>
                 </div>
                 <div className="text-right">
@@ -247,16 +244,23 @@ export default function ProgressScreen() {
               <p className="text-2xl font-bold text-indigo-600">{medicationCompliance}%</p>
               <p className="text-xs text-gray-600 mt-1">Today's compliance</p>
             </div>
-            {medications.length > 0 && (
+            {medications.filter(m => m.is_active).length > 0 && (
               <div className="space-y-2">
-                {medications.filter(m => m.is_active).map((med) => (
-                  <div key={med.id} className="flex items-center justify-between py-2">
-                    <span className="text-sm text-gray-700">{med.name}</span>
-                    <span className={`text-sm font-medium ${med.log?.taken ? 'text-green-600' : 'text-red-500'}`}>
-                      {med.log?.taken ? '✓ Taken' : '✗ Missed'}
-                    </span>
-                  </div>
-                ))}
+                {medications.filter(m => m.is_active).map((med) => {
+                  const dueToday = shouldTakeMedicationToday(med, todayDate)
+                  return (
+                    <div key={med.id} className="flex items-center justify-between py-2">
+                      <span className={`text-sm ${dueToday ? 'text-gray-700' : 'text-gray-400'}`}>{med.name}</span>
+                      {dueToday ? (
+                        <span className={`text-sm font-medium flex items-center gap-1 ${med.log?.taken ? 'text-green-600' : 'text-red-500'}`}>
+                          {med.log?.taken ? <><Check className="w-4 h-4" /> Taken</> : <><X className="w-4 h-4" /> Missed</>}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400">Not due today</span>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>

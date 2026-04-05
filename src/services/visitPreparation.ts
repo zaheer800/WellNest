@@ -1,4 +1,4 @@
-import { supabase } from '@/services/supabase'
+import { invokeFunction } from '@/services/supabase'
 import type { VisitPreparation } from '@/types/appointment.types'
 
 /**
@@ -9,11 +9,9 @@ export async function generateVisitPreparation(
   appointmentId: string,
   patientId: string,
 ): Promise<VisitPreparation> {
-  const { data, error } = await supabase.functions.invoke('generate-visit-preparation', {
-    body: { appointment_id: appointmentId, patient_id: patientId },
+  const data = await invokeFunction('generate-visit-preparation', {
+    appointment_id: appointmentId, patient_id: patientId,
   })
-
-  if (error) throw new Error(`Visit preparation failed: ${error.message}`)
 
   return data as VisitPreparation
 }

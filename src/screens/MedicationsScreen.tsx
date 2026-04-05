@@ -10,7 +10,9 @@ import InjectionCourse from '@/components/features/medications/InjectionCourse'
 import SideEffectMonitor from '@/components/features/medications/SideEffectMonitor'
 import AddSideEffectModal from '@/components/features/medications/AddSideEffectModal'
 import { today } from '@/utils/dateHelpers'
+import { shouldTakeMedicationToday } from '@/utils/healthScore'
 import { debugInjectionCoursesAccess } from '@/services/supabase'
+import { Pill, Syringe } from 'lucide-react'
 
 interface AddForm {
   name: string
@@ -53,27 +55,13 @@ export default function MedicationsScreen() {
     }
   }, [patientId, date, tab])
 
-  const takenCount = medications.filter((m) => m.log?.taken).length
-  const totalCount = medications.filter((m) => m.is_active).length
-  const compliancePct = totalCount > 0 ? Math.round((takenCount / totalCount) * 100) : 0
+  const todayDate = new Date(date)
+  const dueTodayMeds = medications.filter((m) => m.is_active && shouldTakeMedicationToday(m, todayDate))
+  const takenCount = dueTodayMeds.filter((m) => m.log?.taken).length
+  const totalCount = dueTodayMeds.length
+  const compliancePct = totalCount > 0 ? Math.round((takenCount / totalCount) * 100) : 100
 
-  // Helper function to check if medication should be taken today
-  const shouldTakeToday = (med: any) => {
-    const startDate = med.start_date ? new Date(med.start_date) : new Date(med.created_at)
-    const today = new Date(date)
-    const daysSinceStart = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
-
-    switch (med.frequency) {
-      case 'daily':
-        return true
-      case 'alternate_days':
-        return daysSinceStart % 2 === 0
-      case 'weekly':
-        return daysSinceStart % 7 === 0
-      default:
-        return true
-    }
-  }
+  const shouldTakeToday = (med: any) => shouldTakeMedicationToday(med, todayDate)
 
   const handleAdd = async () => {
     if (!form.name.trim() || !patientId) return
@@ -115,13 +103,57 @@ export default function MedicationsScreen() {
   return (
     <PageWrapper title="Medications" headerRight={
       (tab === 'medications' && (
-        <button onClick={() => setShowAdd(!showAdd)} className="text-indigo-600 font-semibold text-sm">
-          {showAdd ? 'Cancel' : '+ Add'}
+        <button
+          onClick={() => setShowAdd(!showAdd)}
+          className={[
+            'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-all',
+            showAdd
+              ? 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95',
+          ].join(' ')}
+        >
+          {showAdd ? (
+            <>
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Cancel
+            </>
+          ) : (
+            <>
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Add
+            </>
+          )}
         </button>
       )) ||
       (tab === 'injections' && (
-        <button onClick={() => setShowAddInjection(!showAddInjection)} className="text-indigo-600 font-semibold text-sm">
-          {showAddInjection ? 'Cancel' : '+ Add'}
+        <button
+          onClick={() => setShowAddInjection(!showAddInjection)}
+          className={[
+            'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-all',
+            showAddInjection
+              ? 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95',
+          ].join(' ')}
+        >
+          {showAddInjection ? (
+            <>
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Cancel
+            </>
+          ) : (
+            <>
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Add
+            </>
+          )}
         </button>
       ))
     }>
@@ -220,8 +252,8 @@ export default function MedicationsScreen() {
 
             {/* Medication list */}
             {medications.length === 0 && !loading ? (
-              <div className="text-center py-12 text-gray-400">
-                <p className="text-4xl mb-3">💊</p>
+              <div className="text-center py-12 text-gray-400 flex flex-col items-center">
+                <Pill className="w-10 h-10 mb-3 text-gray-300" />
                 <p className="font-medium">No medications yet</p>
                 <p className="text-sm">Tap + Add to add your first medication</p>
               </div>
@@ -351,8 +383,8 @@ export default function MedicationsScreen() {
 
             {injectionCourses.length === 0 ? (
               <Card>
-                <div className="text-center py-10 text-gray-400">
-                  <p className="text-2xl mb-2">💉</p>
+                <div className="text-center py-10 text-gray-400 flex flex-col items-center">
+                  <Syringe className="w-8 h-8 mb-2 text-gray-300" />
                   <p className="font-medium">No injection courses yet</p>
                   <p className="text-xs mt-1">You can add injection course management later</p>
                   <Button

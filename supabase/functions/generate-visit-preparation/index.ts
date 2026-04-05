@@ -2,8 +2,6 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import Anthropic from 'npm:@anthropic-ai/sdk'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const anthropic = new Anthropic({ apiKey: Deno.env.get('CLAUDE_API_KEY')! })
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -123,6 +121,14 @@ serve(async (req) => {
     ]
 
     const prompt = `You are preparing a patient for their doctor visit. Based on the following health data, generate a visit preparation guide. Return JSON with: reports_to_carry (array of {name, date, is_new}), symptoms_to_mention (array of {symptom, onset, severity, notes}), questions_to_ask (array of strings), what_doctor_will_check (array of strings), medications_to_discuss (array of {medication, concern}). Health data: ${JSON.stringify({ appointment, recentReports, symptoms, medications, restrictions })}`
+
+    const apiKey = Deno.env.get('CLAUDE_API_KEY')
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: 'CLAUDE_API_KEY is not configured' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const anthropic = new Anthropic({ apiKey })
 
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',

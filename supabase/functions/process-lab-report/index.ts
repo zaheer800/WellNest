@@ -1,8 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import Anthropic from 'npm:@anthropic-ai/sdk'
 
-const anthropic = new Anthropic({ apiKey: Deno.env.get('CLAUDE_API_KEY')! })
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -54,23 +52,34 @@ serve(async (req) => {
     }
 
     const prompt = `You are a medical lab report parser.
-Extract all numeric parameters from this report.
+First identify the report type, then extract all numeric parameters.
 
-For each parameter return an object in this exact shape:
+Return a single JSON object in this exact shape — no other text:
 {
-  "parameter_name": string,
-  "value": number,
-  "unit": string,
-  "reference_min": number | null,
-  "reference_max": number | null,
-  "status": "normal" | "borderline_low" | "borderline_high" |
-            "abnormal_low" | "abnormal_high" |
-            "critical_low" | "critical_high",
-  "plain_language": string,
-  "category": "kidney" | "liver" | "blood" | "lipids" |
-              "diabetes" | "thyroid" | "vitamins" | "cardiac" |
-              "electrolytes" | "urine" | "hormones" | "other"
+  "detected_type": string,
+  "detection_confidence": number,
+  "suggested_label": string,
+  "parameters": [
+    {
+      "parameter_name": string,
+      "value": number,
+      "unit": string,
+      "reference_min": number | null,
+      "reference_max": number | null,
+      "status": "normal" | "borderline_low" | "borderline_high" |
+                "abnormal_low" | "abnormal_high" |
+                "critical_low" | "critical_high",
+      "plain_language": string,
+      "category": "kidney" | "liver" | "blood" | "lipids" |
+                  "diabetes" | "thyroid" | "vitamins" | "cardiac" |
+                  "electrolytes" | "urine" | "hormones" | "other"
+    }
+  ]
 }
+
+detected_type: one of "blood_test", "urine_analysis", "other_lab"
+detection_confidence: 0.0 to 1.0
+suggested_label: human-readable label e.g. "Blood Test — March 2026"
 
 Status rules:
 - normal: within reference range
@@ -86,16 +95,35 @@ parameter_name: use the standardised English name
   (e.g. "Creatinine", "eGFR", "Vitamin D", "Hemoglobin").
 
 Patient context: Age ${body.age ?? 'unknown'}, Gender ${body.gender ?? 'unknown'}
-Return a JSON array only. No preamble, no explanation.
+Return JSON only. No preamble, no explanation.
 
 Report text:
 ${text}`
 
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
-      messages: [{ role: 'user', content: prompt }],
-    })
+    const apiKey = Deno.env.get('CLAUDE_API_KEY')
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: 'CLAUDE_API_KEY is not configured' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const anthropic = new Anthropic({ apiKey })
+
+    let message
+    try {
+      message = await anthropic.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 3500,
+        messages: [{ role: 'user', content: prompt }],
+      })
+    } catch (apiError: any) {
+      if (apiError?.status === 429) {
+        return new Response(
+          JSON.stringify({ error: 'RATE_LIMIT', message: 'Too many requests. Please wait a moment and try again.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      throw apiError
+    }
 
     const responseText = message.content
       .filter((block) => block.type === 'text')
@@ -104,7 +132,7 @@ ${text}`
 
     const jsonMatch =
       responseText.match(/```(?:json)?\s*([\s\S]*?)```/) ||
-      responseText.match(/(\[[\s\S]*\])/)
+      responseText.match(/(\{[\s\S]*\})/)
 
     if (!jsonMatch) {
       return new Response(
@@ -113,10 +141,24 @@ ${text}`
       )
     }
 
-    const parameters = JSON.parse(jsonMatch[1])
+    let parsed: any
+    try {
+      parsed = JSON.parse(jsonMatch[1])
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'JSON parse failed', raw: jsonMatch[1].slice(0, 500) }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
 
     return new Response(
-      JSON.stringify({ report_id: body.report_id, parameters }),
+      JSON.stringify({
+        report_id: body.report_id,
+        detected_type: parsed.detected_type ?? 'other_lab',
+        detection_confidence: parsed.detection_confidence ?? 0,
+        suggested_label: parsed.suggested_label ?? '',
+        parameters: parsed.parameters ?? [],
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {

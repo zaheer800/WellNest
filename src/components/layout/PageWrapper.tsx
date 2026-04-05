@@ -1,6 +1,7 @@
 import React from 'react'
 import Header from './Header'
 import BottomNav from './BottomNav'
+import RoleSwitcher from '@/components/ui/RoleSwitcher'
 
 interface PageWrapperProps {
   children: React.ReactNode
@@ -21,6 +22,9 @@ const PageWrapper: React.FC<PageWrapperProps> = ({
         <Header title={title} showBackButton={showBackButton} rightElement={headerRight} />
       )}
       <main className={['pb-24', title ? 'pt-14' : ''].join(' ')}>
+        <div className="pt-2">
+          <RoleSwitcher />
+        </div>
         {children}
       </main>
       <BottomNav />

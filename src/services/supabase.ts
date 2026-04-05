@@ -11,6 +11,42 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
+/**
+ * Invoke a Supabase Edge Function using raw fetch.
+ * Bypasses supabase.functions.invoke() to avoid internal header-merging quirks
+ * that can result in an expired or missing Authorization token being sent.
+ *
+ * Sends both headers Supabase Edge Functions expect:
+ *   Authorization: Bearer <access_token>   — identifies the user
+ *   apikey: <anon_key>                     — identifies the project
+ */
+export async function invokeFunction<T = any>(
+  name: string,
+  body?: Record<string, any>
+): Promise<T> {
+  const { data: sessionData } = await supabase.auth.getSession()
+  const token = sessionData?.session?.access_token ?? supabaseAnonKey
+
+  const response = await fetch(`${supabaseUrl}/functions/v1/${name}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      'apikey': supabaseAnonKey,
+    },
+    body: JSON.stringify(body ?? {}),
+  })
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}))
+    console.error(`[invokeFunction] ${name} failed ${response.status}:`, payload)
+    if (response.status === 401) throw new Error('SESSION_EXPIRED')
+    throw new Error(payload?.error ?? payload?.message ?? `Function ${name} failed (${response.status})`)
+  }
+
+  return response.json() as Promise<T>
+}
+
 // ─── User helpers ──────────────────────────────────────────────────────────────
 
 /**
@@ -224,6 +260,25 @@ export async function addSymptomLog(log: {
     .single()
   if (error) throw error
   return data
+}
+
+export async function updateSymptomLog(id: string, updates: { symptom_name?: string; symptom_category?: string; severity?: number; notes?: string | null; logged_at?: string }) {
+  const { data, error } = await supabase
+    .from('symptom_logs')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteSymptomLog(id: string) {
+  const { error } = await supabase
+    .from('symptom_logs')
+    .delete()
+    .eq('id', id)
+  if (error) throw error
 }
 
 // ─── Exercise Logs ─────────────────────────────────────────────────────────────
@@ -573,6 +628,9 @@ export async function addAppointment(appt: {
 export async function updateAppointment(
   id: string,
   updates: Partial<{
+    appointment_date: string
+    appointment_type: string | null
+    notes: string | null
     completed: boolean
     post_visit_notes: string
     follow_up_tasks: unknown[]
@@ -627,6 +685,286 @@ export async function markPrepViewed(id: string) {
   return data
 }
 
+// ─── Family Members ────────────────────────────────────────────────────────────
+
+export async function getFamilyMembers(patientId: string) {
+  const { data, error } = await supabase
+    .from('family_members')
+    .select('*')
+    .eq('patient_id', patientId)
+    .eq('is_active', true)
+    .order('invited_at', { ascending: true })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function addFamilyMember(member: {
+  patient_id: string
+  name: string
+  email?: string | null
+  phone?: string | null
+  relationship?: string | null
+  visibility_config?: Record<string, boolean>
+}) {
+  const inviteToken = crypto.randomUUID()
+  const { data, error } = await supabase
+    .from('family_members')
+    .insert({
+      ...member,
+      invite_token: inviteToken,
+      visibility_config: member.visibility_config ?? { health_score: true, medications: true, critical_alerts: true, reports: false },
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function getFamilyMemberByToken(token: string) {
+  const { data, error } = await supabase
+    .from('family_members')
+    .select('*, users!patient_id(name, email)')
+    .eq('invite_token', token)
+    .eq('is_active', true)
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function getFamilyMemberByUserId(userId: string) {
+  const { data, error } = await supabase
+    .from('family_members')
+    .select('*, users!patient_id(id, name, email)')
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .maybeSingle()
+  if (error) return null
+  return data
+}
+
+export async function acceptFamilyInvite(token: string, userId: string) {
+  const { data, error } = await supabase
+    .from('family_members')
+    .update({ user_id: userId, accepted_at: new Date().toISOString() })
+    .eq('invite_token', token)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function getPatientDataForFamily(patientId: string) {
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, name, email')
+    .eq('id', patientId)
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function updateFamilyMember(id: string, updates: {
+  name?: string
+  relationship?: string | null
+  email?: string | null
+  visibility_config?: Record<string, boolean>
+}) {
+  const { data, error } = await supabase
+    .from('family_members')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function removeFamilyMember(id: string) {
+  const { error } = await supabase
+    .from('family_members')
+    .update({ is_active: false })
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function getMessages(patientId: string, limit = 20) {
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*, family_members(name, relationship)')
+    .eq('patient_id', patientId)
+    .order('sent_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return data ?? []
+}
+
+// ─── Doctors ──────────────────────────────────────────────────────────────────
+
+export async function getDoctors(patientId: string) {
+  const { data, error } = await supabase
+    .from('doctors')
+    .select('*')
+    .eq('patient_id', patientId)
+    .eq('is_active', true)
+    .order('added_at', { ascending: true })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function addDoctor(doctor: {
+  patient_id: string
+  name: string
+  specialty?: string | null
+  hospital?: string | null
+  phone?: string | null
+  email?: string | null
+  notes?: string | null
+}) {
+  const inviteToken = crypto.randomUUID()
+  const { data, error } = await supabase
+    .from('doctors')
+    .insert({ ...doctor, invite_token: inviteToken })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function updateDoctor(id: string, updates: {
+  name?: string
+  specialty?: string | null
+  hospital?: string | null
+  phone?: string | null
+  email?: string | null
+  notes?: string | null
+}) {
+  const { data, error } = await supabase
+    .from('doctors')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function removeDoctor(id: string) {
+  const { error } = await supabase
+    .from('doctors')
+    .update({ is_active: false })
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function getDoctorByToken(token: string) {
+  const { data, error } = await supabase
+    .from('doctors')
+    .select('*, users!patient_id(name, email)')
+    .eq('invite_token', token)
+    .eq('is_active', true)
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function getDoctorByUserId(userId: string) {
+  const { data, error } = await supabase
+    .from('doctors')
+    .select('*, users!patient_id(id, name, email)')
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .maybeSingle()
+  if (error) return null
+  return data
+}
+
+export async function acceptDoctorInvite(token: string, userId: string) {
+  const { data, error } = await supabase
+    .from('doctors')
+    .update({ user_id: userId })
+    .eq('invite_token', token)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function addDoctorNote(note: {
+  patient_id: string
+  doctor_id: string
+  note: string
+  note_type?: string
+  is_visible_to_patient?: boolean
+}) {
+  const { data, error } = await supabase
+    .from('doctor_notes')
+    .insert({ ...note, created_at: new Date().toISOString() })
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function getDoctorNotes(patientId: string, doctorId: string) {
+  const { data, error } = await supabase
+    .from('doctor_notes')
+    .select('*')
+    .eq('patient_id', patientId)
+    .eq('doctor_id', doctorId)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function getPatientDataForDoctor(patientId: string, specialty: string | null) {
+  // Fetch clinical data relevant to the doctor's specialty
+  const base = { patient_id: patientId }
+
+  const [labReports, imagingReports, symptomLogs, medicationLogs, notes] = await Promise.all([
+    supabase
+      .from('lab_reports')
+      .select('id, report_name, report_date, detected_type, processing_status, ai_summary')
+      .eq('patient_id', patientId)
+      .order('report_date', { ascending: false })
+      .limit(20)
+      .then(({ data }) => data ?? []),
+
+    supabase
+      .from('imaging_reports')
+      .select('id, report_name, report_date, imaging_type, ai_summary')
+      .eq('patient_id', patientId)
+      .order('report_date', { ascending: false })
+      .limit(20)
+      .then(({ data }) => data ?? []),
+
+    supabase
+      .from('symptom_logs')
+      .select('id, symptom_name, severity, notes, logged_at')
+      .eq('patient_id', patientId)
+      .order('logged_at', { ascending: false })
+      .limit(30)
+      .then(({ data }) => data ?? []),
+
+    supabase
+      .from('medication_logs')
+      .select('id, medication_id, taken, log_date, medications(name, dose, unit)')
+      .eq('patient_id', patientId)
+      .order('log_date', { ascending: false })
+      .limit(30)
+      .then(({ data }) => data ?? []),
+
+    supabase
+      .from('lab_parameters')
+      .select('id, parameter_name, value, unit, status, reference_min, reference_max, category, plain_language, recorded_at')
+      .eq('patient_id', patientId)
+      .order('recorded_at', { ascending: false })
+      .limit(100)
+      .then(({ data }) => data ?? []),
+  ])
+
+  return { labReports, imagingReports, symptomLogs, medicationLogs, labParameters: notes }
+}
+
 // ─── Family Engagement ─────────────────────────────────────────────────────────
 
 export async function logFamilyEngagement(log: {
@@ -665,6 +1003,48 @@ export async function getLabReports(patientId: string) {
   return data ?? []
 }
 
+export async function insertLabReport(row: {
+  patient_id: string
+  report_date: string
+  report_type: string
+  image_url: string
+  processing_status: string
+}) {
+  const { data, error } = await supabase
+    .from('lab_reports')
+    .insert(row)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function updateLabReport(id: string, updates: Record<string, any>) {
+  const { error } = await supabase
+    .from('lab_reports')
+    .update(updates)
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function insertLabParameters(params: {
+  report_id: string
+  patient_id: string
+  report_date: string
+  parameter_name: string
+  parameter_category: string
+  value: number
+  unit: string
+  reference_min: number | null
+  reference_max: number | null
+  status: string
+  plain_language_explanation: string
+}[]) {
+  if (params.length === 0) return
+  const { error } = await supabase.from('lab_parameters').insert(params)
+  if (error) throw error
+}
+
 export async function getLabParameters(reportId: string) {
   const { data, error } = await supabase
     .from('lab_parameters')
@@ -687,12 +1067,77 @@ export async function getImagingReports(patientId: string) {
   return data ?? []
 }
 
+export async function insertImagingReport(row: {
+  patient_id: string
+  report_date: string
+  imaging_type: string
+  image_url: string
+  processing_status: string
+}) {
+  const { data, error } = await supabase
+    .from('imaging_reports')
+    .insert(row)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function updateImagingReport(id: string, updates: Record<string, any>) {
+  const { error } = await supabase
+    .from('imaging_reports')
+    .update(updates)
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function insertImagingFindings(findings: {
+  imaging_report_id: string
+  patient_id: string
+  report_date: string
+  location: string
+  spinal_level: string | null
+  spinal_region: string | null
+  finding_type: string
+  severity: string
+  laterality: string
+  description: string
+  plain_language: string
+  nerves_affected: string[]
+  linked_symptoms: string[]
+}[]) {
+  if (findings.length === 0) return
+  const { error } = await supabase.from('imaging_findings').insert(findings)
+  if (error) throw error
+}
+
 export async function getImagingFindings(reportId: string) {
   const { data, error } = await supabase
     .from('imaging_findings')
     .select('*')
-    .eq('report_id', reportId)
-    .order('finding', { ascending: true })
+    .eq('imaging_report_id', reportId)
+    .order('severity', { ascending: false })
   if (error) throw error
   return data ?? []
+}
+
+export async function deleteTodayPostureLogs(patientId: string, date: string) {
+  const { error } = await supabase
+    .from('posture_logs')
+    .delete()
+    .eq('patient_id', patientId)
+    .gte('session_start', `${date}T00:00:00.000Z`)
+    .lt('session_start', `${date}T23:59:59.999Z`)
+  if (error) throw error
+}
+
+export async function updateWaterLog(id: string, amountMl: number, loggedAt: string) {
+  const { data, error } = await supabase
+    .from('water_logs')
+    .update({ amount_ml: amountMl, logged_at: loggedAt })
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return data
 }

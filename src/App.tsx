@@ -22,11 +22,42 @@ import FamilyScreen from '@/screens/FamilyScreen'
 import DoctorScreen from '@/screens/DoctorScreen'
 import DietScreen from '@/screens/DietScreen'
 import MoreScreen from '@/screens/MoreScreen'
+import JoinScreen from '@/screens/JoinScreen'
+import JoinDoctorScreen from '@/screens/JoinDoctorScreen'
+import FamilyDashboardScreen from '@/screens/FamilyDashboardScreen'
+import DoctorDashboardScreen from '@/screens/DoctorDashboardScreen'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, initialized } = useAuthStore()
   if (!initialized) return null
   if (!session) return <Navigate to="/login" replace />
+  return <>{children}</>
+}
+
+/** Only accessible to users who have the family role */
+function FamilyRoute({ children }: { children: React.ReactNode }) {
+  const { session, roles, initialized } = useAuthStore()
+  if (!initialized) return null
+  if (!session) return <Navigate to="/login" replace />
+  if (!roles.includes('family')) return <Navigate to="/dashboard" replace />
+  return <>{children}</>
+}
+
+/** Only accessible to users who have the doctor role */
+function DoctorRoute({ children }: { children: React.ReactNode }) {
+  const { session, roles, initialized } = useAuthStore()
+  if (!initialized) return null
+  if (!session) return <Navigate to="/login" replace />
+  if (!roles.includes('doctor')) return <Navigate to="/dashboard" replace />
+  return <>{children}</>
+}
+
+/** Only accessible to users who have the patient role */
+function PatientRoute({ children }: { children: React.ReactNode }) {
+  const { session, roles, initialized } = useAuthStore()
+  if (!initialized) return null
+  if (!session) return <Navigate to="/login" replace />
+  if (!roles.includes('patient')) return <Navigate to="/family-dashboard" replace />
   return <>{children}</>
 }
 
@@ -58,23 +89,31 @@ export default function App() {
         <Route path="/" element={<SplashScreen />} />
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/onboarding" element={<OnboardingScreen />} />
+        <Route path="/join" element={<JoinScreen />} />
+        <Route path="/join-doctor" element={<JoinDoctorScreen />} />
 
-        {/* Protected */}
-        <Route path="/dashboard" element={<ProtectedRoute><DashboardScreen /></ProtectedRoute>} />
-        <Route path="/medications" element={<ProtectedRoute><MedicationsScreen /></ProtectedRoute>} />
-        <Route path="/water" element={<ProtectedRoute><WaterScreen /></ProtectedRoute>} />
-        <Route path="/symptoms" element={<ProtectedRoute><SymptomsScreen /></ProtectedRoute>} />
-        <Route path="/exercise" element={<ProtectedRoute><ExerciseScreen /></ProtectedRoute>} />
-        <Route path="/posture" element={<ProtectedRoute><PostureScreen /></ProtectedRoute>} />
-        <Route path="/diet" element={<ProtectedRoute><DietScreen /></ProtectedRoute>} />
-        <Route path="/appointments" element={<ProtectedRoute><AppointmentsScreen /></ProtectedRoute>} />
-        <Route path="/reports" element={<ProtectedRoute><ReportsScreen /></ProtectedRoute>} />
-        <Route path="/imaging" element={<ProtectedRoute><ImagingScreen /></ProtectedRoute>} />
-        <Route path="/conditions" element={<ProtectedRoute><ConditionsScreen /></ProtectedRoute>} />
-        <Route path="/progress" element={<ProtectedRoute><ProgressScreen /></ProtectedRoute>} />
-        <Route path="/family" element={<ProtectedRoute><FamilyScreen /></ProtectedRoute>} />
-        <Route path="/doctor" element={<ProtectedRoute><DoctorScreen /></ProtectedRoute>} />
-        <Route path="/more" element={<ProtectedRoute><MoreScreen /></ProtectedRoute>} />
+        {/* Family member portal */}
+        <Route path="/family-dashboard" element={<FamilyRoute><FamilyDashboardScreen /></FamilyRoute>} />
+
+        {/* Doctor portal */}
+        <Route path="/doctor-dashboard" element={<DoctorRoute><DoctorDashboardScreen /></DoctorRoute>} />
+
+        {/* Patient-only routes */}
+        <Route path="/dashboard" element={<PatientRoute><DashboardScreen /></PatientRoute>} />
+        <Route path="/medications" element={<PatientRoute><MedicationsScreen /></PatientRoute>} />
+        <Route path="/water" element={<PatientRoute><WaterScreen /></PatientRoute>} />
+        <Route path="/symptoms" element={<PatientRoute><SymptomsScreen /></PatientRoute>} />
+        <Route path="/exercise" element={<PatientRoute><ExerciseScreen /></PatientRoute>} />
+        <Route path="/posture" element={<PatientRoute><PostureScreen /></PatientRoute>} />
+        <Route path="/diet" element={<PatientRoute><DietScreen /></PatientRoute>} />
+        <Route path="/appointments" element={<PatientRoute><AppointmentsScreen /></PatientRoute>} />
+        <Route path="/reports" element={<PatientRoute><ReportsScreen /></PatientRoute>} />
+        <Route path="/imaging" element={<PatientRoute><ImagingScreen /></PatientRoute>} />
+        <Route path="/conditions" element={<PatientRoute><ConditionsScreen /></PatientRoute>} />
+        <Route path="/progress" element={<PatientRoute><ProgressScreen /></PatientRoute>} />
+        <Route path="/family" element={<PatientRoute><FamilyScreen /></PatientRoute>} />
+        <Route path="/doctor" element={<PatientRoute><DoctorScreen /></PatientRoute>} />
+        <Route path="/more" element={<PatientRoute><MoreScreen /></PatientRoute>} />
 
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />

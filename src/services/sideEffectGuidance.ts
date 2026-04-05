@@ -1,4 +1,4 @@
-import { supabase } from '@/services/supabase'
+import { invokeFunction } from '@/services/supabase'
 
 export interface SideEffectGuidanceResult {
   guidance: string
@@ -18,17 +18,13 @@ export async function getSideEffectGuidance(
   source: 'experienced' | 'read_about',
   patientConditions: string[] = [],
 ): Promise<SideEffectGuidanceResult> {
-  const { data, error } = await supabase.functions.invoke('generate-side-effect-guidance', {
-    body: {
-      medication_name: medicationName,
-      side_effect: sideEffect,
-      severity,
-      source,
-      patient_conditions: patientConditions,
-    },
+  const data = await invokeFunction('generate-side-effect-guidance', {
+    medication_name: medicationName,
+    side_effect: sideEffect,
+    severity,
+    source,
+    patient_conditions: patientConditions,
   })
-
-  if (error) throw new Error(`Side effect guidance failed: ${error.message}`)
 
   return data as SideEffectGuidanceResult
 }

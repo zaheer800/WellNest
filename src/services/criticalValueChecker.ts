@@ -1,4 +1,4 @@
-import { supabase } from '@/services/supabase'
+import { invokeFunction } from '@/services/supabase'
 import type { LabParameter } from '@/types/report.types'
 
 export interface CriticalParameter {
@@ -19,12 +19,14 @@ export async function checkCriticalValues(
   reportId: string,
   parameters: LabParameter[],
 ): Promise<CriticalValueCheckResult> {
-  const { data, error } = await supabase.functions.invoke('check-critical-values', {
-    body: { patient_id: patientId, report_id: reportId, parameters },
+  const data = await invokeFunction('check-critical-values', {
+    patient_id: patientId, report_id: reportId, parameters,
   })
 
-  if (error) {
-    throw error
+  if (data?.error === 'RATE_LIMIT') {
+    // Never suppress a critical value check failure — return empty and let caller handle
+    console.warn('[criticalValueChecker] Rate limited — raw values still visible to user')
+    return { critical_found: false, critical_parameters: [] }
   }
 
   return data as CriticalValueCheckResult

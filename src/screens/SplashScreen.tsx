@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
+import { HeartPulse } from 'lucide-react'
 
 export default function SplashScreen() {
   const navigate = useNavigate()
@@ -20,7 +21,11 @@ export default function SplashScreen() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600">
       <div className="text-center space-y-4">
-        <div className="text-7xl mb-2">🪺</div>
+        <div className="flex items-center justify-center mb-2">
+          <div className="w-20 h-20 bg-white rounded-[2rem] shadow-2xl flex items-center justify-center">
+            <HeartPulse className="w-10 h-10 text-indigo-500" />
+          </div>
+        </div>
         <h1 className="text-4xl font-bold text-white tracking-tight">WellNest</h1>
         <p className="text-indigo-100 text-base">Your health. Your circle. Your journey.</p>
       </div>

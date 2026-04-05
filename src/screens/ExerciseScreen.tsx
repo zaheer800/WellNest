@@ -6,6 +6,7 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import { today, formatTime } from '@/utils/dateHelpers'
+import { Ban, AlertTriangle, Check, Activity, PersonStanding } from 'lucide-react'
 
 const EXERCISE_TYPES = ['Walking', 'Running', 'Swimming', 'Cycling', 'Yoga', 'Stretching', 'Physiotherapy', 'Weight training', 'Other']
 
@@ -54,7 +55,7 @@ export default function ExerciseScreen() {
           <div className="space-y-2">
             {activityRestrictions.map((r) => (
               <div key={r.id} className={`rounded-xl p-3 flex items-start gap-2 ${r.severity === 'absolute' ? 'bg-red-50 border border-red-100' : r.severity === 'strict' ? 'bg-orange-50 border border-orange-100' : 'bg-yellow-50 border border-yellow-100'}`}>
-                <span className="text-lg flex-shrink-0">{r.severity === 'absolute' ? '🚫' : '⚠️'}</span>
+                <div className="flex-shrink-0 mt-0.5">{r.severity === 'absolute' ? <Ban className="w-5 h-5 text-red-600" /> : <AlertTriangle className="w-5 h-5 text-orange-600" />}</div>
                 <div>
                   <p className="text-sm font-semibold text-gray-800">{r.restriction}</p>
                   {r.reason && <p className="text-xs text-gray-500 mt-0.5">{r.reason}</p>}
@@ -102,8 +103,8 @@ export default function ExerciseScreen() {
             </label>
 
             {success && (
-              <div className="bg-green-50 border border-green-100 rounded-xl px-4 py-2.5 text-green-700 text-sm text-center font-medium">
-                ✓ Exercise logged
+              <div className="bg-green-50 border border-green-100 rounded-xl px-4 py-2.5 text-green-700 text-sm text-center flex items-center justify-center gap-2 font-medium">
+                <Check className="w-4 h-4" /> Exercise logged
               </div>
             )}
 
@@ -120,8 +121,8 @@ export default function ExerciseScreen() {
             <div className="space-y-2">
               {exerciseLogs.map((log) => (
                 <div key={log.id} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">{log.is_physiotherapy ? '🧘' : '🏃'}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-600">{log.is_physiotherapy ? <PersonStanding className="w-4 h-4 text-indigo-600" /> : <Activity className="w-4 h-4 text-green-600" />}</div>
                     <div>
                       <p className="text-sm font-medium text-gray-800">{log.exercise_type}</p>
                       {log.duration_minutes && <p className="text-xs text-gray-400">{log.duration_minutes} min</p>}
@@ -136,8 +137,8 @@ export default function ExerciseScreen() {
             </div>
           </Card>
         ) : (
-          <div className="text-center py-10 text-gray-400">
-            <p className="text-4xl mb-3">🏃</p>
+          <div className="text-center py-10 text-gray-400 flex flex-col items-center">
+            <Activity className="w-10 h-10 mb-3 text-gray-300" />
             <p className="font-medium text-sm">No exercise logged today</p>
             <p className="text-xs mt-1">Even a 10-minute walk counts!</p>
           </div>

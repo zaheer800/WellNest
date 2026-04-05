@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useAuthStore } from '@/store/authStore'
 import Button from '@/components/ui/Button'
+import { HeartPulse } from 'lucide-react'
 
 interface EmailForm { email: string }
 interface OtpForm { otp: string }
@@ -45,7 +46,11 @@ export default function LoginScreen() {
       <div className="w-full max-w-sm space-y-8">
         {/* Logo */}
         <div className="text-center">
-          <div className="text-5xl mb-3">🪺</div>
+          <div className="flex items-center justify-center mb-3">
+            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-[1.5rem] shadow-xl flex items-center justify-center">
+              <HeartPulse className="w-8 h-8 text-white" />
+            </div>
+          </div>
           <h1 className="text-2xl font-bold text-gray-900">WellNest</h1>
           <p className="text-gray-500 text-sm mt-1">Your health. Your circle. Your journey.</p>
         </div>

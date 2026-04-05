@@ -1,8 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import Anthropic from 'npm:@anthropic-ai/sdk'
 
-const anthropic = new Anthropic({ apiKey: Deno.env.get('CLAUDE_API_KEY')! })
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -59,6 +57,14 @@ Provide clear, reassuring but accurate guidance. Return a JSON object with exact
 - personalised_context: string — any specific considerations given their conditions (or general context if no conditions provided)
 
 Be empathetic, clear, and actionable. Do not be alarmist unless genuinely warranted.`
+
+    const apiKey = Deno.env.get('CLAUDE_API_KEY')
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: 'CLAUDE_API_KEY is not configured' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const anthropic = new Anthropic({ apiKey })
 
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',

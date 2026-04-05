@@ -1,11 +1,15 @@
 import React from 'react'
 import type { Appointment } from '@/types/appointment.types'
 import Badge from '@/components/ui/Badge'
+import { RefreshCw, Pencil, Trash2 } from 'lucide-react'
 
 interface AppointmentCardProps {
   appointment: Appointment
   onPrepare: (id: string) => void
   onComplete: (id: string) => void
+  onReschedule: (appointment: Appointment) => void
+  onEdit: (appointment: Appointment) => void
+  onDelete: (id: string) => void
 }
 
 function formatDateTime(iso: string): string {
@@ -24,8 +28,16 @@ function isWithin48Hours(iso: string): boolean {
   return diff > 0 && diff <= 48 * 60 * 60 * 1000
 }
 
-const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, onPrepare, onComplete }) => {
-  const soon = !appointment.completed && isWithin48Hours(appointment.appointment_date)
+const AppointmentCard: React.FC<AppointmentCardProps> = ({
+  appointment, onPrepare, onComplete, onReschedule, onEdit, onDelete,
+}) => {
+  const isPast = new Date(appointment.appointment_date) < new Date()
+  const isMissed = isPast && !appointment.completed
+  const isCompleted = appointment.completed
+  const soon = !isPast && isWithin48Hours(appointment.appointment_date)
+
+  const badgeLabel = isCompleted ? 'Completed' : isMissed ? 'Missed' : 'Upcoming'
+  const badgeColor = isCompleted ? 'green' : isMissed ? 'red' : 'blue'
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 space-y-3">
@@ -40,15 +52,34 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, onPrepar
             <p className="text-xs text-gray-500 mt-1 truncate">{appointment.notes}</p>
           )}
         </div>
-        <Badge
-          label={appointment.completed ? 'Completed' : 'Upcoming'}
-          color={appointment.completed ? 'green' : 'blue'}
-          size="sm"
-        />
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <Badge label={badgeLabel} color={badgeColor} size="sm" />
+          {/* Edit / delete only for upcoming */}
+          {!isPast && !isCompleted && (
+            <>
+              <button
+                type="button"
+                onClick={() => onEdit(appointment)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 transition"
+                aria-label="Edit appointment"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => onDelete(appointment.id)}
+                className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition"
+                aria-label="Delete appointment"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Upcoming actions */}
-      {!appointment.completed && (
+      {/* Upcoming — prepare + mark completed */}
+      {!isPast && !isCompleted && (
         <div className="flex gap-2">
           <button
             type="button"
@@ -62,24 +93,52 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, onPrepar
           >
             {soon ? '📋 Prepare for Visit' : 'Prepare for Visit'}
           </button>
+          <button
+            type="button"
+            onClick={() => onComplete(appointment.id)}
+            className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold bg-green-50 text-green-600 hover:bg-green-100 transition"
+          >
+            Mark Completed
+          </button>
         </div>
       )}
 
-      {/* Completed — log notes if missing */}
-      {appointment.completed && !appointment.post_visit_notes && (
+      {/* Missed — mark completed (late) + reschedule */}
+      {isMissed && (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => onComplete(appointment.id)}
+            className="flex-1 py-2 px-3 rounded-xl text-xs font-semibold bg-green-50 text-green-600 hover:bg-green-100 transition"
+          >
+            Mark as completed
+          </button>
+          <button
+            type="button"
+            onClick={() => onReschedule(appointment)}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-semibold bg-orange-50 text-orange-600 hover:bg-orange-100 transition"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Reschedule
+          </button>
+        </div>
+      )}
+
+      {/* Completed — log outcome if missing */}
+      {isCompleted && !appointment.post_visit_notes && (
         <button
           type="button"
           onClick={() => onComplete(appointment.id)}
-          className="w-full py-2 px-3 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium text-gray-600 hover:bg-gray-100 transition"
+          className="w-full py-2 px-3 bg-indigo-50 border border-indigo-100 rounded-xl text-xs font-semibold text-indigo-600 hover:bg-indigo-100 transition"
         >
-          Log visit notes
+          Log outcome &amp; medications
         </button>
       )}
 
       {/* Post-visit notes preview */}
       {appointment.post_visit_notes && (
         <div className="bg-green-50 rounded-xl px-3 py-2">
-          <p className="text-xs text-green-600 font-medium mb-0.5">Visit notes</p>
+          <p className="text-xs text-green-600 font-medium mb-0.5">Visit outcome</p>
           <p className="text-xs text-gray-600 line-clamp-2">{appointment.post_visit_notes}</p>
         </div>
       )}

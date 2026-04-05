@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useAuthStore } from '@/store/authStore'
 import Button from '@/components/ui/Button'
+import { PartyPopper, Check } from 'lucide-react'
 
 interface Step1Data { name: string; date_of_birth: string; gender: 'male' | 'female' | 'other' }
 interface Step2Data { height_cm: number; weight_kg: number }
@@ -154,7 +155,9 @@ export default function OnboardingScreen() {
 
         {step === 3 && (
           <div className="flex flex-col items-center text-center space-y-6 pt-8">
-            <div className="text-7xl">🎉</div>
+            <div className="w-24 h-24 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mb-2">
+              <PartyPopper className="w-12 h-12 text-indigo-600" />
+            </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900">You're all set!</h2>
               <p className="text-gray-500 text-sm mt-2">
@@ -165,7 +168,7 @@ export default function OnboardingScreen() {
               <p className="text-xs font-semibold text-indigo-700 uppercase tracking-wide">What's next</p>
               {['Log your first medication', 'Set your water goal', 'Track your posture today'].map((item) => (
                 <div key={item} className="flex items-center gap-2 text-sm text-indigo-900">
-                  <span className="text-indigo-400">✓</span> {item}
+                  <Check className="w-4 h-4 text-indigo-500 flex-shrink-0" /> {item}
                 </div>
               ))}
             </div>

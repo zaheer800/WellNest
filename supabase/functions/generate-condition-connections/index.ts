@@ -1,8 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import Anthropic from 'npm:@anthropic-ai/sdk'
 
-const anthropic = new Anthropic({ apiKey: Deno.env.get('CLAUDE_API_KEY')! })
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -62,11 +60,30 @@ Do not invent connections not supported by the data.
 Patient context: Age ${body.age ?? 'unknown'}, Gender ${body.gender ?? 'unknown'}
 Return a JSON array only. No preamble, no explanation.`
 
-    const message = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
-      messages: [{ role: 'user', content: prompt }],
-    })
+    const apiKey = Deno.env.get('CLAUDE_API_KEY')
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: 'CLAUDE_API_KEY is not configured' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const anthropic = new Anthropic({ apiKey })
+
+    let message
+    try {
+      message = await anthropic.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1500,
+        messages: [{ role: 'user', content: prompt }],
+      })
+    } catch (apiError: any) {
+      if (apiError?.status === 429) {
+        return new Response(
+          JSON.stringify({ error: 'RATE_LIMIT', message: 'Too many requests. Please wait a moment and try again.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      throw apiError
+    }
 
     const responseText = message.content
       .filter((block) => block.type === 'text')

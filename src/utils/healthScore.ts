@@ -26,7 +26,7 @@ export function calcMedicationScore(medications: MedicationWithLog[]): number {
   return Math.round((takenCount / expectedCount) * 25)
 }
 
-function shouldTakeMedicationToday(med: MedicationWithLog, today: Date): boolean {
+export function shouldTakeMedicationToday(med: MedicationWithLog, today: Date): boolean {
   const startDate = med.start_date ? new Date(med.start_date) : new Date(med.created_at)
   const daysSinceStart = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
 

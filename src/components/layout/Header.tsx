@@ -51,8 +51,8 @@ const Header: React.FC<HeaderProps> = ({
           {title}
         </h1>
 
-        {/* Right slot */}
-        <div className="w-10 flex items-center justify-end">
+        {/* Right slot — wider to fit pill buttons */}
+        <div className="flex items-center justify-end">
           {rightElement ?? null}
         </div>
       </div>

@@ -4,6 +4,7 @@ import {
   getAppointments,
   addAppointment as dbAddAppointment,
   updateAppointment as dbUpdateAppointment,
+  deleteAppointment as dbDeleteAppointment,
   getVisitPreparation,
   markPrepViewed as dbMarkPrepViewed,
 } from '@/services/supabase'
@@ -25,6 +26,8 @@ interface AppointmentActions {
     notes?: string | null
   }) => Promise<void>
   completeAppointment: (id: string, notes: string) => Promise<void>
+  editAppointment: (id: string, updates: { appointment_date: string; appointment_type: string | null; notes: string | null }) => Promise<void>
+  deleteAppointment: (id: string) => Promise<void>
   fetchPreparation: (appointmentId: string) => Promise<void>
   markPrepViewed: (id: string) => Promise<void>
 }
@@ -61,6 +64,18 @@ export const useAppointmentStore = create<AppointmentStore>((set) => ({
         a.id === id ? { ...a, completed: true, post_visit_notes: notes } : a,
       ),
     }))
+  },
+
+  editAppointment: async (id, updates) => {
+    const updated = await dbUpdateAppointment(id, updates)
+    set((state) => ({
+      appointments: state.appointments.map((a) => (a.id === id ? (updated as Appointment) : a)),
+    }))
+  },
+
+  deleteAppointment: async (id) => {
+    await dbDeleteAppointment(id)
+    set((state) => ({ appointments: state.appointments.filter((a) => a.id !== id) }))
   },
 
   fetchPreparation: async (appointmentId) => {
