@@ -22,6 +22,7 @@ import FamilyScreen from '@/screens/FamilyScreen'
 import DoctorScreen from '@/screens/DoctorScreen'
 import DietScreen from '@/screens/DietScreen'
 import MoreScreen from '@/screens/MoreScreen'
+import ProfileScreen from '@/screens/ProfileScreen'
 import AuthCallbackScreen from '@/screens/AuthCallbackScreen'
 import JoinScreen from '@/screens/JoinScreen'
 import JoinDoctorScreen from '@/screens/JoinDoctorScreen'
@@ -116,6 +117,7 @@ export default function App() {
         <Route path="/family" element={<PatientRoute><FamilyScreen /></PatientRoute>} />
         <Route path="/doctor" element={<PatientRoute><DoctorScreen /></PatientRoute>} />
         <Route path="/more" element={<PatientRoute><MoreScreen /></PatientRoute>} />
+        <Route path="/profile" element={<PatientRoute><ProfileScreen /></PatientRoute>} />
 
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />

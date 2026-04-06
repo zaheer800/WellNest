@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom'
+import { useAuthStore } from '@/store/authStore'
 import PageWrapper from '@/components/layout/PageWrapper'
-import { Activity, Utensils, Calendar, LineChart, ChevronRight } from 'lucide-react'
+import { Activity, Utensils, Calendar, LineChart, ChevronRight, UserCircle, LogOut } from 'lucide-react'
+import { useState } from 'react'
 
 interface Feature {
   label: string
@@ -11,6 +13,18 @@ interface Feature {
 }
 
 const SECTIONS: { title: string; features: Feature[] }[] = [
+  {
+    title: 'Account',
+    features: [
+      {
+        label: 'My Profile',
+        icon: <UserCircle className="w-5 h-5 text-indigo-600" />,
+        path: '/profile',
+        description: 'Edit name, height, weight and personal details',
+        color: 'bg-indigo-50 border-indigo-100',
+      },
+    ],
+  },
   {
     title: 'Daily Tracking',
     features: [
@@ -29,10 +43,22 @@ const SECTIONS: { title: string; features: Feature[] }[] = [
 
 export default function MoreScreen() {
   const navigate = useNavigate()
+  const { signOut } = useAuthStore()
+  const [signingOut, setSigningOut] = useState(false)
+
+  const handleSignOut = async () => {
+    setSigningOut(true)
+    try {
+      await signOut()
+      navigate('/login', { replace: true })
+    } catch {
+      setSigningOut(false)
+    }
+  }
 
   return (
     <PageWrapper title="More">
-      <div className="px-4 pt-4 pb-8 space-y-6">
+      <div className="px-4 pt-4 pb-10 space-y-6">
         {SECTIONS.map((section) => (
           <div key={section.title}>
             <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
@@ -58,6 +84,23 @@ export default function MoreScreen() {
             </div>
           </div>
         ))}
+
+        {/* Sign out */}
+        <div>
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Session</h2>
+          <button
+            onClick={handleSignOut}
+            disabled={signingOut}
+            className="w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl border border-red-100 bg-red-50 text-left transition active:scale-95 disabled:opacity-60"
+          >
+            <div className="w-10 h-10 flex items-center justify-center flex-shrink-0 bg-white rounded-full shadow-sm">
+              <LogOut className="w-5 h-5 text-red-500" />
+            </div>
+            <p className="text-sm font-semibold text-red-600">
+              {signingOut ? 'Signing out…' : 'Sign out'}
+            </p>
+          </button>
+        </div>
       </div>
     </PageWrapper>
   )

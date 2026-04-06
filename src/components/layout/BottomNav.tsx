@@ -113,7 +113,7 @@ const BottomNav: React.FC = () => {
     <nav className="fixed bottom-0 left-0 right-0 z-40 h-16 bg-white border-t border-gray-100 pb-safe">
       <div className="max-w-md mx-auto h-full flex items-stretch">
         {navItems.map(({ label, path, icon: Icon }) => {
-          const moreRoutes = ['/symptoms', '/exercise', '/posture', '/diet', '/family', '/doctor', '/imaging', '/conditions', '/progress', '/more']
+          const moreRoutes = ['/symptoms', '/exercise', '/posture', '/diet', '/family', '/doctor', '/imaging', '/conditions', '/progress', '/more', '/profile']
           const isActive = path === '/more'
             ? moreRoutes.includes(location.pathname)
             : location.pathname === path;

@@ -154,10 +154,11 @@ export async function getMedications(patientId: string) {
 export async function addMedication(med: {
   patient_id: string
   name: string
-  dose?: string
-  unit?: string
+  dose?: string | null
+  unit?: string | null
   frequency?: string
-  notes?: string
+  schedule_config?: Record<string, unknown>
+  notes?: string | null
   start_date?: string
   is_injection?: boolean
   known_side_effects?: string[]
