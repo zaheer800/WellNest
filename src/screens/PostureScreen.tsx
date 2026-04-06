@@ -137,7 +137,7 @@ export default function PostureScreen() {
                 <UserCheck className="w-10 h-10" />
               </div>
               <h2 className="text-2xl font-bold text-gray-800 mb-3 relative z-10">Ready for work?</h2>
-              <p className="text-gray-500 mb-8 text-[15px] leading-relaxed relative z-10">
+              <p className="text-gray-500 mb-8 text-base leading-relaxed relative z-10">
                 Start tracking to monitor your continuous sitting time and get reminders to stretch every 45 minutes.
               </p>
               
@@ -253,7 +253,7 @@ export default function PostureScreen() {
                           </svg>
                         )}
                       </div>
-                      <span className={`text-[15px] font-semibold transition-colors duration-300 ${isChecked ? 'text-indigo-900 line-through decoration-indigo-200 decoration-2' : 'text-gray-700'}`}>{item.label}</span>
+                      <span className={`text-base font-semibold transition-colors duration-300 ${isChecked ? 'text-indigo-900 line-through decoration-indigo-200 decoration-2' : 'text-gray-700'}`}>{item.label}</span>
                     </label>
                   )
                 })}

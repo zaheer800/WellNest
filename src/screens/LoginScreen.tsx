@@ -33,8 +33,6 @@ export default function LoginScreen() {
     setError('')
     try {
       await verifyOtp(email, data.otp)
-      // Navigation happens in App.tsx based on user profile status
-      // Always go to onboarding to check if profile is complete
       navigate('/onboarding', { replace: true })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Invalid OTP. Please try again.')
@@ -42,58 +40,65 @@ export default function LoginScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6">
-      <div className="w-full max-w-sm space-y-8">
+    <div className="min-h-screen bg-gradient-to-b from-indigo-50/50 via-white to-white flex flex-col items-center justify-center px-6 relative overflow-hidden">
+      {/* Decorative background bloom */}
+      <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-indigo-100 rounded-full blur-3xl opacity-60 pointer-events-none" />
+
+      <div className="w-full max-w-sm space-y-8 relative">
         {/* Logo */}
         <div className="text-center">
-          <div className="flex items-center justify-center mb-3">
-            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-[1.5rem] shadow-xl flex items-center justify-center">
-              <HeartPulse className="w-8 h-8 text-white" />
+          <div className="flex items-center justify-center mb-4">
+            <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[1.75rem] shadow-[0_8px_30px_rgba(99,102,241,0.35)] flex items-center justify-center">
+              <HeartPulse className="w-10 h-10 text-white" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">WellNest</h1>
-          <p className="text-gray-500 text-sm mt-1">Your health. Your circle. Your journey.</p>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">WellNest</h1>
+          <p className="text-gray-400 text-sm mt-1 font-medium">Your health. Your circle. Your journey.</p>
         </div>
 
         {step === 'email' ? (
           <form onSubmit={emailForm.handleSubmit(handleSendOtp)} className="space-y-4">
             <div>
-              <h2 className="text-xl font-semibold text-gray-800 mb-1">Welcome to WellNest</h2>
-              <p className="text-gray-500 text-sm">Sign in or create an account. We'll send a one-time code to your email.</p>
+              <h2 className="text-xl font-semibold text-gray-800 mb-1">Welcome</h2>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                Sign in or create an account. We'll send a one-time code to your email.
+              </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
               <input
                 type="email"
                 autoComplete="email"
                 placeholder="you@example.com"
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
                 {...emailForm.register('email', { required: 'Email is required' })}
               />
               {emailForm.formState.errors.email && (
-                <p className="text-red-500 text-xs mt-1">{emailForm.formState.errors.email.message}</p>
+                <p className="text-red-500 text-xs mt-1.5">{emailForm.formState.errors.email.message}</p>
               )}
             </div>
 
-            {error && <p className="text-red-500 text-sm bg-red-50 rounded-lg px-3 py-2">{error}</p>}
+            {error && (
+              <p className="text-red-600 text-sm bg-red-50 border border-red-100 rounded-xl px-4 py-3">{error}</p>
+            )}
 
             <Button type="submit" variant="primary" fullWidth loading={loading}>
-              Send OTP
+              Send Code
             </Button>
 
-            <div className="relative flex items-center py-2">
+            <div className="relative flex items-center py-1">
               <div className="flex-grow border-t border-gray-200" />
-              <span className="mx-3 text-gray-400 text-xs">or</span>
+              <span className="mx-3 text-gray-300 text-xs font-medium">or</span>
               <div className="flex-grow border-t border-gray-200" />
             </div>
 
             <button
               type="button"
               onClick={() => signInWithGoogle()}
-              className="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-xl py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+              className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 rounded-xl py-3.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 hover:border-gray-300 transition active:scale-95"
             >
-              <svg className="w-5 h-5" viewBox="0 0 48 48">
+              <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 48 48">
                 <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
                 <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
                 <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
@@ -106,28 +111,34 @@ export default function LoginScreen() {
           <form onSubmit={otpForm.handleSubmit(handleVerifyOtp)} className="space-y-4">
             <div>
               <h2 className="text-xl font-semibold text-gray-800 mb-1">Check your email</h2>
-              <p className="text-gray-500 text-sm">
-                We sent a 6-digit code to <span className="font-medium text-gray-700">{email}</span>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                We sent a 6-digit code to{' '}
+                <span className="font-semibold text-gray-700">{email}</span>
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">One-time code</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">One-time code</label>
               <input
                 type="text"
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 maxLength={6}
                 placeholder="000000"
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-lg text-center tracking-widest font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                {...otpForm.register('otp', { required: 'Code is required', minLength: { value: 6, message: 'Enter 6-digit code' } })}
+                className="w-full border border-gray-200 rounded-xl px-4 py-4 text-2xl text-center tracking-[0.5em] font-mono shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                {...otpForm.register('otp', {
+                  required: 'Code is required',
+                  minLength: { value: 6, message: 'Enter the full 6-digit code' },
+                })}
               />
               {otpForm.formState.errors.otp && (
-                <p className="text-red-500 text-xs mt-1">{otpForm.formState.errors.otp.message}</p>
+                <p className="text-red-500 text-xs mt-1.5">{otpForm.formState.errors.otp.message}</p>
               )}
             </div>
 
-            {error && <p className="text-red-500 text-sm bg-red-50 rounded-lg px-3 py-2">{error}</p>}
+            {error && (
+              <p className="text-red-600 text-sm bg-red-50 border border-red-100 rounded-xl px-4 py-3">{error}</p>
+            )}
 
             <Button type="submit" variant="primary" fullWidth loading={loading}>
               Verify
@@ -136,9 +147,9 @@ export default function LoginScreen() {
             <button
               type="button"
               onClick={() => { setStep('email'); setError('') }}
-              className="w-full text-center text-sm text-indigo-600 hover:underline"
+              className="w-full text-center text-sm text-indigo-600 hover:text-indigo-700 font-medium py-1"
             >
-              Use a different email
+              ← Use a different email
             </button>
           </form>
         )}

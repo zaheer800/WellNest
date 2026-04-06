@@ -101,7 +101,7 @@ export default function DashboardScreen() {
                   label={
                     <div className="flex flex-col items-center justify-center translate-y-1">
                       <span className={`text-4xl font-black tracking-tighter text-white leading-none`}>{score}</span>
-                      <span className="text-[10px] font-bold text-indigo-200 uppercase tracking-widest mt-1">Score</span>
+                      <span className="text-xs font-bold text-indigo-200 uppercase tracking-widest mt-1">Score</span>
                     </div>
                   }
                 />
@@ -137,7 +137,7 @@ export default function DashboardScreen() {
 
         {/* Quick Actions Bar - Floating circular buttons */}
         <div>
-          <h3 className="text-[13px] font-semibold text-gray-400 uppercase tracking-wider mb-3 px-1">Quick Log</h3>
+          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3 px-1">Quick Log</h3>
           <div className="grid grid-cols-4 gap-3">
             {quickActions.map((a) => (
               <button
@@ -156,7 +156,7 @@ export default function DashboardScreen() {
 
         {/* Quick Stats Grid */}
         <div>
-          <h3 className="text-[13px] font-semibold text-gray-400 uppercase tracking-wider mb-3 px-1">Today's Progress</h3>
+          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3 px-1">Today's Progress</h3>
           <div className="grid grid-cols-2 gap-4">
             {/* Water Stat */}
             <div onClick={() => navigate('/water')} className="bg-gradient-to-br from-blue-50 to-cyan-50 p-5 rounded-[1.5rem] shadow-sm border border-blue-100 relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-transform">
@@ -216,7 +216,7 @@ export default function DashboardScreen() {
                   </div>
                   <div className="flex-1">
                     <div className="flex justify-between items-start">
-                      <p className="text-[15px] font-bold leading-snug">{r.restriction}</p>
+                      <p className="text-base font-bold leading-snug">{r.restriction}</p>
                       <Badge label={r.severity} color={r.severity === 'absolute' ? 'red' : r.severity === 'strict' ? 'yellow' : 'gray'} size="sm" />
                     </div>
                     {r.reason && <p className={`text-xs mt-1.5 font-medium opacity-80`}>{r.reason}</p>}
@@ -229,14 +229,14 @@ export default function DashboardScreen() {
 
         {/* Support & Care Team */}
         <div>
-          <h3 className="text-[13px] font-semibold text-gray-400 uppercase tracking-wider mb-3 px-1">My Care Team</h3>
+          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3 px-1">My Care Team</h3>
           <div className="grid grid-cols-2 gap-4">
             <button
               onClick={() => navigate('/family')}
               className="flex flex-col items-start p-5 rounded-[1.5rem] bg-pink-50/50 hover:bg-pink-50 border border-pink-100 transition-all active:scale-[0.98] text-left cursor-pointer"
             >
               <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center mb-3"><Users className="w-5 h-5 text-pink-600" /></div>
-              <p className="text-[15px] font-bold text-gray-900">Family</p>
+              <p className="text-base font-bold text-gray-900">Family</p>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-1">Share Updates</p>
             </button>
             <button
@@ -244,7 +244,7 @@ export default function DashboardScreen() {
               className="flex flex-col items-start p-5 rounded-[1.5rem] bg-cyan-50/50 hover:bg-cyan-50 border border-cyan-100 transition-all active:scale-[0.98] text-left cursor-pointer"
             >
               <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center mb-3"><UserRoundCog className="w-5 h-5 text-cyan-600" /></div>
-              <p className="text-[15px] font-bold text-gray-900">Doctors</p>
+              <p className="text-base font-bold text-gray-900">Doctors</p>
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-1">Grant Access</p>
             </button>
           </div>
@@ -253,7 +253,7 @@ export default function DashboardScreen() {
         {/* Medical Records (AI Insights) */}
         <div>
           <div className="flex items-center justify-between mb-3 px-1">
-            <h3 className="text-[13px] font-semibold text-gray-400 uppercase tracking-wider">Medical Records</h3>
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Medical Records</h3>
             <span className="text-xs text-purple-600 font-semibold bg-purple-50 px-2 flex items-center justify-center gap-1 py-0.5 rounded-full border border-purple-100"><Sparkles className="w-3 h-3 text-purple-500 fill-purple-400" /> AI Active</span>
           </div>
           <div className="grid grid-cols-3 gap-3">
