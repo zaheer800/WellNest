@@ -13,6 +13,7 @@ export default function OnboardingScreen() {
   const { user, updateProfile, loading } = useAuthStore()
   const [step, setStep] = useState(1)
   const [step1Data, setStep1Data] = useState<Step1Data | null>(null)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const form1 = useForm<Step1Data>()
   const form2 = useForm<Step2Data>({ mode: 'onBlur' })
@@ -30,6 +31,7 @@ export default function OnboardingScreen() {
   }
 
   const handleStep2 = async (data: Step2Data) => {
+    setSubmitError(null)
     try {
       await updateProfile({
         ...(step1Data ?? {}),
@@ -38,7 +40,9 @@ export default function OnboardingScreen() {
       })
       setStep(3)
     } catch (e) {
-      // Error handled by store
+      setSubmitError(
+        e instanceof Error ? e.message : 'Could not save your measurements. Please try again.'
+      )
     }
   }
 
@@ -144,10 +148,14 @@ export default function OnboardingScreen() {
               )}
             </div>
 
+            {submitError && (
+              <p className="text-red-500 text-sm bg-red-50 rounded-lg px-3 py-2">{submitError}</p>
+            )}
+
             <div className="pt-4 space-y-3">
               <Button type="submit" variant="primary" fullWidth loading={loading}>Continue</Button>
               <button type="button" onClick={handleSkip} className="w-full text-sm text-gray-400 hover:text-gray-600">
-                Skip for now
+                Skip — enter later
               </button>
             </div>
           </form>

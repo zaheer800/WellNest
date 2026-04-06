@@ -22,6 +22,7 @@ import FamilyScreen from '@/screens/FamilyScreen'
 import DoctorScreen from '@/screens/DoctorScreen'
 import DietScreen from '@/screens/DietScreen'
 import MoreScreen from '@/screens/MoreScreen'
+import AuthCallbackScreen from '@/screens/AuthCallbackScreen'
 import JoinScreen from '@/screens/JoinScreen'
 import JoinDoctorScreen from '@/screens/JoinDoctorScreen'
 import FamilyDashboardScreen from '@/screens/FamilyDashboardScreen'
@@ -89,6 +90,7 @@ export default function App() {
         <Route path="/" element={<SplashScreen />} />
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/onboarding" element={<OnboardingScreen />} />
+        <Route path="/auth/callback" element={<AuthCallbackScreen />} />
         <Route path="/join" element={<JoinScreen />} />
         <Route path="/join-doctor" element={<JoinDoctorScreen />} />
 

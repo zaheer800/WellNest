@@ -110,8 +110,8 @@ const BottomNav: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-100 pb-safe">
-      <div className="max-w-md mx-auto flex items-stretch">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 h-16 bg-white border-t border-gray-100 pb-safe">
+      <div className="max-w-md mx-auto h-full flex items-stretch">
         {navItems.map(({ label, path, icon: Icon }) => {
           const moreRoutes = ['/symptoms', '/exercise', '/posture', '/diet', '/family', '/doctor', '/imaging', '/conditions', '/progress', '/more']
           const isActive = path === '/more'
@@ -122,14 +122,19 @@ const BottomNav: React.FC = () => {
               key={path}
               onClick={() => navigate(path)}
               className={[
-                'flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-xs font-medium',
-                'transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400',
+                'flex-1 relative flex flex-col items-center justify-center gap-1 py-3 min-h-[56px]',
+                'text-[11px] font-medium transition-colors duration-150',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400',
                 isActive ? 'text-indigo-500' : 'text-gray-400 hover:text-gray-600',
               ].join(' ')}
               aria-current={isActive ? 'page' : undefined}
               aria-label={label}
             >
-              <Icon className="h-5 w-5" />
+              {/* Active indicator line at top */}
+              {isActive && (
+                <span className="absolute top-0 left-1/4 right-1/4 h-0.5 bg-indigo-500 rounded-b-full" />
+              )}
+              <Icon className="h-6 w-6" />
               <span>{label}</span>
             </button>
           );

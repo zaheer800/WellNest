@@ -64,7 +64,7 @@ export default function DashboardScreen() {
             {getGreeting()}{user?.name ? `, ${user.name.split(' ')[0]}` : ''}
           </h1>
           <div className="flex items-center gap-3">
-            <span className="text-[13px] font-bold text-gray-400 tracking-wider uppercase">{formatDate(date)}</span>
+            <span className="text-sm font-semibold text-gray-400 uppercase tracking-wider">{formatDate(date)}</span>
           </div>
         </div>
 
@@ -80,10 +80,10 @@ export default function DashboardScreen() {
         )}
 
         {/* HERO: Health Score Dashboard */}
-        <div className="relative bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-950 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.15)] overflow-hidden text-white">
+        <div className="relative bg-gradient-to-br from-indigo-800 via-indigo-900 to-purple-900 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.15)] overflow-hidden text-white border border-indigo-700/30">
           {/* Decorative background blobs */}
-          <div className="absolute -top-20 -right-20 w-64 h-64 bg-fuchsia-500 rounded-full blur-[80px] opacity-40"></div>
-          <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-indigo-500 rounded-full blur-[80px] opacity-40"></div>
+          <div className="absolute -top-20 -right-20 w-64 h-64 bg-fuchsia-500 rounded-full blur-[80px] opacity-25"></div>
+          <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-indigo-500 rounded-full blur-[80px] opacity-25"></div>
           
           <div className="p-7 relative z-10">
             <div className="flex items-center justify-between mb-6">
@@ -119,8 +119,8 @@ export default function DashboardScreen() {
                   <div key={item.label} className="flex flex-col gap-1">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5 flex-1">
-                        <span className="text-[10px] drop-shadow-sm flex items-center justify-center">{item.icon}</span>
-                        <span className="text-[11px] font-semibold text-indigo-100 uppercase tracking-wider">{item.label}</span>
+                        <span className="text-xs drop-shadow-sm flex items-center justify-center">{item.icon}</span>
+                        <span className="text-xs font-semibold text-indigo-100 uppercase tracking-wider">{item.label}</span>
                       </div>
                       <span className={`text-xs font-bold ${item.color}`}>{item.value}<span className="text-white/40">/{item.max}</span></span>
                     </div>
@@ -137,7 +137,7 @@ export default function DashboardScreen() {
 
         {/* Quick Actions Bar - Floating circular buttons */}
         <div>
-          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-1">Quick Log</h3>
+          <h3 className="text-[13px] font-semibold text-gray-400 uppercase tracking-wider mb-3 px-1">Quick Log</h3>
           <div className="grid grid-cols-4 gap-3">
             {quickActions.map((a) => (
               <button
@@ -145,10 +145,10 @@ export default function DashboardScreen() {
                 onClick={() => navigate(a.path)}
                 className="flex flex-col items-center gap-2 group cursor-pointer"
               >
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center shadow-[0_4px_15px_rgb(0,0,0,0.04)] border border-white transition-all duration-300 group-hover:scale-105 active:scale-95 text-gray-700 bg-white`}>
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center shadow-[0_4px_15px_rgb(0,0,0,0.06)] border border-gray-100 transition-all duration-300 group-hover:scale-105 active:scale-95 text-gray-700 bg-white`}>
                   <div className={a.color}>{a.icon}</div>
                 </div>
-                <span className="text-[11px] font-semibold text-gray-600">{a.label}</span>
+                <span className="text-xs font-medium text-gray-600">{a.label}</span>
               </button>
             ))}
           </div>
@@ -156,13 +156,13 @@ export default function DashboardScreen() {
 
         {/* Quick Stats Grid */}
         <div>
-          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-1">Today's Progress</h3>
+          <h3 className="text-[13px] font-semibold text-gray-400 uppercase tracking-wider mb-3 px-1">Today's Progress</h3>
           <div className="grid grid-cols-2 gap-4">
             {/* Water Stat */}
             <div onClick={() => navigate('/water')} className="bg-gradient-to-br from-blue-50 to-cyan-50 p-5 rounded-[1.5rem] shadow-sm border border-blue-100 relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-transform">
               <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/60 rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
               <p className="text-2xl font-black text-blue-600 tracking-tight">{formatMl(waterTotal)}</p>
-              <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mb-3">/ {formatMl(waterGoalMl)} Goal</p>
+              <p className="text-xs text-blue-400 font-semibold uppercase tracking-wider mb-3">/ {formatMl(waterGoalMl)} Goal</p>
               <div className="flex items-center gap-2">
                 <Droplet className="w-5 h-5 text-blue-500" />
                 <span className="text-sm font-semibold text-blue-800">Water</span>
@@ -173,7 +173,7 @@ export default function DashboardScreen() {
             <div onClick={() => navigate('/medications')} className="bg-gradient-to-br from-indigo-50 to-purple-50 p-5 rounded-[1.5rem] shadow-sm border border-indigo-100 relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-transform">
                <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/60 rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
               <p className="text-2xl font-black text-indigo-600 tracking-tight">{takenCount}<span className="text-indigo-300">/{totalMeds}</span></p>
-              <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mb-3">Taken Today</p>
+              <p className="text-xs text-indigo-400 font-semibold uppercase tracking-wider mb-3">Taken Today</p>
               <div className="flex items-center gap-2">
                 <Pill className="w-5 h-5 text-indigo-500" />
                 <span className="text-sm font-semibold text-indigo-800">Meds</span>
@@ -184,7 +184,7 @@ export default function DashboardScreen() {
             <div onClick={() => navigate('/posture')} className="bg-gradient-to-br from-emerald-50 to-teal-50 p-5 rounded-[1.5rem] shadow-sm border border-emerald-100 relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-transform">
                <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/60 rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
               <p className="text-2xl font-black text-emerald-600 tracking-tight">{breaksTaken}<span className="text-emerald-300">/{standBreakGoal}</span></p>
-              <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest mb-3">Stand Breaks</p>
+              <p className="text-xs text-emerald-400 font-semibold uppercase tracking-wider mb-3">Stand Breaks</p>
               <div className="flex items-center gap-2">
                 <Armchair className="w-5 h-5 text-emerald-500" />
                 <span className="text-sm font-semibold text-emerald-800">Posture</span>
@@ -195,7 +195,7 @@ export default function DashboardScreen() {
             <div onClick={() => navigate('/symptoms')} className="bg-gradient-to-br from-orange-50 to-amber-50 p-5 rounded-[1.5rem] shadow-sm border border-orange-100 relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-transform">
                <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/60 rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
               <p className="text-2xl font-black text-orange-500 tracking-tight">Log</p>
-              <p className="text-[10px] text-orange-400 font-bold uppercase tracking-widest mb-3">How you feel</p>
+              <p className="text-xs text-orange-400 font-semibold uppercase tracking-wider mb-3">How you feel</p>
               <div className="flex items-center gap-2">
                 <Stethoscope className="w-5 h-5 text-orange-500" />
                 <span className="text-sm font-semibold text-orange-800">Symptoms</span>
@@ -229,7 +229,7 @@ export default function DashboardScreen() {
 
         {/* Support & Care Team */}
         <div>
-          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-1">My Care Team</h3>
+          <h3 className="text-[13px] font-semibold text-gray-400 uppercase tracking-wider mb-3 px-1">My Care Team</h3>
           <div className="grid grid-cols-2 gap-4">
             <button
               onClick={() => navigate('/family')}
@@ -237,7 +237,7 @@ export default function DashboardScreen() {
             >
               <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center mb-3"><Users className="w-5 h-5 text-pink-600" /></div>
               <p className="text-[15px] font-bold text-gray-900">Family</p>
-              <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mt-1">Share Updates</p>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-1">Share Updates</p>
             </button>
             <button
               onClick={() => navigate('/doctor')}
@@ -245,7 +245,7 @@ export default function DashboardScreen() {
             >
               <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center mb-3"><UserRoundCog className="w-5 h-5 text-cyan-600" /></div>
               <p className="text-[15px] font-bold text-gray-900">Doctors</p>
-              <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mt-1">Grant Access</p>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-1">Grant Access</p>
             </button>
           </div>
         </div>
@@ -253,8 +253,8 @@ export default function DashboardScreen() {
         {/* Medical Records (AI Insights) */}
         <div>
           <div className="flex items-center justify-between mb-3 px-1">
-            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Medical Records</h3>
-            <span className="text-[10px] text-purple-600 font-bold bg-purple-50 px-2 flex items-center justify-center gap-1 py-0.5 rounded-full border border-purple-100"><Sparkles className="w-3 h-3 text-purple-500 fill-purple-400" /> AI Active</span>
+            <h3 className="text-[13px] font-semibold text-gray-400 uppercase tracking-wider">Medical Records</h3>
+            <span className="text-xs text-purple-600 font-semibold bg-purple-50 px-2 flex items-center justify-center gap-1 py-0.5 rounded-full border border-purple-100"><Sparkles className="w-3 h-3 text-purple-500 fill-purple-400" /> AI Active</span>
           </div>
           <div className="grid grid-cols-3 gap-3">
             <button
