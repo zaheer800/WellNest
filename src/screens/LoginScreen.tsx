@@ -1,50 +1,219 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
 import { useAuthStore } from '@/store/authStore'
 import Button from '@/components/ui/Button'
-import { HeartPulse } from 'lucide-react'
+import { HeartPulse, ChevronDown } from 'lucide-react'
 
-interface EmailForm { email: string }
-interface OtpForm { otp: string }
+// ─── Country codes ─────────────────────────────────────────────────────────────
 
-export default function LoginScreen() {
-  const navigate = useNavigate()
-  const { signInWithOtp, verifyOtp, signInWithGoogle, loading } = useAuthStore()
-  const [step, setStep] = useState<'email' | 'otp'>('email')
-  const [email, setEmail] = useState('')
-  const [error, setError] = useState('')
+const COUNTRY_CODES = [
+  { code: '+91',  flag: '🇮🇳', name: 'India' },
+  { code: '+1',   flag: '🇺🇸', name: 'US / Canada' },
+  { code: '+44',  flag: '🇬🇧', name: 'UK' },
+  { code: '+971', flag: '🇦🇪', name: 'UAE' },
+  { code: '+65',  flag: '🇸🇬', name: 'Singapore' },
+  { code: '+60',  flag: '🇲🇾', name: 'Malaysia' },
+  { code: '+92',  flag: '🇵🇰', name: 'Pakistan' },
+  { code: '+61',  flag: '🇦🇺', name: 'Australia' },
+  { code: '+880', flag: '🇧🇩', name: 'Bangladesh' },
+  { code: '+94',  flag: '🇱🇰', name: 'Sri Lanka' },
+  { code: '+966', flag: '🇸🇦', name: 'Saudi Arabia' },
+  { code: '+974', flag: '🇶🇦', name: 'Qatar' },
+  { code: '+973', flag: '🇧🇭', name: 'Bahrain' },
+  { code: '+49',  flag: '🇩🇪', name: 'Germany' },
+  { code: '+33',  flag: '🇫🇷', name: 'France' },
+  { code: '+81',  flag: '🇯🇵', name: 'Japan' },
+  { code: '+86',  flag: '🇨🇳', name: 'China' },
+  { code: '+82',  flag: '🇰🇷', name: 'South Korea' },
+]
 
-  const emailForm = useForm<EmailForm>()
-  const otpForm = useForm<OtpForm>()
+// ─── OTP input — 6 individual boxes ──────────────────────────────────────────
 
-  const handleSendOtp = async (data: EmailForm) => {
-    setError('')
-    try {
-      await signInWithOtp(data.email)
-      setEmail(data.email)
-      setStep('otp')
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to send OTP')
+function OtpBoxes({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const inputs = useRef<(HTMLInputElement | null)[]>([])
+
+  const handleKey = (i: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !value[i] && i > 0) {
+      inputs.current[i - 1]?.focus()
     }
   }
 
-  const handleVerifyOtp = async (data: OtpForm) => {
-    setError('')
-    try {
-      await verifyOtp(email, data.otp)
-      navigate('/onboarding', { replace: true })
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Invalid OTP. Please try again.')
+  const handleChange = (i: number, char: string) => {
+    const digit = char.replace(/\D/g, '').slice(-1)
+    const arr = value.padEnd(6, ' ').split('')
+    arr[i] = digit || ' '
+    const next = arr.join('').trimEnd()
+    onChange(next)
+    if (digit && i < 5) {
+      inputs.current[i + 1]?.focus()
     }
+  }
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
+    if (pasted) {
+      onChange(pasted)
+      inputs.current[Math.min(pasted.length, 5)]?.focus()
+    }
+    e.preventDefault()
   }
 
   return (
+    <div className="flex gap-2.5 justify-center" onPaste={handlePaste}>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <input
+          key={i}
+          ref={(el) => { inputs.current[i] = el }}
+          type="text"
+          inputMode="numeric"
+          maxLength={1}
+          value={value[i] ?? ''}
+          autoFocus={i === 0}
+          onChange={(e) => handleChange(i, e.target.value)}
+          onKeyDown={(e) => handleKey(i, e)}
+          className={[
+            'w-11 h-14 text-center text-xl font-bold rounded-xl border-2 transition-all',
+            'focus:outline-none focus:border-indigo-500 focus:bg-indigo-50/50',
+            value[i] ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-gray-200 bg-gray-50 text-gray-800',
+          ].join(' ')}
+        />
+      ))}
+    </div>
+  )
+}
+
+// ─── Main component ────────────────────────────────────────────────────────────
+
+type AuthTab = 'phone' | 'email'
+type FlowStep = 'input' | 'otp'
+
+export default function LoginScreen() {
+  const navigate = useNavigate()
+  const { signInWithOtp, verifyOtp, signInWithPhone, verifyPhoneOtp, signInWithGoogle, loading } = useAuthStore()
+
+  const [tab, setTab] = useState<AuthTab>('phone')
+  const [flowStep, setFlowStep] = useState<FlowStep>('input')
+
+  // Phone state
+  const [countryCode, setCountryCode] = useState('+91')
+  const [phoneNumber, setPhoneNumber] = useState('')
+  const [showCountryPicker, setShowCountryPicker] = useState(false)
+
+  // Email state
+  const [email, setEmail] = useState('')
+
+  // Shared OTP state
+  const [otp, setOtp] = useState('')
+  const [error, setError] = useState('')
+
+  const selectedCountry = COUNTRY_CODES.find((c) => c.code === countryCode) ?? COUNTRY_CODES[0]
+  const fullPhone = `${countryCode}${phoneNumber.replace(/\D/g, '')}`
+  const canSubmitPhone = phoneNumber.replace(/\D/g, '').length >= 7
+  const canSubmitEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  const canVerify = otp.replace(/\s/g, '').length === 6
+
+  // Auto-submit OTP when all 6 digits are entered
+  useEffect(() => {
+    if (canVerify && flowStep === 'otp') {
+      handleVerify()
+    }
+  }, [otp])
+
+  const handleSendOtp = async () => {
+    setError('')
+    try {
+      if (tab === 'phone') {
+        await signInWithPhone(fullPhone)
+      } else {
+        await signInWithOtp(email)
+      }
+      setFlowStep('otp')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not send code. Please try again.')
+    }
+  }
+
+  const handleVerify = async () => {
+    setError('')
+    try {
+      if (tab === 'phone') {
+        await verifyPhoneOtp(fullPhone, otp.trim())
+      } else {
+        await verifyOtp(email, otp.trim())
+      }
+      navigate('/onboarding', { replace: true })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Incorrect code. Please try again.')
+    }
+  }
+
+  const handleBack = () => {
+    setFlowStep('input')
+    setOtp('')
+    setError('')
+  }
+
+  // ── OTP verification screen ────────────────────────────────────────────────
+
+  if (flowStep === 'otp') {
+    const sentTo = tab === 'phone'
+      ? `${selectedCountry.flag} ${countryCode} ${phoneNumber}`
+      : email
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-indigo-50/50 via-white to-white flex flex-col items-center justify-center px-6 relative overflow-hidden">
+        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-indigo-100 rounded-full blur-3xl opacity-60 pointer-events-none" />
+        <div className="w-full max-w-sm space-y-8 relative">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">{tab === 'phone' ? '📱' : '✉️'}</span>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">Enter the code</h2>
+            <p className="text-gray-500 text-sm mt-2 leading-relaxed">
+              We sent a 6-digit code to<br />
+              <span className="font-semibold text-gray-700">{sentTo}</span>
+            </p>
+          </div>
+
+          <OtpBoxes value={otp} onChange={setOtp} />
+
+          {error && (
+            <p className="text-red-600 text-sm bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-center">
+              {error}
+            </p>
+          )}
+
+          <Button variant="primary" fullWidth onClick={handleVerify} loading={loading} disabled={!canVerify}>
+            Verify & Continue
+          </Button>
+
+          <div className="text-center space-y-2">
+            <button
+              onClick={handleSendOtp}
+              disabled={loading}
+              className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+            >
+              Resend code
+            </button>
+            <br />
+            <button
+              onClick={handleBack}
+              className="text-sm text-gray-400 hover:text-gray-600"
+            >
+              ← Change {tab === 'phone' ? 'number' : 'email'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Input screen ───────────────────────────────────────────────────────────
+
+  return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50/50 via-white to-white flex flex-col items-center justify-center px-6 relative overflow-hidden">
-      {/* Decorative background bloom */}
       <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-indigo-100 rounded-full blur-3xl opacity-60 pointer-events-none" />
 
-      <div className="w-full max-w-sm space-y-8 relative">
+      <div className="w-full max-w-sm space-y-7 relative">
         {/* Logo */}
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
@@ -56,104 +225,134 @@ export default function LoginScreen() {
           <p className="text-gray-400 text-sm mt-1 font-medium">Your health. Your circle. Your journey.</p>
         </div>
 
-        {step === 'email' ? (
-          <form onSubmit={emailForm.handleSubmit(handleSendOtp)} className="space-y-4">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-800 mb-1">Welcome</h2>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                Sign in or create an account. We'll send a one-time code to your email.
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
-              <input
-                type="email"
-                autoComplete="email"
-                placeholder="you@example.com"
-                className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                {...emailForm.register('email', { required: 'Email is required' })}
-              />
-              {emailForm.formState.errors.email && (
-                <p className="text-red-500 text-xs mt-1.5">{emailForm.formState.errors.email.message}</p>
-              )}
-            </div>
-
-            {error && (
-              <p className="text-red-600 text-sm bg-red-50 border border-red-100 rounded-xl px-4 py-3">{error}</p>
-            )}
-
-            <Button type="submit" variant="primary" fullWidth loading={loading}>
-              Send Code
-            </Button>
-
-            <div className="relative flex items-center py-1">
-              <div className="flex-grow border-t border-gray-200" />
-              <span className="mx-3 text-gray-300 text-xs font-medium">or</span>
-              <div className="flex-grow border-t border-gray-200" />
-            </div>
-
+        {/* Tab switcher */}
+        <div className="flex bg-gray-100 rounded-2xl p-1">
+          {(['phone', 'email'] as AuthTab[]).map((t) => (
             <button
-              type="button"
-              onClick={() => signInWithGoogle()}
-              className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 rounded-xl py-3.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 hover:border-gray-300 transition active:scale-95"
+              key={t}
+              onClick={() => { setTab(t); setError('') }}
+              className={[
+                'flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all',
+                tab === t ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700',
+              ].join(' ')}
             >
-              <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 48 48">
-                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-              </svg>
-              Continue with Google
+              {t === 'phone' ? '📱  Phone' : '✉️  Email'}
             </button>
-          </form>
-        ) : (
-          <form onSubmit={otpForm.handleSubmit(handleVerifyOtp)} className="space-y-4">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-800 mb-1">Check your email</h2>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                We sent a 6-digit code to{' '}
-                <span className="font-semibold text-gray-700">{email}</span>
-              </p>
-            </div>
+          ))}
+        </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">One-time code</label>
+        {/* Phone input */}
+        {tab === 'phone' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Mobile number</label>
+            <div className="flex gap-2">
+              {/* Country code button */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowCountryPicker(!showCountryPicker)}
+                  className="h-full px-3 flex items-center gap-1.5 border border-gray-200 rounded-xl bg-gray-50 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-100 transition whitespace-nowrap"
+                >
+                  <span className="text-base">{selectedCountry.flag}</span>
+                  <span>{countryCode}</span>
+                  <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                </button>
+
+                {showCountryPicker && (
+                  <div className="absolute top-full left-0 mt-1 w-52 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 max-h-64 overflow-y-auto">
+                    {COUNTRY_CODES.map((c) => (
+                      <button
+                        key={c.code}
+                        onClick={() => { setCountryCode(c.code); setShowCountryPicker(false) }}
+                        className={[
+                          'w-full flex items-center gap-3 px-4 py-3 text-sm text-left hover:bg-indigo-50 transition',
+                          c.code === countryCode ? 'bg-indigo-50 font-semibold text-indigo-700' : 'text-gray-700',
+                        ].join(' ')}
+                      >
+                        <span className="text-base">{c.flag}</span>
+                        <span className="flex-1 truncate">{c.name}</span>
+                        <span className="text-gray-400 font-medium">{c.code}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Number input */}
               <input
-                type="text"
+                type="tel"
                 inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-                placeholder="000000"
-                className="w-full border border-gray-200 rounded-xl px-4 py-4 text-2xl text-center tracking-[0.5em] font-mono shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                {...otpForm.register('otp', {
-                  required: 'Code is required',
-                  minLength: { value: 6, message: 'Enter the full 6-digit code' },
-                })}
+                placeholder="9876543210"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                className="flex-1 border border-gray-200 rounded-xl px-4 py-3.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                autoFocus
               />
-              {otpForm.formState.errors.otp && (
-                <p className="text-red-500 text-xs mt-1.5">{otpForm.formState.errors.otp.message}</p>
-              )}
             </div>
-
-            {error && (
-              <p className="text-red-600 text-sm bg-red-50 border border-red-100 rounded-xl px-4 py-3">{error}</p>
-            )}
-
-            <Button type="submit" variant="primary" fullWidth loading={loading}>
-              Verify
-            </Button>
-
-            <button
-              type="button"
-              onClick={() => { setStep('email'); setError('') }}
-              className="w-full text-center text-sm text-indigo-600 hover:text-indigo-700 font-medium py-1"
-            >
-              ← Use a different email
-            </button>
-          </form>
+            <p className="text-xs text-gray-400 mt-2">We'll send you a one-time code via SMS</p>
+          </div>
         )}
+
+        {/* Email input */}
+        {tab === 'email' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Email address</label>
+            <input
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+              autoFocus
+            />
+            <p className="text-xs text-gray-400 mt-2">We'll email you a one-time sign-in code</p>
+          </div>
+        )}
+
+        {error && (
+          <p className="text-red-600 text-sm bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+            {error}
+          </p>
+        )}
+
+        <Button
+          variant="primary"
+          fullWidth
+          loading={loading}
+          disabled={tab === 'phone' ? !canSubmitPhone : !canSubmitEmail}
+          onClick={handleSendOtp}
+        >
+          Send Code
+        </Button>
+
+        {/* Divider */}
+        <div className="relative flex items-center">
+          <div className="flex-grow border-t border-gray-200" />
+          <span className="mx-3 text-gray-300 text-xs font-medium">or</span>
+          <div className="flex-grow border-t border-gray-200" />
+        </div>
+
+        {/* Google */}
+        <button
+          type="button"
+          onClick={() => signInWithGoogle()}
+          className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 rounded-xl py-3.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 hover:border-gray-300 transition active:scale-95"
+        >
+          <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 48 48">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          </svg>
+          Continue with Google
+        </button>
       </div>
+
+      {/* Close country picker on outside tap */}
+      {showCountryPicker && (
+        <div className="fixed inset-0 z-40" onClick={() => setShowCountryPicker(false)} />
+      )}
     </div>
   )
 }

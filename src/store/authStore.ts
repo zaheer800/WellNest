@@ -22,6 +22,8 @@ interface AuthActions {
   initialize: () => Promise<void>
   signInWithOtp: (email: string) => Promise<void>
   verifyOtp: (email: string, token: string) => Promise<void>
+  signInWithPhone: (phone: string) => Promise<void>
+  verifyPhoneOtp: (phone: string, token: string) => Promise<void>
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
   updateProfile: (profile: Partial<UserProfile>) => Promise<void>
@@ -191,6 +193,33 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         token,
         type: 'email',
       })
+      if (error) throw error
+    } finally {
+      set({ loading: false })
+    }
+  },
+
+  /**
+   * Sends a one-time password via SMS to the given phone number.
+   * Phone must be in E.164 format: +[country code][number] e.g. +919876543210
+   */
+  signInWithPhone: async (phone: string) => {
+    set({ loading: true })
+    try {
+      const { error } = await supabase.auth.signInWithOtp({ phone })
+      if (error) throw error
+    } finally {
+      set({ loading: false })
+    }
+  },
+
+  /**
+   * Verifies the SMS OTP token submitted by the user.
+   */
+  verifyPhoneOtp: async (phone: string, token: string) => {
+    set({ loading: true })
+    try {
+      const { error } = await supabase.auth.verifyOtp({ phone, token, type: 'sms' })
       if (error) throw error
     } finally {
       set({ loading: false })
