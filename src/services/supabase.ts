@@ -100,6 +100,9 @@ export async function upsertUser(
     if (profile.gender !== undefined) updateData.gender = profile.gender
     if (profile.height_cm !== undefined) updateData.height_cm = profile.height_cm
     if (profile.weight_kg !== undefined) updateData.weight_kg = profile.weight_kg
+    if (profile.blood_type !== undefined) updateData.blood_type = profile.blood_type
+    if (profile.allergies !== undefined) updateData.allergies = profile.allergies
+    if (profile.emergency_contacts !== undefined) updateData.emergency_contacts = profile.emergency_contacts
 
     const { data, error } = await supabase
       .from('users')
@@ -123,6 +126,9 @@ export async function upsertUser(
     if (profile.gender !== undefined) insertData.gender = profile.gender
     if (profile.height_cm !== undefined) insertData.height_cm = profile.height_cm
     if (profile.weight_kg !== undefined) insertData.weight_kg = profile.weight_kg
+    if (profile.blood_type !== undefined) insertData.blood_type = profile.blood_type
+    if (profile.allergies !== undefined) insertData.allergies = profile.allergies
+    if (profile.emergency_contacts !== undefined) insertData.emergency_contacts = profile.emergency_contacts
 
     const { data, error } = await supabase
       .from('users')
@@ -136,6 +142,29 @@ export async function upsertUser(
 
     return data as User
   }
+}
+
+// ─── Medical ID (public) ───────────────────────────────────────────────────────
+
+/**
+ * Fetch public Medical ID data via the get-medical-id Edge Function.
+ * No auth required — the token is the access control mechanism.
+ * Returns null if the token does not exist.
+ */
+export async function getMedicalIdData(token: string): Promise<{
+  name: string
+  blood_type: string | null
+  allergies: string[]
+  emergency_contacts: { name: string; phone: string; relationship: string }[]
+  medications: { name: string; dose: string | null; unit: string | null; frequency: string | null }[]
+} | null> {
+  const response = await fetch(
+    `${supabaseUrl}/functions/v1/get-medical-id?token=${encodeURIComponent(token)}`,
+    { headers: { apikey: supabaseAnonKey } }
+  )
+  if (response.status === 404) return null
+  if (!response.ok) throw new Error('Failed to load Medical ID')
+  return response.json()
 }
 
 // ─── Medications ───────────────────────────────────────────────────────────────

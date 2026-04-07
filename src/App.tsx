@@ -23,6 +23,8 @@ import DoctorScreen from '@/screens/DoctorScreen'
 import DietScreen from '@/screens/DietScreen'
 import MoreScreen from '@/screens/MoreScreen'
 import ProfileScreen from '@/screens/ProfileScreen'
+import SOSScreen from '@/screens/SOSScreen'
+import MedicalIdScreen from '@/screens/MedicalIdScreen'
 import AuthCallbackScreen from '@/screens/AuthCallbackScreen'
 import JoinScreen from '@/screens/JoinScreen'
 import JoinDoctorScreen from '@/screens/JoinDoctorScreen'
@@ -94,6 +96,7 @@ export default function App() {
         <Route path="/auth/callback" element={<AuthCallbackScreen />} />
         <Route path="/join" element={<JoinScreen />} />
         <Route path="/join-doctor" element={<JoinDoctorScreen />} />
+        <Route path="/medical-id/:token" element={<MedicalIdScreen />} />
 
         {/* Family member portal */}
         <Route path="/family-dashboard" element={<FamilyRoute><FamilyDashboardScreen /></FamilyRoute>} />
@@ -118,6 +121,7 @@ export default function App() {
         <Route path="/doctor" element={<PatientRoute><DoctorScreen /></PatientRoute>} />
         <Route path="/more" element={<PatientRoute><MoreScreen /></PatientRoute>} />
         <Route path="/profile" element={<PatientRoute><ProfileScreen /></PatientRoute>} />
+        <Route path="/sos" element={<PatientRoute><SOSScreen /></PatientRoute>} />
 
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />

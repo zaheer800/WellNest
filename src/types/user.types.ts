@@ -1,3 +1,9 @@
+export interface EmergencyContact {
+  name: string
+  phone: string
+  relationship: string
+}
+
 export interface User {
   id: string
   email: string
@@ -7,16 +13,23 @@ export interface User {
   height_cm: number | null
   weight_kg: number | null
   profile_photo_url: string | null
+  blood_type: string | null
+  allergies: string[]
+  medical_id_token: string | null
+  emergency_contacts: EmergencyContact[]
   created_at: string
   updated_at: string
 }
 
 export interface UserProfile {
-  name: string
-  date_of_birth: string
-  gender: 'male' | 'female' | 'other'
-  height_cm: number
-  weight_kg: number
+  name?: string
+  date_of_birth?: string
+  gender?: 'male' | 'female' | 'other'
+  height_cm?: number
+  weight_kg?: number
+  blood_type?: string
+  allergies?: string[]
+  emergency_contacts?: EmergencyContact[]
 }
 
 export interface FamilyMember {

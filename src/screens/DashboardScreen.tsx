@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/authStore'
 import { useHealthStore } from '@/store/healthStore'
 import { useMedicationStore } from '@/store/medicationStore'
 import { usePostureStore } from '@/store/postureStore'
-import { Star, Pill, Droplet, Activity, Salad, Armchair, Stethoscope, Ban, AlertTriangle, MapPin, Users, UserRoundCog, FlaskConical, HeartPulse, Link2, Sparkles } from 'lucide-react'
+import { Star, Pill, Droplet, Activity, Salad, Armchair, Stethoscope, Ban, AlertTriangle, MapPin, Users, UserRoundCog, FlaskConical, HeartPulse, Link2, Sparkles, Phone } from 'lucide-react'
 import CircularProgress from '@/components/ui/CircularProgress'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
@@ -282,6 +282,15 @@ export default function DashboardScreen() {
         </div>
 
       </div>
+
+      {/* SOS floating button */}
+      <button
+        onClick={() => navigate('/sos')}
+        aria-label="Emergency SOS"
+        className="fixed bottom-24 right-5 z-40 w-14 h-14 rounded-full bg-red-500 text-white flex items-center justify-center shadow-[0_4px_20px_rgba(239,68,68,0.45)] hover:bg-red-600 active:scale-95 transition-all"
+      >
+        <Phone className="w-6 h-6 fill-white text-white" />
+      </button>
     </PageWrapper>
   )
 }

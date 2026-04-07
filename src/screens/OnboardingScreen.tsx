@@ -2,7 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '@/store/authStore'
-import { HeartPulse, ChevronUp, ChevronDown, ArrowLeft } from 'lucide-react'
+import { HeartPulse, ChevronUp, ChevronDown, ArrowLeft, Plus, Trash2, Phone } from 'lucide-react'
+import type { EmergencyContact } from '@/types/user.types'
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
@@ -15,7 +16,9 @@ const GOALS = [
   { id: 'recovery',   emoji: '💊', title: 'Post-treatment recovery',    sub: 'Monitor progress after treatment' },
 ]
 
-const TOTAL_STEPS = 8 // 0 = welcome, 7 = finale
+const TOTAL_STEPS = 9 // 0 = welcome, 8 = finale
+
+const RELATIONSHIPS = ['Parent', 'Spouse', 'Child', 'Sibling', 'Friend', 'Other']
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -192,6 +195,7 @@ export default function OnboardingScreen() {
   const [heightCm,  setHeightCm]  = useState(170)
   const [weightKg,  setWeightKg]  = useState(70)
   const [goal,      setGoal]      = useState<string | null>(null)
+  const [contacts,  setContacts]  = useState<EmergencyContact[]>([])
 
   // Redirect if already onboarded
   useEffect(() => {
@@ -214,12 +218,14 @@ export default function OnboardingScreen() {
     setSaving(true)
     try {
       const dob = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+      const validContacts = contacts.filter((c) => c.name.trim() && c.phone.trim())
       await updateProfile({
         name: name.trim(),
         date_of_birth: dob,
         gender: gender ?? undefined,
         height_cm: heightCm,
         weight_kg: weightKg,
+        emergency_contacts: validContacts,
       })
       goNext()
     } catch (e) {
@@ -231,11 +237,25 @@ export default function OnboardingScreen() {
 
   const handleSkip = () => navigate('/dashboard', { replace: true })
 
-  // Progress bar fill (steps 1–6 are "data" steps)
-  const progress = step === 0 ? 0 : step >= 7 ? 100 : Math.round(((step) / 7) * 100)
+  const handleSaveContacts = async () => {
+    if (contacts.length === 0) { goNext(); return }
+    setSaving(true)
+    try {
+      await updateProfile({ emergency_contacts: contacts })
+      goNext()
+    } catch {
+      // Non-critical — skip silently and move forward
+      goNext()
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Progress bar fill (steps 1–7 are "data" steps)
+  const progress = step === 0 ? 0 : step >= 8 ? 100 : Math.round((step / 7) * 100)
 
   // ── Background: dark for welcome/finale, light for data steps ─────────────
-  const isDark = step === 0 || step === 7
+  const isDark = step === 0 || step === 8
   const bgClass = isDark
     ? 'bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-950'
     : 'bg-gradient-to-b from-indigo-50/40 via-white to-white'
@@ -294,7 +314,7 @@ export default function OnboardingScreen() {
         return (
           <div className="flex flex-col gap-8 px-6 py-8">
             <div>
-              <p className="text-indigo-500 text-sm font-semibold mb-2">Step 1 of 6</p>
+              <p className="text-indigo-500 text-sm font-semibold mb-2">Step 1 of 7</p>
               <h2 className="text-3xl font-black text-gray-900 leading-tight">What should<br />we call you?</h2>
               <p className="text-gray-500 text-sm mt-2">We'll use your name throughout the app.</p>
             </div>
@@ -323,7 +343,7 @@ export default function OnboardingScreen() {
         return (
           <div className="flex flex-col gap-8 px-6 py-8">
             <div>
-              <p className="text-indigo-500 text-sm font-semibold mb-2">Step 2 of 6</p>
+              <p className="text-indigo-500 text-sm font-semibold mb-2">Step 2 of 7</p>
               <h2 className="text-3xl font-black text-gray-900 leading-tight">
                 When were<br />you born,{' '}
                 <span className="text-indigo-600">{name.split(' ')[0]}</span>?
@@ -374,7 +394,7 @@ export default function OnboardingScreen() {
         return (
           <div className="flex flex-col gap-8 px-6 py-8">
             <div>
-              <p className="text-indigo-500 text-sm font-semibold mb-2">Step 3 of 6</p>
+              <p className="text-indigo-500 text-sm font-semibold mb-2">Step 3 of 7</p>
               <h2 className="text-3xl font-black text-gray-900 leading-tight">How do<br />you identify?</h2>
               <p className="text-gray-500 text-sm mt-2">Used for accurate health reference ranges.</p>
             </div>
@@ -418,7 +438,7 @@ export default function OnboardingScreen() {
         return (
           <div className="flex flex-col gap-8 px-6 py-8">
             <div>
-              <p className="text-indigo-500 text-sm font-semibold mb-2">Step 4 of 6</p>
+              <p className="text-indigo-500 text-sm font-semibold mb-2">Step 4 of 7</p>
               <h2 className="text-3xl font-black text-gray-900 leading-tight">How tall<br />are you?</h2>
               <p className="text-gray-500 text-sm mt-2">Used to calculate BMI and personalise your plan.</p>
             </div>
@@ -453,7 +473,7 @@ export default function OnboardingScreen() {
         return (
           <div className="flex flex-col gap-8 px-6 py-8">
             <div>
-              <p className="text-indigo-500 text-sm font-semibold mb-2">Step 5 of 6</p>
+              <p className="text-indigo-500 text-sm font-semibold mb-2">Step 5 of 7</p>
               <h2 className="text-3xl font-black text-gray-900 leading-tight">What do<br />you weigh?</h2>
               <p className="text-gray-500 text-sm mt-2">We'll calculate your BMI and track changes over time.</p>
             </div>
@@ -493,7 +513,7 @@ export default function OnboardingScreen() {
         return (
           <div className="flex flex-col gap-6 px-6 py-8">
             <div>
-              <p className="text-indigo-500 text-sm font-semibold mb-2">Step 6 of 6</p>
+              <p className="text-indigo-500 text-sm font-semibold mb-2">Step 6 of 7</p>
               <h2 className="text-3xl font-black text-gray-900 leading-tight">What brings<br />you here?</h2>
               <p className="text-gray-500 text-sm mt-2">We'll personalise your dashboard around your goal.</p>
             </div>
@@ -531,17 +551,117 @@ export default function OnboardingScreen() {
             )}
 
             <button
-              onClick={handleSave}
-              disabled={!goal || saving || loading}
+              onClick={goNext}
+              disabled={!goal}
               className="w-full bg-indigo-600 text-white font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(99,102,241,0.3)] hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none"
             >
-              {saving || loading ? 'Saving…' : 'Finish setup →'}
+              Continue →
             </button>
           </div>
         )
 
-      // ── 7: Finale ─────────────────────────────────────────────────────────
+      // ── 7: Emergency Contacts ─────────────────────────────────────────────
       case 7: {
+        const addContact = () => {
+          if (contacts.length >= 3) return
+          setContacts([...contacts, { name: '', phone: '', relationship: 'Parent' }])
+        }
+        const removeContact = (i: number) =>
+          setContacts(contacts.filter((_, idx) => idx !== i))
+        const updateContact = (i: number, field: keyof EmergencyContact, val: string) =>
+          setContacts(contacts.map((c, idx) => idx === i ? { ...c, [field]: val } : c))
+
+        const validContacts = contacts.filter((c) => c.name.trim() && c.phone.trim())
+
+        return (
+          <div className="flex flex-col gap-6 px-6 py-8">
+            <div>
+              <p className="text-indigo-500 text-sm font-semibold mb-2">Step 7 of 7</p>
+              <h2 className="text-3xl font-black text-gray-900 leading-tight">Emergency<br />contacts</h2>
+              <p className="text-gray-500 text-sm mt-2">Who should be called in an emergency? Added to your scannable Medical ID.</p>
+            </div>
+
+            <div className="space-y-4">
+              {contacts.map((c, i) => (
+                <div key={i} className="bg-white border border-gray-200 rounded-2xl p-4 space-y-3 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center">
+                        <Phone className="w-3.5 h-3.5 text-red-500" />
+                      </div>
+                      <span className="text-sm font-bold text-gray-700">Contact {i + 1}</span>
+                    </div>
+                    <button onClick={() => removeContact(i)} className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-red-500 transition">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Full name"
+                    value={c.name}
+                    onChange={(e) => updateContact(i, 'name', e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  />
+                  <input
+                    type="tel"
+                    placeholder="Phone number"
+                    value={c.phone}
+                    onChange={(e) => updateContact(i, 'phone', e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    {RELATIONSHIPS.map((r) => (
+                      <button
+                        key={r}
+                        onClick={() => updateContact(i, 'relationship', r)}
+                        className={[
+                          'px-3 py-1.5 rounded-full text-xs font-semibold border transition',
+                          c.relationship === r
+                            ? 'bg-indigo-500 border-indigo-500 text-white'
+                            : 'border-gray-200 text-gray-600',
+                        ].join(' ')}
+                      >
+                        {r}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              {contacts.length < 3 && (
+                <button
+                  onClick={addContact}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border-2 border-dashed border-indigo-200 text-indigo-500 font-semibold text-sm hover:border-indigo-400 hover:bg-indigo-50 transition"
+                >
+                  <Plus className="w-4 h-4" /> Add contact
+                </button>
+              )}
+            </div>
+
+            {error && (
+              <p className="text-red-500 text-sm bg-red-50 border border-red-100 rounded-xl px-4 py-3">{error}</p>
+            )}
+
+            <button
+              onClick={handleSave}
+              disabled={saving || loading}
+              className="w-full bg-indigo-600 text-white font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(99,102,241,0.3)] hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none"
+            >
+              {saving || loading ? 'Saving…' : validContacts.length > 0 ? `Save & finish →` : 'Finish setup →'}
+            </button>
+
+            <button
+              onClick={handleSkip}
+              className="text-gray-400 text-sm font-medium py-1 hover:text-gray-600 transition text-center"
+            >
+              Skip — add contacts later
+            </button>
+          </div>
+        )
+      }
+
+      // ── 8: Finale ─────────────────────────────────────────────────────────
+      case 8: {
         const goalData = GOALS.find((g) => g.id === goal)
         const trackingItems = {
           condition: ['Medications & doses', 'Symptoms & severity', 'Lab & imaging reports'],
@@ -604,7 +724,7 @@ export default function OnboardingScreen() {
     <div className={`min-h-screen ${bgClass} flex flex-col transition-colors duration-500 overflow-hidden`}>
 
       {/* Top bar: progress + back */}
-      {step > 0 && step < 7 && (
+      {step > 0 && step < 8 && (
         <div className="flex items-center gap-3 px-5 pt-safe pt-5 pb-2 flex-shrink-0">
           <button
             onClick={goBack}
