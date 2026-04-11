@@ -38,7 +38,7 @@ const Header: React.FC<HeaderProps> = ({
           {showBackButton && (
             <button
               onClick={() => navigate(-1)}
-              className="p-1 -ml-1 rounded-lg text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+              className="p-1 -ml-1 rounded-lg text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal"
               aria-label="Go back"
             >
               <BackArrow />

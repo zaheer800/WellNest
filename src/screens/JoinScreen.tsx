@@ -77,29 +77,29 @@ export default function JoinScreen() {
     }
   }
 
-  const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
+  const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal'
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center p-6">
       <div className="w-full max-w-sm bg-white rounded-3xl shadow-xl p-8 space-y-6">
         <div className="text-center">
-          <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <HeartHandshake className="w-8 h-8 text-indigo-600" />
+          <div className="w-16 h-16 bg-brand-teal-light rounded-full flex items-center justify-center mx-auto mb-4">
+            <HeartHandshake className="w-8 h-8 text-brand-teal" />
           </div>
           <h1 className="text-xl font-bold text-gray-900">WellNest Family</h1>
         </div>
 
         {step === 'loading' && (
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
+            <Loader2 className="w-6 h-6 text-brand-teal animate-spin" />
           </div>
         )}
 
         {step === 'login' && invite && (
           <div className="space-y-4">
-            <div className="bg-indigo-50 rounded-2xl p-4 text-center">
+            <div className="bg-brand-teal-light rounded-2xl p-4 text-center">
               <p className="text-sm text-gray-600">
-                <span className="font-semibold text-indigo-700">{invite.patient_name}</span> has invited you to their WellNest health circle.
+                <span className="font-semibold text-brand-navy">{invite.patient_name}</span> has invited you to their WellNest health circle.
               </p>
             </div>
             <p className="text-sm text-gray-500 text-center">Enter your email to get started</p>
@@ -113,7 +113,7 @@ export default function JoinScreen() {
             <button
               onClick={handleSendOtp}
               disabled={loading || !email.trim()}
-              className="w-full py-3 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 disabled:opacity-60 transition"
+              className="w-full py-3 bg-brand-teal text-white rounded-xl font-semibold text-sm hover:bg-brand-teal-dark disabled:opacity-60 transition"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Send verification code'}
             </button>
@@ -141,7 +141,7 @@ export default function JoinScreen() {
             <button
               onClick={handleVerifyOtp}
               disabled={loading || otp.length < 6}
-              className="w-full py-3 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 disabled:opacity-60 transition"
+              className="w-full py-3 bg-brand-teal text-white rounded-xl font-semibold text-sm hover:bg-brand-teal-dark disabled:opacity-60 transition"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Verify & join circle'}
             </button>
@@ -153,7 +153,7 @@ export default function JoinScreen() {
 
         {(step === 'accepting') && (
           <div className="flex flex-col items-center gap-3 py-6">
-            <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
+            <Loader2 className="w-6 h-6 text-brand-teal animate-spin" />
             <p className="text-sm text-gray-500">Joining the circle…</p>
           </div>
         )}
@@ -163,7 +163,7 @@ export default function JoinScreen() {
             <p className="text-2xl">🎉</p>
             <p className="font-semibold text-gray-800">You're in!</p>
             <p className="text-sm text-gray-500">You can now see {invite?.patient_name}'s health updates.</p>
-            <button onClick={() => navigate('/family-dashboard', { replace: true })} className="w-full py-3 bg-indigo-600 text-white rounded-xl font-semibold text-sm">
+            <button onClick={() => navigate('/family-dashboard', { replace: true })} className="w-full py-3 bg-brand-teal text-white rounded-xl font-semibold text-sm">
               Go to dashboard
             </button>
           </div>

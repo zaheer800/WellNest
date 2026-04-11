@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import Button from '@/components/ui/Button'
-import { HeartPulse, ChevronDown } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 
 // ─── Country codes ─────────────────────────────────────────────────────────────
 
@@ -73,8 +73,8 @@ function OtpBoxes({ value, onChange }: { value: string; onChange: (v: string) =>
           onKeyDown={(e) => handleKey(i, e)}
           className={[
             'w-11 h-14 text-center text-xl font-bold rounded-xl border-2 transition-all',
-            'focus:outline-none focus:border-indigo-500 focus:bg-indigo-50/50',
-            value[i] ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-gray-200 bg-gray-50 text-gray-800',
+            'focus:outline-none focus:border-brand-teal focus:bg-brand-teal-light/50',
+            value[i] ? 'border-brand-teal bg-brand-teal-light text-brand-navy' : 'border-gray-200 bg-gray-50 text-gray-800',
           ].join(' ')}
         />
       ))}
@@ -160,11 +160,11 @@ export default function LoginScreen() {
       ? `${selectedCountry.flag} ${countryCode} ${phoneNumber}`
       : email
     return (
-      <div className="min-h-screen bg-gradient-to-b from-indigo-50/50 via-white to-white flex flex-col items-center justify-center px-6 relative overflow-hidden">
-        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-indigo-100 rounded-full blur-3xl opacity-60 pointer-events-none" />
+      <div className="min-h-screen bg-gradient-to-b from-brand-teal-light/50 via-white to-white flex flex-col items-center justify-center px-6 relative overflow-hidden">
+        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-brand-teal-light rounded-full blur-3xl opacity-60 pointer-events-none" />
         <div className="w-full max-w-sm space-y-8 relative">
           <div className="text-center">
-            <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-brand-teal-light rounded-2xl flex items-center justify-center mx-auto mb-4">
               <span className="text-3xl">{tab === 'phone' ? '📱' : '✉️'}</span>
             </div>
             <h2 className="text-2xl font-bold text-gray-900">Enter the code</h2>
@@ -190,7 +190,7 @@ export default function LoginScreen() {
             <button
               onClick={handleSendOtp}
               disabled={loading}
-              className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+              className="text-sm text-brand-teal hover:text-brand-navy font-medium"
             >
               Resend code
             </button>
@@ -210,19 +210,21 @@ export default function LoginScreen() {
   // ── Input screen ───────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-50/50 via-white to-white flex flex-col items-center justify-center px-6 relative overflow-hidden">
-      <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-indigo-100 rounded-full blur-3xl opacity-60 pointer-events-none" />
+    <div className="min-h-screen bg-gradient-to-b from-brand-teal-light/50 via-white to-white flex flex-col items-center justify-center px-6 relative overflow-hidden">
+      <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-brand-teal-light rounded-full blur-3xl opacity-60 pointer-events-none" />
 
       <div className="w-full max-w-sm space-y-7 relative">
         {/* Logo */}
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[1.75rem] shadow-[0_8px_30px_rgba(99,102,241,0.35)] flex items-center justify-center">
-              <HeartPulse className="w-10 h-10 text-white" />
-            </div>
+            <img
+              src="/icons/wellnest-icon.png"
+              alt="WellNest"
+              className="w-20 h-20 rounded-[1.75rem] shadow-[0_8px_30px_rgba(14,165,183,0.25)]"
+            />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">WellNest</h1>
-          <p className="text-gray-400 text-sm mt-1 font-medium">Your health. Your circle. Your journey.</p>
+          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">WellNest</h1>
+          <p className="text-gray-400 text-sm mt-1">Health Records. Smarter Insights. Better Decisions.</p>
         </div>
 
         {/* Tab switcher */}
@@ -265,8 +267,8 @@ export default function LoginScreen() {
                         key={c.code}
                         onClick={() => { setCountryCode(c.code); setShowCountryPicker(false) }}
                         className={[
-                          'w-full flex items-center gap-3 px-4 py-3 text-sm text-left hover:bg-indigo-50 transition',
-                          c.code === countryCode ? 'bg-indigo-50 font-semibold text-indigo-700' : 'text-gray-700',
+                          'w-full flex items-center gap-3 px-4 py-3 text-sm text-left hover:bg-brand-teal-light transition',
+                          c.code === countryCode ? 'bg-brand-teal-light font-semibold text-brand-navy' : 'text-gray-700',
                         ].join(' ')}
                       >
                         <span className="text-base">{c.flag}</span>
@@ -285,7 +287,7 @@ export default function LoginScreen() {
                 placeholder="9876543210"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
-                className="flex-1 border border-gray-200 rounded-xl px-4 py-3.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                className="flex-1 border border-gray-200 rounded-xl px-4 py-3.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-teal focus:border-transparent transition"
                 autoFocus
               />
             </div>
@@ -303,7 +305,7 @@ export default function LoginScreen() {
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+              className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-teal focus:border-transparent transition"
               autoFocus
             />
             <p className="text-xs text-gray-400 mt-2">We'll email you a one-time sign-in code</p>

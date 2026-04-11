@@ -79,7 +79,7 @@ const ReportUpload: React.FC<ReportUploadProps> = ({ patientId, onUploadComplete
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="w-full border-2 border-dashed border-gray-200 rounded-2xl py-10 flex flex-col items-center gap-2 text-gray-400 hover:border-indigo-300 hover:text-indigo-400 transition"
+          className="w-full border-2 border-dashed border-gray-200 rounded-2xl py-10 flex flex-col items-center gap-2 text-gray-400 hover:border-indigo-300 hover:text-brand-teal transition"
         >
           <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
@@ -100,7 +100,7 @@ const ReportUpload: React.FC<ReportUploadProps> = ({ patientId, onUploadComplete
       {/* Uploading spinner */}
       {uploading && (
         <div className="flex items-center gap-2 py-3 text-gray-500 text-sm">
-          <div className="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+          <div className="w-4 h-4 border-2 border-brand-teal border-t-transparent rounded-full animate-spin" />
           Uploading…
         </div>
       )}
@@ -110,8 +110,8 @@ const ReportUpload: React.FC<ReportUploadProps> = ({ patientId, onUploadComplete
         <div className="mt-1 space-y-4">
           {/* File name row */}
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-indigo-50 rounded-xl flex items-center justify-center flex-shrink-0">
-              <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <div className="w-9 h-9 bg-brand-teal-light rounded-xl flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-brand-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
               </svg>
             </div>
@@ -133,7 +133,7 @@ const ReportUpload: React.FC<ReportUploadProps> = ({ patientId, onUploadComplete
                   key={opt.value}
                   className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
                     pipeline === opt.value
-                      ? 'border-indigo-400 bg-indigo-50'
+                      ? 'border-brand-teal bg-brand-teal-light'
                       : 'border-gray-200 hover:border-indigo-200'
                   }`}
                 >
@@ -157,7 +157,7 @@ const ReportUpload: React.FC<ReportUploadProps> = ({ patientId, onUploadComplete
           <button
             type="button"
             onClick={handleConfirm}
-            className="w-full bg-indigo-600 text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-indigo-700 transition"
+            className="w-full bg-brand-teal text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-brand-teal-dark transition"
           >
             Process Report
           </button>

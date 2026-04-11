@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
-import { HeartPulse } from 'lucide-react'
 
 export default function SplashScreen() {
   const navigate = useNavigate()
@@ -19,21 +18,23 @@ export default function SplashScreen() {
   }, [initialized, session, user, navigate])
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-brand-navy">
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center mb-2">
-          <div className="w-20 h-20 bg-white rounded-[2rem] shadow-2xl flex items-center justify-center">
-            <HeartPulse className="w-10 h-10 text-indigo-500" />
-          </div>
+          <img
+            src="/icons/wellnest-icon.png"
+            alt="WellNest"
+            className="w-24 h-24 rounded-[1.75rem] shadow-2xl"
+          />
         </div>
-        <h1 className="text-4xl font-bold text-white tracking-tight">WellNest</h1>
-        <p className="text-indigo-100 text-base">Your health. Your circle. Your journey.</p>
+        <h1 className="text-4xl font-semibold text-white tracking-tight">WellNest</h1>
+        <p className="text-white/50 text-sm font-medium">Health Records. Smarter Insights. Better Decisions.</p>
       </div>
       <div className="absolute bottom-16 flex space-x-1.5">
         {[0, 1, 2].map((i) => (
           <div
             key={i}
-            className="w-2 h-2 rounded-full bg-white/60 animate-pulse"
+            className="w-2 h-2 rounded-full bg-brand-teal animate-pulse"
             style={{ animationDelay: `${i * 200}ms` }}
           />
         ))}

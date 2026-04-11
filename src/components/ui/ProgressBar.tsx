@@ -12,7 +12,7 @@ interface ProgressBarProps {
 }
 
 const colorClasses: Record<BarColor, string> = {
-  indigo: 'bg-indigo-500',
+  indigo: 'bg-brand-teal',
   green: 'bg-green-500',
   yellow: 'bg-yellow-400',
   red: 'bg-red-500',

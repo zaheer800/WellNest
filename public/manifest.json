@@ -1,0 +1,17 @@
+{
+  "name": "WellNest",
+  "short_name": "WellNest",
+  "description": "Health Records. Smarter Insights. Better Decisions.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A2540",
+  "theme_color": "#0A2540",
+  "icons": [
+    {
+      "src": "/icons/wellnest-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

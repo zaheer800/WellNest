@@ -43,7 +43,7 @@ const Card: React.FC<CardProps> = ({
         'bg-white rounded-2xl shadow-[0_2px_8px_rgba(0,0,0,0.06)] border border-gray-100/80',
         paddingClasses[padding],
         isClickable
-          ? 'hover:shadow-[0_4px_16px_rgba(0,0,0,0.09)] cursor-pointer transition-shadow duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-1'
+          ? 'hover:shadow-[0_4px_16px_rgba(0,0,0,0.09)] cursor-pointer transition-shadow duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-1'
           : '',
         className,
       ]

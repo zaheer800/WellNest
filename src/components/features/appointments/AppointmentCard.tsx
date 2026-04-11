@@ -60,7 +60,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
               <button
                 type="button"
                 onClick={() => onEdit(appointment)}
-                className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 transition"
+                className="p-1.5 rounded-lg text-gray-400 hover:text-brand-teal hover:bg-brand-teal-light transition"
                 aria-label="Edit appointment"
               >
                 <Pencil className="w-3.5 h-3.5" />
@@ -87,8 +87,8 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
             className={[
               'flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition',
               soon
-                ? 'bg-indigo-500 text-white hover:bg-indigo-600 animate-pulse'
-                : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100',
+                ? 'bg-brand-teal text-white hover:bg-brand-teal animate-pulse'
+                : 'bg-brand-teal-light text-brand-teal hover:bg-brand-teal-light',
             ].join(' ')}
           >
             {soon ? '📋 Prepare for Visit' : 'Prepare for Visit'}
@@ -129,7 +129,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
         <button
           type="button"
           onClick={() => onComplete(appointment.id)}
-          className="w-full py-2 px-3 bg-indigo-50 border border-indigo-100 rounded-xl text-xs font-semibold text-indigo-600 hover:bg-indigo-100 transition"
+          className="w-full py-2 px-3 bg-brand-teal-light border border-indigo-100 rounded-xl text-xs font-semibold text-brand-teal hover:bg-brand-teal-light transition"
         >
           Log outcome &amp; medications
         </button>

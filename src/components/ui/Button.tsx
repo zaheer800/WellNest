@@ -17,13 +17,13 @@ interface ButtonProps {
 
 const variantClasses: Record<Variant, string> = {
   primary:
-    'bg-indigo-500 text-white hover:bg-indigo-600 active:bg-indigo-700 focus-visible:ring-indigo-400',
+    'bg-brand-teal text-white hover:bg-brand-teal-dark active:bg-brand-teal-dark focus-visible:ring-brand-teal',
   secondary:
-    'bg-gray-100 text-gray-700 hover:bg-gray-200 active:bg-gray-300 focus-visible:ring-gray-300',
+    'bg-white text-brand-navy border border-gray-200 hover:bg-gray-50 active:bg-gray-100 focus-visible:ring-gray-300',
   danger:
     'bg-red-500 text-white hover:bg-red-600 active:bg-red-700 focus-visible:ring-red-400',
   ghost:
-    'bg-transparent text-indigo-500 hover:bg-indigo-50 active:bg-indigo-100 focus-visible:ring-indigo-300',
+    'bg-transparent text-brand-teal hover:bg-brand-teal-light active:bg-brand-teal/20 focus-visible:ring-brand-teal/30',
 };
 
 const sizeClasses: Record<Size, string> = {
@@ -40,19 +40,8 @@ const Spinner: React.FC = () => (
     viewBox="0 0 24 24"
     aria-hidden="true"
   >
-    <circle
-      className="opacity-25"
-      cx="12"
-      cy="12"
-      r="10"
-      stroke="currentColor"
-      strokeWidth="4"
-    />
-    <path
-      className="opacity-75"
-      fill="currentColor"
-      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-    />
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
   </svg>
 );
 
@@ -75,13 +64,13 @@ const Button: React.FC<ButtonProps> = ({
       onClick={onClick}
       disabled={isDisabled}
       className={[
-        'inline-flex items-center justify-center font-medium',
-        'transition-colors duration-150',
+        'inline-flex items-center justify-center font-semibold',
+        'transition-all duration-150',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
         variantClasses[variant],
         sizeClasses[size],
         fullWidth ? 'w-full' : '',
-        isDisabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-pointer',
+        isDisabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-pointer active:scale-[0.98]',
         className,
       ]
         .filter(Boolean)

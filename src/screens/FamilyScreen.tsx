@@ -41,7 +41,7 @@ const VISIBILITY_OPTIONS = [
   { key: 'reports', label: 'Detailed Reports', description: 'Full lab and imaging report data' },
 ]
 
-const AVATAR_COLORS = ['bg-indigo-400', 'bg-pink-400', 'bg-emerald-400', 'bg-amber-400', 'bg-cyan-400', 'bg-violet-400']
+const AVATAR_COLORS = ['bg-brand-teal', 'bg-pink-400', 'bg-emerald-400', 'bg-amber-400', 'bg-cyan-400', 'bg-violet-400']
 
 function getInitials(name: string) {
   return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
@@ -66,13 +66,13 @@ function InviteLinkPanel({ link, label, copied, onCopy }: {
   onCopy: () => void
 }) {
   return (
-    <div className="mt-2 bg-indigo-50 border border-indigo-200 rounded-xl p-3 space-y-2">
-      <p className="text-xs font-medium text-indigo-800">{label}</p>
+    <div className="mt-2 bg-brand-teal-light border border-indigo-200 rounded-xl p-3 space-y-2">
+      <p className="text-xs font-medium text-brand-navy">{label}</p>
       <div className="flex items-center gap-2">
         <p className="flex-1 text-xs text-gray-700 bg-white rounded-lg px-2.5 py-1.5 border border-indigo-200 truncate font-mono select-all">{link}</p>
         <button
           onClick={onCopy}
-          className="flex items-center gap-1 px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold flex-shrink-0 transition"
+          className="flex items-center gap-1 px-2.5 py-1.5 bg-brand-teal hover:bg-brand-teal-dark text-white rounded-lg text-xs font-semibold flex-shrink-0 transition"
         >
           {copied ? <><Check className="w-3 h-3" /> Copied</> : <><Link2 className="w-3 h-3" /> Copy</>}
         </button>
@@ -228,7 +228,7 @@ export default function FamilyScreen() {
     setMembers((prev) => prev.filter((m) => m.id !== id))
   }
 
-  const inputClass = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
+  const inputClass = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal'
 
   const VisibilityToggles = ({
     visibility,
@@ -267,7 +267,7 @@ export default function FamilyScreen() {
             'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-all',
             showAdd
               ? 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-              : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95',
+              : 'bg-brand-teal text-white hover:bg-brand-teal-dark active:scale-95',
           ].join(' ')}
         >
           {showAdd ? (
@@ -313,8 +313,8 @@ export default function FamilyScreen() {
 
         {/* Invite link banner */}
         {newInviteLink && (
-          <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4 space-y-2">
-            <p className="text-sm font-semibold text-indigo-800">Share this invite link</p>
+          <div className="bg-brand-teal-light border border-indigo-200 rounded-2xl p-4 space-y-2">
+            <p className="text-sm font-semibold text-brand-navy">Share this invite link</p>
             <p className="text-xs text-gray-500">Send this link to your family member so they can join your circle.</p>
             <div className="flex items-center gap-2">
               <p className="flex-1 text-xs text-gray-700 bg-white rounded-xl px-3 py-2 border border-indigo-200 truncate font-mono">{newInviteLink}</p>
@@ -324,7 +324,7 @@ export default function FamilyScreen() {
                   setInviteLinkCopied(true)
                   setTimeout(() => setInviteLinkCopied(false), 2500)
                 }}
-                className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold flex-shrink-0"
+                className="flex items-center gap-1.5 px-3 py-2 bg-brand-teal text-white rounded-xl text-xs font-semibold flex-shrink-0"
               >
                 {inviteLinkCopied ? <><Check className="w-3.5 h-3.5" /> Copied!</> : <><Link2 className="w-3.5 h-3.5" /> Copy</>}
               </button>
@@ -339,7 +339,7 @@ export default function FamilyScreen() {
 
           {loadingMembers ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-5 h-5 text-indigo-400 animate-spin" />
+              <Loader2 className="w-5 h-5 text-brand-teal animate-spin" />
             </div>
           ) : members.length === 0 ? (
             <div className="text-center py-8">
@@ -353,7 +353,7 @@ export default function FamilyScreen() {
                 <div key={member.id}>
                   {editingId === member.id ? (
                     /* Inline edit form */
-                    <div className="border border-indigo-100 rounded-2xl p-4 space-y-3 bg-indigo-50/30">
+                    <div className="border border-indigo-100 rounded-2xl p-4 space-y-3 bg-brand-teal-light/30">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-semibold text-gray-700">Edit member</p>
                         <button onClick={() => setEditingId(null)} className="text-gray-400 hover:text-gray-600">
@@ -379,7 +379,7 @@ export default function FamilyScreen() {
                         <button
                           onClick={handleEditSave}
                           disabled={editSaving || !editForm.name.trim()}
-                          className="flex-1 py-2 rounded-xl bg-indigo-500 text-white text-xs font-semibold disabled:opacity-60"
+                          className="flex-1 py-2 rounded-xl bg-brand-teal text-white text-xs font-semibold disabled:opacity-60"
                         >
                           {editSaving ? 'Saving…' : 'Save changes'}
                         </button>
@@ -412,7 +412,7 @@ export default function FamilyScreen() {
                         {!member.accepted_at && member.invite_token && (
                           <button
                             onClick={() => toggleInvitePanel(member)}
-                            className={`p-1.5 rounded-lg transition ${viewingInviteId === member.id ? 'text-indigo-600 bg-indigo-50' : 'text-gray-400 hover:text-indigo-500 hover:bg-indigo-50'}`}
+                            className={`p-1.5 rounded-lg transition ${viewingInviteId === member.id ? 'text-brand-teal bg-brand-teal-light' : 'text-gray-400 hover:text-brand-teal hover:bg-brand-teal-light'}`}
                             aria-label="Show invite link"
                             title="Show invite link"
                           >
@@ -421,7 +421,7 @@ export default function FamilyScreen() {
                         )}
                         <button
                           onClick={() => startEdit(member)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 transition"
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-brand-teal hover:bg-brand-teal-light transition"
                           aria-label="Edit access"
                         >
                           <Pencil className="w-3.5 h-3.5" />
@@ -456,14 +456,14 @@ export default function FamilyScreen() {
         {/* Messages from circle / AI fallback */}
         <Card>
           <div className="flex items-center gap-2 mb-4">
-            <MessageCircle className="w-4 h-4 text-indigo-500" />
+            <MessageCircle className="w-4 h-4 text-brand-teal" />
             <h3 className="font-semibold text-gray-800">Messages from Your Circle</h3>
           </div>
 
           {messages.length > 0 ? (
             <div className="space-y-3">
               {messages.map((msg) => (
-                <div key={msg.id} className="bg-indigo-50 rounded-2xl px-4 py-3">
+                <div key={msg.id} className="bg-brand-teal-light rounded-2xl px-4 py-3">
                   <p className="text-sm text-gray-700">"{msg.message}"</p>
                   <p className="text-xs text-gray-400 mt-1.5">
                     {msg.family_members?.name ?? 'Family'}

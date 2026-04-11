@@ -153,7 +153,7 @@ export default function ProfileScreen() {
     }
   }
 
-  const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
+  const inputClass = 'w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal'
   const labelClass = 'block text-sm font-medium text-gray-700 mb-1.5'
 
   // Avatar initials
@@ -231,7 +231,7 @@ export default function ProfileScreen() {
                       <div className={[
                         'text-center py-3 rounded-xl border text-sm font-medium capitalize transition',
                         genderVal === g
-                          ? 'border-indigo-400 bg-indigo-50 text-indigo-700'
+                          ? 'border-brand-teal bg-brand-teal-light text-brand-navy'
                           : 'border-gray-200 text-gray-600',
                       ].join(' ')}>
                         {g}
@@ -330,7 +330,7 @@ export default function ProfileScreen() {
                   <button
                     type="button"
                     onClick={addAllergy}
-                    className="w-11 h-11 rounded-xl bg-indigo-500 text-white flex items-center justify-center flex-shrink-0 hover:bg-indigo-600 active:scale-95 transition"
+                    className="w-11 h-11 rounded-xl bg-brand-teal text-white flex items-center justify-center flex-shrink-0 hover:bg-brand-teal active:scale-95 transition"
                   >
                     <Plus className="w-5 h-5" />
                   </button>
@@ -392,7 +392,7 @@ export default function ProfileScreen() {
                         className={[
                           'px-3 py-1.5 rounded-full text-xs font-semibold border transition',
                           c.relationship === r
-                            ? 'bg-indigo-500 border-indigo-500 text-white'
+                            ? 'bg-brand-teal border-brand-teal text-white'
                             : 'border-gray-200 text-gray-600',
                         ].join(' ')}
                       >
@@ -406,7 +406,7 @@ export default function ProfileScreen() {
                 <button
                   type="button"
                   onClick={addContact}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-dashed border-indigo-200 text-indigo-500 font-semibold text-sm hover:border-indigo-400 hover:bg-indigo-50 transition"
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border-2 border-dashed border-indigo-200 text-brand-teal font-semibold text-sm hover:border-brand-teal hover:bg-brand-teal-light transition"
                 >
                   <Plus className="w-4 h-4" /> Add contact
                 </button>
@@ -428,9 +428,9 @@ export default function ProfileScreen() {
         {medicalIdUrl && (
           <Card>
             <div className="flex items-center gap-2 mb-4">
-              <QrCode className="w-5 h-5 text-indigo-600" />
+              <QrCode className="w-5 h-5 text-brand-teal" />
               <p className="text-sm font-bold text-gray-800">Medical ID</p>
-              <span className="ml-auto text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full font-semibold border border-indigo-100">Public</span>
+              <span className="ml-auto text-xs text-brand-teal bg-brand-teal-light px-2 py-0.5 rounded-full font-semibold border border-indigo-100">Public</span>
             </div>
             <p className="text-xs text-gray-500 mb-4 leading-relaxed">
               Anyone who scans this QR code can view your emergency medical info — no login needed. Share it on your phone lock screen or print it on a card.
@@ -455,7 +455,7 @@ export default function ProfileScreen() {
                   href={medicalIdUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition active:scale-95"
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-brand-teal text-white text-sm font-semibold hover:bg-brand-teal-dark transition active:scale-95"
                 >
                   <ExternalLink className="w-4 h-4" /> Preview
                 </a>

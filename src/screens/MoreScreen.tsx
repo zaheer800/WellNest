@@ -18,10 +18,10 @@ const SECTIONS: { title: string; features: Feature[] }[] = [
     features: [
       {
         label: 'My Profile',
-        icon: <UserCircle className="w-5 h-5 text-indigo-600" />,
+        icon: <UserCircle className="w-5 h-5 text-brand-teal" />,
         path: '/profile',
         description: 'Edit name, height, weight and personal details',
-        color: 'bg-indigo-50 border-indigo-100',
+        color: 'bg-brand-teal-light border-indigo-100',
       },
     ],
   },
@@ -36,7 +36,7 @@ const SECTIONS: { title: string; features: Feature[] }[] = [
   {
     title: 'Analytics',
     features: [
-      { label: 'Progress', icon: <LineChart className="w-5 h-5 text-indigo-600" />, path: '/progress', description: 'Trends, streaks, score history', color: 'bg-indigo-50 border-indigo-100' },
+      { label: 'Progress', icon: <LineChart className="w-5 h-5 text-brand-teal" />, path: '/progress', description: 'Trends, streaks, score history', color: 'bg-brand-teal-light border-indigo-100' },
     ],
   },
 ]

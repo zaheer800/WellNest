@@ -28,7 +28,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ colors, value, onChange, clas
               onClick={() => onChange(color.id)}
               title={color.label}
               className={[
-                'flex-shrink-0 w-9 h-9 rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-400',
+                'flex-shrink-0 w-9 h-9 rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-teal',
                 isSelected ? 'ring-2 ring-offset-2 ring-gray-800 scale-110' : 'hover:scale-105',
               ].join(' ')}
               style={{ backgroundColor: color.hex }}

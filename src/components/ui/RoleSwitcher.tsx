@@ -72,7 +72,7 @@ export default function RoleSwitcher() {
             className={[
               'flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl text-xs font-semibold transition-all',
               active
-                ? 'bg-white text-indigo-700 shadow-sm'
+                ? 'bg-white text-brand-navy shadow-sm'
                 : 'text-gray-500 hover:text-gray-700',
             ].join(' ')}
             aria-pressed={active}

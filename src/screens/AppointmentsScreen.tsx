@@ -156,7 +156,7 @@ export default function AppointmentsScreen() {
     }
   }
 
-  const inputClass = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
+  const inputClass = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal'
 
   return (
     <PageWrapper
@@ -168,7 +168,7 @@ export default function AppointmentsScreen() {
             'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-all',
             showAdd
               ? 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-              : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95',
+              : 'bg-brand-teal text-white hover:bg-brand-teal-dark active:scale-95',
           ].join(' ')}
         >
           {showAdd ? (

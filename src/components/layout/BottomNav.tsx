@@ -124,15 +124,15 @@ const BottomNav: React.FC = () => {
               className={[
                 'flex-1 relative flex flex-col items-center justify-center gap-1 py-3 min-h-[56px]',
                 'text-[11px] font-medium transition-colors duration-150',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400',
-                isActive ? 'text-indigo-500' : 'text-gray-400 hover:text-gray-600',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-teal',
+                isActive ? 'text-brand-teal' : 'text-gray-400 hover:text-gray-600',
               ].join(' ')}
               aria-current={isActive ? 'page' : undefined}
               aria-label={label}
             >
               {/* Active indicator line at top */}
               {isActive && (
-                <span className="absolute top-0 left-1/4 right-1/4 h-0.5 bg-indigo-500 rounded-b-full" />
+                <span className="absolute top-0 left-1/4 right-1/4 h-0.5 bg-brand-teal rounded-b-full" />
               )}
               <Icon className="h-6 w-6" />
               <span>{label}</span>

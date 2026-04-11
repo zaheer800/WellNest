@@ -49,8 +49,8 @@ const Toggle: React.FC<ToggleProps> = ({
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         className={[
-          'relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-400',
-          checked ? 'bg-indigo-500' : 'bg-gray-300',
+          'relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-teal',
+          checked ? 'bg-brand-teal' : 'bg-gray-300',
         ].join(' ')}
       >
         {/* Thumb */}

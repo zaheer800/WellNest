@@ -50,7 +50,7 @@ export default function DashboardScreen() {
   const quickActions = [
     { label: 'Add Water', icon: <Droplet className="w-6 h-6" />, path: '/water', color: 'text-blue-600' },
     { label: 'Symptom', icon: <Stethoscope className="w-6 h-6" />, path: '/symptoms', color: 'text-orange-600' },
-    { label: 'Medications', icon: <Pill className="w-6 h-6" />, path: '/medications', color: 'text-indigo-600' },
+    { label: 'Medications', icon: <Pill className="w-6 h-6" />, path: '/medications', color: 'text-brand-teal' },
     { label: 'Posture', icon: <Armchair className="w-6 h-6" />, path: '/posture', color: 'text-green-600' },
   ]
 
@@ -83,7 +83,7 @@ export default function DashboardScreen() {
         <div className="relative bg-gradient-to-br from-indigo-800 via-indigo-900 to-purple-900 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.15)] overflow-hidden text-white border border-indigo-700/30">
           {/* Decorative background blobs */}
           <div className="absolute -top-20 -right-20 w-64 h-64 bg-fuchsia-500 rounded-full blur-[80px] opacity-25"></div>
-          <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-indigo-500 rounded-full blur-[80px] opacity-25"></div>
+          <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-brand-teal rounded-full blur-[80px] opacity-25"></div>
           
           <div className="p-7 relative z-10">
             <div className="flex items-center justify-between mb-6">
@@ -101,7 +101,7 @@ export default function DashboardScreen() {
                   label={
                     <div className="flex flex-col items-center justify-center translate-y-1">
                       <span className={`text-4xl font-black tracking-tighter text-white leading-none`}>{score}</span>
-                      <span className="text-xs font-bold text-indigo-200 uppercase tracking-widest mt-1">Score</span>
+                      <span className="text-xs font-bold text-brand-teal/50 uppercase tracking-widest mt-1">Score</span>
                     </div>
                   }
                 />
@@ -110,7 +110,7 @@ export default function DashboardScreen() {
               {/* Breakdown List */}
               <div className="flex-1 space-y-3">
                 {[
-                  { label: 'Meds', icon: <Pill className="w-3 h-3" />, value: dailyScore?.medication ?? 0, max: 25, color: 'text-indigo-300', bg: 'bg-indigo-400' },
+                  { label: 'Meds', icon: <Pill className="w-3 h-3" />, value: dailyScore?.medication ?? 0, max: 25, color: 'text-brand-teal/70', bg: 'bg-brand-teal' },
                   { label: 'Water', icon: <Droplet className="w-3 h-3" />, value: dailyScore?.water ?? 0, max: 20, color: 'text-blue-300', bg: 'bg-blue-400' },
                   { label: 'Move', icon: <Activity className="w-3 h-3" />, value: dailyScore?.exercise ?? 0, max: 20, color: 'text-emerald-300', bg: 'bg-emerald-400' },
                   { label: 'Diet', icon: <Salad className="w-3 h-3" />, value: dailyScore?.diet ?? 0, max: 20, color: 'text-orange-300', bg: 'bg-orange-400' },
@@ -172,11 +172,11 @@ export default function DashboardScreen() {
             {/* Meds Stat */}
             <div onClick={() => navigate('/medications')} className="bg-gradient-to-br from-indigo-50 to-purple-50 p-5 rounded-[1.5rem] shadow-sm border border-indigo-100 relative overflow-hidden group cursor-pointer active:scale-[0.98] transition-transform">
                <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/60 rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
-              <p className="text-2xl font-black text-indigo-600 tracking-tight">{takenCount}<span className="text-indigo-300">/{totalMeds}</span></p>
-              <p className="text-xs text-indigo-400 font-semibold uppercase tracking-wider mb-3">Taken Today</p>
+              <p className="text-2xl font-black text-brand-teal tracking-tight">{takenCount}<span className="text-brand-teal/70">/{totalMeds}</span></p>
+              <p className="text-xs text-brand-teal font-semibold uppercase tracking-wider mb-3">Taken Today</p>
               <div className="flex items-center gap-2">
-                <Pill className="w-5 h-5 text-indigo-500" />
-                <span className="text-sm font-semibold text-indigo-800">Meds</span>
+                <Pill className="w-5 h-5 text-brand-teal" />
+                <span className="text-sm font-semibold text-brand-navy">Meds</span>
               </div>
             </div>
 
@@ -275,7 +275,7 @@ export default function DashboardScreen() {
               onClick={() => navigate('/conditions')}
               className="flex flex-col items-center gap-2 py-5 px-2 rounded-[1.5rem] bg-white border border-gray-100 shadow-[0_2px_10px_rgb(0,0,0,0.02)] hover:border-indigo-200 transition-all active:scale-[0.98] cursor-pointer"
             >
-              <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center mb-1"><Link2 className="w-6 h-6 text-indigo-600" /></div>
+              <div className="w-12 h-12 rounded-full bg-brand-teal-light flex items-center justify-center mb-1"><Link2 className="w-6 h-6 text-brand-teal" /></div>
               <p className="text-xs font-bold text-gray-800 text-center">My<br/>Conditions</p>
             </button>
           </div>

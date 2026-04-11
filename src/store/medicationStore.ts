@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Medication, MedicationLog, MedicationWithLog } from '@/types/health.types'
+import type { Medication, MedicationLog, MedicationWithLog, MedicationScheduleConfig } from '@/types/health.types'
 import {
   getMedications,
   addMedication as dbAddMedication,
@@ -17,7 +17,7 @@ interface MedicationState {
 interface MedicationActions {
   fetchMedications: (patientId: string, date: string) => Promise<void>
   markTaken: (medicationId: string, patientId: string, date: string, taken: boolean) => Promise<void>
-  addMedication: (med: Omit<Medication, 'id' | 'created_at' | 'schedule_config' | 'is_active' | 'refill_reminder_days'>) => Promise<void>
+  addMedication: (med: Omit<Medication, 'id' | 'created_at' | 'is_active' | 'refill_reminder_days' | 'schedule_config'> & { schedule_config?: MedicationScheduleConfig }) => Promise<void>
   removeMedication: (id: string) => Promise<void>
 }
 

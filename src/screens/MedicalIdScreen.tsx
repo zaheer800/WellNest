@@ -115,7 +115,7 @@ export default function MedicalIdScreen() {
         {data.medications.length > 0 && (
           <section>
             <div className="flex items-center gap-2 mb-3 px-1">
-              <Pill className="w-5 h-5 text-indigo-600" />
+              <Pill className="w-5 h-5 text-brand-teal" />
               <h2 className="font-extrabold text-gray-800 text-base">Current Medications</h2>
             </div>
             <div className="space-y-2">
@@ -126,7 +126,7 @@ export default function MedicalIdScreen() {
                     {m.frequency && <p className="text-xs text-gray-400 font-medium mt-0.5">{m.frequency}</p>}
                   </div>
                   {(m.dose || m.unit) && (
-                    <span className="text-sm font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full flex-shrink-0">
+                    <span className="text-sm font-bold text-brand-teal bg-brand-teal-light px-3 py-1 rounded-full flex-shrink-0">
                       {[m.dose, m.unit].filter(Boolean).join(' ')}
                     </span>
                   )}

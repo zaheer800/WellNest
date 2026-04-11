@@ -39,7 +39,7 @@ const FamilyDashboard: React.FC<FamilyDashboardProps> = ({
       {/* Detail bars */}
       <div className="space-y-3">
         {[
-          { label: 'Medications', value: medicationPct, color: 'bg-indigo-400' },
+          { label: 'Medications', value: medicationPct, color: 'bg-brand-teal' },
           { label: 'Water intake', value: waterPct, color: 'bg-cyan-400' },
           { label: 'Posture', value: posturePct, color: 'bg-emerald-400' },
         ].map((item) => (

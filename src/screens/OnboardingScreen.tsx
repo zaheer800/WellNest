@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '@/store/authStore'
-import { HeartPulse, ChevronUp, ChevronDown, ArrowLeft, Plus, Trash2, Phone } from 'lucide-react'
+import { ChevronUp, ChevronDown, ArrowLeft, Plus, Trash2, Phone } from 'lucide-react'
 import type { EmergencyContact } from '@/types/user.types'
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -258,8 +258,8 @@ export default function OnboardingScreen() {
   // ── Background: dark for welcome/finale, light for data steps ─────────────
   const isDark = step === 0 || step === 8
   const bgClass = isDark
-    ? 'bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-950'
-    : 'bg-gradient-to-b from-indigo-50/40 via-white to-white'
+    ? 'bg-gradient-to-br from-brand-navy via-brand-navy-deep to-brand-navy'
+    : 'bg-white'
 
   // ── Step content ────────────────────────────────────────────────────────────
 
@@ -276,19 +276,21 @@ export default function OnboardingScreen() {
         return (
           <div className="flex flex-col items-center justify-center text-center gap-8 px-6 py-16">
             <div className="relative">
-              <div className="w-28 h-28 bg-white/15 rounded-[2rem] backdrop-blur-sm border border-white/20 flex items-center justify-center shadow-2xl">
-                <HeartPulse className="w-14 h-14 text-white" />
-              </div>
-              <div className="absolute -top-2 -right-2 w-7 h-7 bg-emerald-400 rounded-full flex items-center justify-center shadow-lg">
+              <img
+                src="/icons/wellnest-icon.png"
+                alt="WellNest"
+                className="w-28 h-28 rounded-[2rem] shadow-2xl"
+              />
+              <div className="absolute -top-2 -right-2 w-7 h-7 bg-brand-green rounded-full flex items-center justify-center shadow-lg">
                 <span className="text-xs font-bold text-white">✓</span>
               </div>
             </div>
 
             <div className="space-y-3">
-              <h1 className="text-4xl font-black text-white leading-tight tracking-tight">
-                Your health,<br />your way.
+              <h1 className="text-4xl font-semibold text-white leading-tight tracking-tight">
+                Health Records.<br />Smarter Insights.
               </h1>
-              <p className="text-indigo-200 text-base leading-relaxed max-w-xs mx-auto">
+              <p className="text-white/50 text-base leading-relaxed max-w-xs mx-auto">
                 WellNest tracks your medications, symptoms, reports and daily habits — all in one place.
               </p>
             </div>
@@ -296,13 +298,13 @@ export default function OnboardingScreen() {
             <div className="w-full space-y-3 pt-4">
               <button
                 onClick={goNext}
-                className="w-full bg-white text-indigo-700 font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(255,255,255,0.2)] hover:bg-indigo-50 active:scale-95 transition-all"
+                className="w-full bg-white text-brand-navy font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(255,255,255,0.2)] hover:bg-brand-teal-light active:scale-95 transition-all"
               >
                 Get started →
               </button>
               <button
                 onClick={handleSkip}
-                className="w-full text-indigo-300/70 text-sm font-medium py-2 hover:text-indigo-200 transition"
+                className="w-full text-brand-teal/70/70 text-sm font-medium py-2 hover:text-brand-teal/50 transition"
               >
                 Skip setup for now
               </button>
@@ -315,7 +317,7 @@ export default function OnboardingScreen() {
         return (
           <div className="flex flex-col gap-8 px-6 py-8">
             <div>
-              <p className="text-indigo-500 text-sm font-semibold mb-2">Step 1 of 7</p>
+              <p className="text-brand-teal text-sm font-semibold mb-2">Step 1 of 7</p>
               <h2 className="text-3xl font-black text-gray-900 leading-tight">What should<br />we call you?</h2>
               <p className="text-gray-500 text-sm mt-2">We'll use your name throughout the app.</p>
             </div>
@@ -326,13 +328,13 @@ export default function OnboardingScreen() {
               placeholder="Your first name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full text-3xl font-bold text-gray-900 border-0 border-b-2 border-gray-200 focus:border-indigo-500 pb-3 focus:outline-none bg-transparent placeholder:text-gray-300 transition-colors"
+              className="w-full text-3xl font-bold text-gray-900 border-0 border-b-2 border-gray-200 focus:border-brand-teal pb-3 focus:outline-none bg-transparent placeholder:text-gray-300 transition-colors"
             />
 
             <button
               onClick={goNext}
               disabled={!name.trim()}
-              className="w-full bg-indigo-600 text-white font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(99,102,241,0.3)] hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none mt-auto"
+              className="w-full bg-brand-teal text-white font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(14,165,183,0.3)] hover:bg-brand-teal-dark active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none mt-auto"
             >
               Continue →
             </button>
@@ -344,15 +346,15 @@ export default function OnboardingScreen() {
         return (
           <div className="flex flex-col gap-8 px-6 py-8">
             <div>
-              <p className="text-indigo-500 text-sm font-semibold mb-2">Step 2 of 7</p>
+              <p className="text-brand-teal text-sm font-semibold mb-2">Step 2 of 7</p>
               <h2 className="text-3xl font-black text-gray-900 leading-tight">
                 When were<br />you born,{' '}
-                <span className="text-indigo-600">{name.split(' ')[0]}</span>?
+                <span className="text-brand-teal">{name.split(' ')[0]}</span>?
               </h2>
               <p className="text-gray-500 text-sm mt-2">Helps us personalise your health reference ranges.</p>
             </div>
 
-            <div className="flex gap-4 justify-center bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-6 shadow-[0_8px_30px_rgba(99,102,241,0.3)]">
+            <div className="flex gap-4 justify-center bg-gradient-to-br from-brand-navy to-brand-teal rounded-3xl p-6 shadow-[0_8px_30px_rgba(14,165,183,0.3)]">
               <DrumColumn
                 label="Day"
                 value={day}
@@ -383,7 +385,7 @@ export default function OnboardingScreen() {
 
             <button
               onClick={goNext}
-              className="w-full bg-indigo-600 text-white font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(99,102,241,0.3)] hover:bg-indigo-700 active:scale-95 transition-all"
+              className="w-full bg-brand-teal text-white font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(14,165,183,0.3)] hover:bg-brand-teal-dark active:scale-95 transition-all"
             >
               Continue →
             </button>
@@ -395,7 +397,7 @@ export default function OnboardingScreen() {
         return (
           <div className="flex flex-col gap-8 px-6 py-8">
             <div>
-              <p className="text-indigo-500 text-sm font-semibold mb-2">Step 3 of 7</p>
+              <p className="text-brand-teal text-sm font-semibold mb-2">Step 3 of 7</p>
               <h2 className="text-3xl font-black text-gray-900 leading-tight">How do<br />you identify?</h2>
               <p className="text-gray-500 text-sm mt-2">Used for accurate health reference ranges.</p>
             </div>
@@ -412,12 +414,12 @@ export default function OnboardingScreen() {
                   className={[
                     'flex flex-col items-center gap-3 py-6 rounded-2xl border-2 transition-all active:scale-95',
                     gender === opt.value
-                      ? 'border-indigo-500 bg-indigo-50 shadow-[0_4px_16px_rgba(99,102,241,0.2)]'
+                      ? 'border-brand-teal bg-brand-teal-light shadow-[0_4px_16px_rgba(14,165,183,0.2)]'
                       : 'border-gray-200 bg-white hover:border-gray-300',
                   ].join(' ')}
                 >
                   <span className="text-4xl">{opt.emoji}</span>
-                  <span className={`text-sm font-bold ${gender === opt.value ? 'text-indigo-700' : 'text-gray-700'}`}>
+                  <span className={`text-sm font-bold ${gender === opt.value ? 'text-brand-navy' : 'text-gray-700'}`}>
                     {opt.label}
                   </span>
                 </button>
@@ -427,7 +429,7 @@ export default function OnboardingScreen() {
             <button
               onClick={goNext}
               disabled={!gender}
-              className="w-full bg-indigo-600 text-white font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(99,102,241,0.3)] hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none mt-auto"
+              className="w-full bg-brand-teal text-white font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(14,165,183,0.3)] hover:bg-brand-teal-dark active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none mt-auto"
             >
               Continue →
             </button>
@@ -439,12 +441,12 @@ export default function OnboardingScreen() {
         return (
           <div className="flex flex-col gap-8 px-6 py-8">
             <div>
-              <p className="text-indigo-500 text-sm font-semibold mb-2">Step 4 of 7</p>
+              <p className="text-brand-teal text-sm font-semibold mb-2">Step 4 of 7</p>
               <h2 className="text-3xl font-black text-gray-900 leading-tight">How tall<br />are you?</h2>
               <p className="text-gray-500 text-sm mt-2">Used to calculate BMI and personalise your plan.</p>
             </div>
 
-            <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-8 shadow-[0_8px_30px_rgba(99,102,241,0.3)] flex items-center justify-center">
+            <div className="bg-gradient-to-br from-brand-navy to-brand-teal rounded-3xl p-8 shadow-[0_8px_30px_rgba(14,165,183,0.3)] flex items-center justify-center">
               <Stepper
                 value={heightCm}
                 min={50}
@@ -462,7 +464,7 @@ export default function OnboardingScreen() {
 
             <button
               onClick={goNext}
-              className="w-full bg-indigo-600 text-white font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(99,102,241,0.3)] hover:bg-indigo-700 active:scale-95 transition-all"
+              className="w-full bg-brand-teal text-white font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(14,165,183,0.3)] hover:bg-brand-teal-dark active:scale-95 transition-all"
             >
               Continue →
             </button>
@@ -474,12 +476,12 @@ export default function OnboardingScreen() {
         return (
           <div className="flex flex-col gap-8 px-6 py-8">
             <div>
-              <p className="text-indigo-500 text-sm font-semibold mb-2">Step 5 of 7</p>
+              <p className="text-brand-teal text-sm font-semibold mb-2">Step 5 of 7</p>
               <h2 className="text-3xl font-black text-gray-900 leading-tight">What do<br />you weigh?</h2>
               <p className="text-gray-500 text-sm mt-2">We'll calculate your BMI and track changes over time.</p>
             </div>
 
-            <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl p-8 shadow-[0_8px_30px_rgba(99,102,241,0.3)] flex items-center justify-center">
+            <div className="bg-gradient-to-br from-brand-navy to-brand-teal rounded-3xl p-8 shadow-[0_8px_30px_rgba(14,165,183,0.3)] flex items-center justify-center">
               <Stepper
                 value={weightKg}
                 min={10}
@@ -502,7 +504,7 @@ export default function OnboardingScreen() {
 
             <button
               onClick={goNext}
-              className="w-full bg-indigo-600 text-white font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(99,102,241,0.3)] hover:bg-indigo-700 active:scale-95 transition-all"
+              className="w-full bg-brand-teal text-white font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(14,165,183,0.3)] hover:bg-brand-teal-dark active:scale-95 transition-all"
             >
               Continue →
             </button>
@@ -514,7 +516,7 @@ export default function OnboardingScreen() {
         return (
           <div className="flex flex-col gap-6 px-6 py-8">
             <div>
-              <p className="text-indigo-500 text-sm font-semibold mb-2">Step 6 of 7</p>
+              <p className="text-brand-teal text-sm font-semibold mb-2">Step 6 of 7</p>
               <h2 className="text-3xl font-black text-gray-900 leading-tight">What brings<br />you here?</h2>
               <p className="text-gray-500 text-sm mt-2">We'll personalise your dashboard around your goal.</p>
             </div>
@@ -527,17 +529,17 @@ export default function OnboardingScreen() {
                   className={[
                     'w-full flex items-center gap-4 px-4 py-4 rounded-2xl border-2 text-left transition-all active:scale-[0.98]',
                     goal === g.id
-                      ? 'border-indigo-500 bg-indigo-50 shadow-[0_4px_16px_rgba(99,102,241,0.15)]'
+                      ? 'border-brand-teal bg-brand-teal-light shadow-[0_4px_16px_rgba(14,165,183,0.15)]'
                       : 'border-gray-200 bg-white hover:border-gray-300',
                   ].join(' ')}
                 >
                   <span className="text-3xl flex-shrink-0">{g.emoji}</span>
                   <div>
-                    <p className={`font-bold text-sm ${goal === g.id ? 'text-indigo-800' : 'text-gray-800'}`}>{g.title}</p>
+                    <p className={`font-bold text-sm ${goal === g.id ? 'text-brand-navy' : 'text-gray-800'}`}>{g.title}</p>
                     <p className="text-xs text-gray-500 mt-0.5">{g.sub}</p>
                   </div>
                   {goal === g.id && (
-                    <div className="ml-auto w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center flex-shrink-0">
+                    <div className="ml-auto w-5 h-5 rounded-full bg-brand-teal flex items-center justify-center flex-shrink-0">
                       <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
@@ -554,7 +556,7 @@ export default function OnboardingScreen() {
             <button
               onClick={goNext}
               disabled={!goal}
-              className="w-full bg-indigo-600 text-white font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(99,102,241,0.3)] hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none"
+              className="w-full bg-brand-teal text-white font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(14,165,183,0.3)] hover:bg-brand-teal-dark active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none"
             >
               Continue →
             </button>
@@ -577,7 +579,7 @@ export default function OnboardingScreen() {
         return (
           <div className="flex flex-col gap-6 px-6 py-8">
             <div>
-              <p className="text-indigo-500 text-sm font-semibold mb-2">Step 7 of 7</p>
+              <p className="text-brand-teal text-sm font-semibold mb-2">Step 7 of 7</p>
               <h2 className="text-3xl font-black text-gray-900 leading-tight">Emergency<br />contacts</h2>
               <p className="text-gray-500 text-sm mt-2">Who should be called in an emergency? Added to your scannable Medical ID.</p>
             </div>
@@ -601,14 +603,14 @@ export default function OnboardingScreen() {
                     placeholder="Full name"
                     value={c.name}
                     onChange={(e) => updateContact(i, 'name', e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal"
                   />
                   <input
                     type="tel"
                     placeholder="Phone number"
                     value={c.phone}
                     onChange={(e) => updateContact(i, 'phone', e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal"
                   />
                   <div className="flex flex-wrap gap-2">
                     {RELATIONSHIPS.map((r) => (
@@ -618,7 +620,7 @@ export default function OnboardingScreen() {
                         className={[
                           'px-3 py-1.5 rounded-full text-xs font-semibold border transition',
                           c.relationship === r
-                            ? 'bg-indigo-500 border-indigo-500 text-white'
+                            ? 'bg-brand-teal border-brand-teal text-white'
                             : 'border-gray-200 text-gray-600',
                         ].join(' ')}
                       >
@@ -632,7 +634,7 @@ export default function OnboardingScreen() {
               {contacts.length < 3 && (
                 <button
                   onClick={addContact}
-                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border-2 border-dashed border-indigo-200 text-indigo-500 font-semibold text-sm hover:border-indigo-400 hover:bg-indigo-50 transition"
+                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border-2 border-dashed border-indigo-200 text-brand-teal font-semibold text-sm hover:border-brand-teal hover:bg-brand-teal-light transition"
                 >
                   <Plus className="w-4 h-4" /> Add contact
                 </button>
@@ -646,7 +648,7 @@ export default function OnboardingScreen() {
             <button
               onClick={handleSave}
               disabled={saving || loading}
-              className="w-full bg-indigo-600 text-white font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(99,102,241,0.3)] hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none"
+              className="w-full bg-brand-teal text-white font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(14,165,183,0.3)] hover:bg-brand-teal-dark active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none"
             >
               {saving || loading ? 'Saving…' : validContacts.length > 0 ? `Save & finish →` : 'Finish setup →'}
             </button>
@@ -677,22 +679,22 @@ export default function OnboardingScreen() {
               <div className="text-5xl mb-2">🎉</div>
               <h1 className="text-4xl font-black text-white leading-tight">
                 You're all set,<br />
-                <span className="text-indigo-300">{name.split(' ')[0] || 'friend'}</span>!
+                <span className="text-brand-teal/70">{name.split(' ')[0] || 'friend'}</span>!
               </h1>
-              <p className="text-indigo-200 text-base leading-relaxed">
+              <p className="text-brand-teal/50 text-base leading-relaxed">
                 Your WellNest is personalised and ready to go.
               </p>
             </div>
 
             {goalData && (
               <div className="w-full bg-white/10 border border-white/20 rounded-3xl p-5 text-left space-y-3">
-                <p className="text-xs font-bold text-indigo-300 uppercase tracking-wider">
+                <p className="text-xs font-bold text-brand-teal/70 uppercase tracking-wider">
                   {goalData.emoji} {goalData.title}
                 </p>
                 {trackingItems?.map((item) => (
                   <div key={item} className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded-full bg-indigo-400/30 border border-indigo-400/50 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-3 h-3 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <div className="w-5 h-5 rounded-full bg-brand-teal/30 border border-brand-teal/50 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-3 h-3 text-brand-teal/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
@@ -705,7 +707,7 @@ export default function OnboardingScreen() {
             <div className="w-full space-y-3">
               <button
                 onClick={() => navigate('/dashboard', { replace: true })}
-                className="w-full bg-white text-indigo-700 font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(255,255,255,0.2)] hover:bg-indigo-50 active:scale-95 transition-all"
+                className="w-full bg-white text-brand-navy font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(255,255,255,0.2)] hover:bg-brand-teal-light active:scale-95 transition-all"
               >
                 Go to my dashboard →
               </button>
@@ -740,7 +742,7 @@ export default function OnboardingScreen() {
           {/* Progress bar */}
           <div className="flex-1 h-1.5 bg-gray-200/40 rounded-full overflow-hidden">
             <motion.div
-              className="h-full bg-indigo-500 rounded-full"
+              className="h-full bg-brand-teal rounded-full"
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.4, ease: 'easeOut' }}
             />

@@ -87,7 +87,7 @@ const PostVisitLogger: React.FC<PostVisitLoggerProps> = ({ appointment, onSave, 
     onSave(notes.trim(), validTasks, validMeds)
   }
 
-  const inputClass = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
+  const inputClass = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal'
 
   return (
     <div className="space-y-4">
@@ -116,19 +116,19 @@ const PostVisitLogger: React.FC<PostVisitLoggerProps> = ({ appointment, onSave, 
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-500 hover:border-indigo-300 hover:text-indigo-500 transition"
+            className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm text-gray-500 hover:border-indigo-300 hover:text-brand-teal transition"
           >
             <Paperclip className="w-4 h-4" />
             Upload prescription (photo or PDF)
           </button>
         ) : uploadState === 'uploading' || uploadState === 'extracting' ? (
-          <div className="flex items-center gap-3 py-3 px-4 bg-indigo-50 rounded-xl">
-            <Loader2 className="w-4 h-4 text-indigo-500 animate-spin flex-shrink-0" />
+          <div className="flex items-center gap-3 py-3 px-4 bg-brand-teal-light rounded-xl">
+            <Loader2 className="w-4 h-4 text-brand-teal animate-spin flex-shrink-0" />
             <div>
-              <p className="text-sm font-medium text-indigo-700">
+              <p className="text-sm font-medium text-brand-navy">
                 {uploadState === 'uploading' ? 'Uploading…' : 'Reading prescription…'}
               </p>
-              <p className="text-xs text-indigo-400">
+              <p className="text-xs text-brand-teal">
                 {uploadState === 'extracting' ? 'AI is extracting medications' : ''}
               </p>
             </div>
@@ -164,7 +164,7 @@ const PostVisitLogger: React.FC<PostVisitLoggerProps> = ({ appointment, onSave, 
           <button
             type="button"
             onClick={addMed}
-            className="flex items-center gap-1 text-xs text-indigo-500 font-semibold hover:text-indigo-700 transition"
+            className="flex items-center gap-1 text-xs text-brand-teal font-semibold hover:text-brand-navy transition"
           >
             <Plus className="w-3.5 h-3.5" /> Add
           </button>
@@ -177,9 +177,9 @@ const PostVisitLogger: React.FC<PostVisitLoggerProps> = ({ appointment, onSave, 
         ) : (
           <div className="space-y-3">
             {medications.map((med, i) => (
-              <div key={i} className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-3 space-y-2">
+              <div key={i} className="bg-brand-teal-light/50 border border-indigo-100 rounded-xl p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-indigo-700">Medication {i + 1}</span>
+                  <span className="text-xs font-semibold text-brand-navy">Medication {i + 1}</span>
                   <button type="button" onClick={() => removeMed(i)} className="text-gray-400 hover:text-red-400 transition">
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -198,7 +198,7 @@ const PostVisitLogger: React.FC<PostVisitLoggerProps> = ({ appointment, onSave, 
                     onChange={(e) => updateMed(i, 'dose', e.target.value)}
                   />
                   <select
-                    className="w-24 border border-gray-200 rounded-xl px-2 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-24 border border-gray-200 rounded-xl px-2 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal"
                     value={med.unit}
                     onChange={(e) => updateMed(i, 'unit', e.target.value)}
                   >
@@ -249,7 +249,7 @@ const PostVisitLogger: React.FC<PostVisitLoggerProps> = ({ appointment, onSave, 
         <button
           type="button"
           onClick={addTask}
-          className="mt-2 text-xs text-indigo-500 font-medium hover:text-indigo-700 transition"
+          className="mt-2 text-xs text-brand-teal font-medium hover:text-brand-navy transition"
         >
           + Add task
         </button>

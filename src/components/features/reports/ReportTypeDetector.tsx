@@ -42,7 +42,7 @@ const ReportTypeDetector: React.FC<ReportTypeDetectorProps> = ({
   if (loading) {
     return (
       <div className="flex items-center gap-3 py-4">
-        <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+        <div className="w-5 h-5 border-2 border-brand-teal border-t-transparent rounded-full animate-spin flex-shrink-0" />
         <p className="text-sm text-gray-600">Analysing report type…</p>
       </div>
     )
@@ -53,10 +53,10 @@ const ReportTypeDetector: React.FC<ReportTypeDetectorProps> = ({
   return (
     <div className="space-y-3">
       {/* Detection result */}
-      <div className="bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
+      <div className="bg-brand-teal-light border border-indigo-100 rounded-xl px-4 py-3">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs text-indigo-500 font-medium uppercase tracking-wide">Detected type</p>
+            <p className="text-xs text-brand-teal font-medium uppercase tracking-wide">Detected type</p>
             <p className="text-base font-semibold text-gray-800 mt-0.5">{detected.suggested_label}</p>
           </div>
           <span className={`text-sm font-bold ${confidenceColor}`}>{confidencePct}%</span>
@@ -68,7 +68,7 @@ const ReportTypeDetector: React.FC<ReportTypeDetectorProps> = ({
         <button
           type="button"
           onClick={() => onConfirm(detected.detected_type)}
-          className="flex-1 py-2.5 px-4 bg-indigo-500 text-white rounded-xl text-sm font-semibold hover:bg-indigo-600 transition"
+          className="flex-1 py-2.5 px-4 bg-brand-teal text-white rounded-xl text-sm font-semibold hover:bg-brand-teal transition"
         >
           Confirm
         </button>
@@ -87,7 +87,7 @@ const ReportTypeDetector: React.FC<ReportTypeDetectorProps> = ({
           <select
             value={overrideType}
             onChange={(e) => setOverrideType(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal"
           >
             <option value="">Select correct type…</option>
             {REPORT_TYPES.map((t) => (

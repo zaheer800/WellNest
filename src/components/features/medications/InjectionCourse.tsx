@@ -88,7 +88,7 @@ const InjectionCourse: React.FC<InjectionCourseProps> = ({ course, onLogDose }) 
           </div>
           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-indigo-500 rounded-full transition-all"
+              className="h-full bg-brand-teal rounded-full transition-all"
               style={{ width: `${progressPct}%` }}
             />
           </div>
@@ -103,7 +103,7 @@ const InjectionCourse: React.FC<InjectionCourseProps> = ({ course, onLogDose }) 
               className={[
                 'w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium border transition',
                 administered
-                  ? 'bg-indigo-500 border-indigo-500 text-white'
+                  ? 'bg-brand-teal border-brand-teal text-white'
                   : 'bg-white border-gray-300 text-gray-400',
               ].join(' ')}
             >
@@ -124,7 +124,7 @@ const InjectionCourse: React.FC<InjectionCourseProps> = ({ course, onLogDose }) 
             <span className="text-gray-500">
               {isOverdue ? 'Overdue since' : 'Next dose'}
             </span>
-            <span className={`font-semibold ${isOverdue ? 'text-red-500' : course.next_dose_date === todayStr ? 'text-indigo-600' : 'text-gray-700'}`}>
+            <span className={`font-semibold ${isOverdue ? 'text-red-500' : course.next_dose_date === todayStr ? 'text-brand-teal' : 'text-gray-700'}`}>
               {course.next_dose_date === todayStr ? 'Today' : formatDate(course.next_dose_date)}
               {isOverdue && ' ⚠️'}
             </span>
@@ -152,7 +152,7 @@ const InjectionCourse: React.FC<InjectionCourseProps> = ({ course, onLogDose }) 
               'w-full py-3.5 rounded-2xl text-sm font-bold transition-all active:scale-95',
               isOverdue
                 ? 'bg-red-50 border border-red-200 text-red-600 hover:bg-red-100'
-                : 'bg-indigo-600 text-white shadow-[0_4px_14px_rgba(99,102,241,0.3)] hover:bg-indigo-700',
+                : 'bg-brand-teal text-white shadow-[0_4px_14px_rgba(14,165,183,0.3)] hover:bg-brand-teal-dark',
             ].join(' ')}
           >
             {isOverdue ? 'Log Overdue Dose' : "Log Today's Dose"}
@@ -192,7 +192,7 @@ const InjectionCourse: React.FC<InjectionCourseProps> = ({ course, onLogDose }) 
                 min={course.start_date}
                 max={todayStr}
                 onChange={(e) => setLogDate(e.target.value)}
-                className="w-full border border-gray-200 rounded-2xl px-4 py-3.5 text-base font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50"
+                className="w-full border border-gray-200 rounded-2xl px-4 py-3.5 text-base font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-teal bg-gray-50"
               />
               {logDate !== (course.next_dose_date ?? todayStr) && (
                 <p className="text-xs text-amber-600 mt-1.5">
@@ -215,7 +215,7 @@ const InjectionCourse: React.FC<InjectionCourseProps> = ({ course, onLogDose }) 
                     className={[
                       'flex flex-col items-center gap-1.5 py-3 rounded-2xl border-2 text-xs font-semibold transition-all',
                       logBy === opt.value
-                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                        ? 'border-brand-teal bg-brand-teal-light text-brand-navy'
                         : 'border-gray-200 text-gray-600 hover:border-gray-300',
                     ].join(' ')}
                   >
@@ -230,7 +230,7 @@ const InjectionCourse: React.FC<InjectionCourseProps> = ({ course, onLogDose }) 
             <button
               onClick={handleConfirm}
               disabled={saving || !logDate}
-              className="w-full py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-[0_4px_14px_rgba(99,102,241,0.3)] hover:bg-indigo-700 active:scale-95 transition-all disabled:opacity-50"
+              className="w-full py-4 bg-brand-teal text-white font-bold rounded-2xl shadow-[0_4px_14px_rgba(14,165,183,0.3)] hover:bg-brand-teal-dark active:scale-95 transition-all disabled:opacity-50"
             >
               {saving ? 'Saving…' : 'Confirm Dose Taken'}
             </button>

@@ -84,11 +84,11 @@ export default function ReportsScreen() {
 
         {/* Processing banner */}
         {processingStatus === 'processing' && (
-          <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-100 rounded-2xl px-4 py-3">
-            <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+          <div className="flex items-center gap-3 bg-brand-teal-light border border-indigo-100 rounded-2xl px-4 py-3">
+            <div className="w-4 h-4 border-2 border-brand-teal border-t-transparent rounded-full animate-spin flex-shrink-0" />
             <div>
-              <p className="text-sm font-semibold text-indigo-700">Analysing your report…</p>
-              <p className="text-xs text-indigo-500 mt-0.5">This takes 20–40 seconds. You can browse other screens.</p>
+              <p className="text-sm font-semibold text-brand-navy">Analysing your report…</p>
+              <p className="text-xs text-brand-teal mt-0.5">This takes 20–40 seconds. You can browse other screens.</p>
             </div>
           </div>
         )}
@@ -137,7 +137,7 @@ export default function ReportsScreen() {
               onClick={() => setViewMode(tab.key)}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition ${
                 viewMode === tab.key
-                  ? 'border-indigo-500 text-indigo-600'
+                  ? 'border-brand-teal text-brand-teal'
                   : 'border-transparent text-gray-500 hover:text-gray-800'
               }`}
             >
@@ -162,7 +162,7 @@ export default function ReportsScreen() {
                 <p className="text-gray-500 text-sm">No lab reports yet.</p>
                 <button
                   onClick={() => setViewMode('upload')}
-                  className="mt-3 text-sm text-indigo-500 font-medium"
+                  className="mt-3 text-sm text-brand-teal font-medium"
                 >
                   Upload one now
                 </button>
@@ -227,7 +227,7 @@ export default function ReportsScreen() {
                 <p className="text-gray-500 text-sm">No imaging reports yet.</p>
                 <button
                   onClick={() => setViewMode('upload')}
-                  className="mt-3 text-sm text-indigo-500 font-medium"
+                  className="mt-3 text-sm text-brand-teal font-medium"
                 >
                   Upload one now
                 </button>
