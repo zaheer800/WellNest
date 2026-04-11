@@ -27,7 +27,7 @@ const InjectionCourseLog: React.FC<InjectionCourseLogProps> = ({ logs, totalDose
       <div
         className={[
           'w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-semibold',
-          log.administered ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-400',
+          log.administered ? 'bg-brand-teal-light text-brand-navy' : 'bg-gray-100 text-gray-400',
         ].join(' ')}
       >
         {log.dose_number}

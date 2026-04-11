@@ -339,7 +339,7 @@ export default function DoctorDashboardScreen() {
           {/* Doctor Notes */}
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-50">
-              <ClipboardList className="w-4 h-4 text-indigo-500" />
+              <ClipboardList className="w-4 h-4 text-brand-teal" />
               <p className="text-sm font-semibold text-gray-800 flex-1">Clinical Notes</p>
               <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{notes.length}</span>
             </div>

@@ -28,10 +28,10 @@ const FamilyImpact: React.FC<FamilyImpactProps> = ({
 
       {/* Score comparison */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-indigo-50 rounded-2xl px-4 py-4 text-center">
-          <p className="text-xs text-indigo-400 font-medium">Days you checked in</p>
-          <p className="text-2xl font-bold text-indigo-600 mt-1">{engagedDayScore}</p>
-          <p className="text-xs text-indigo-400">out of 100</p>
+        <div className="bg-brand-teal-light rounded-2xl px-4 py-4 text-center">
+          <p className="text-xs text-brand-teal font-medium">Days you checked in</p>
+          <p className="text-2xl font-bold text-brand-teal mt-1">{engagedDayScore}</p>
+          <p className="text-xs text-brand-teal">out of 100</p>
         </div>
         <div className="bg-gray-50 rounded-2xl px-4 py-4 text-center">
           <p className="text-xs text-gray-400 font-medium">Other days</p>
@@ -71,7 +71,7 @@ const FamilyImpact: React.FC<FamilyImpactProps> = ({
         </div>
         <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
           <div
-            className="h-full bg-indigo-400 rounded-full transition-all"
+            className="h-full bg-brand-teal rounded-full transition-all"
             style={{ width: `${totalDays > 0 ? (checkInsThisWeek / totalDays) * 100 : 0}%` }}
           />
         </div>

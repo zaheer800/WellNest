@@ -31,6 +31,7 @@ export default function AppointmentsScreen() {
     editAppointment,
     deleteAppointment,
     completeAppointment,
+    dismissTask,
     fetchPreparation,
     markPrepViewed,
   } = useAppointmentStore()
@@ -129,10 +130,10 @@ export default function AppointmentsScreen() {
     }
   }
 
-  const handleCompleteVisit = async (id: string, notes: string, _tasks: string[], medications: NewMedication[]) => {
+  const handleCompleteVisit = async (id: string, notes: string, tasks: string[], medications: NewMedication[]) => {
     setSavingLog(true)
     try {
-      await completeAppointment(id, notes)
+      await completeAppointment(id, notes, tasks)
       // Add any medications prescribed during the visit
       for (const med of medications) {
         if (med.name.trim()) {
@@ -156,7 +157,7 @@ export default function AppointmentsScreen() {
     }
   }
 
-  const inputClass = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
+  const inputClass = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal'
 
   return (
     <PageWrapper
@@ -168,7 +169,7 @@ export default function AppointmentsScreen() {
             'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-all',
             showAdd
               ? 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-              : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95',
+              : 'bg-brand-teal text-white hover:bg-brand-teal-dark active:scale-95',
           ].join(' ')}
         >
           {showAdd ? (
@@ -242,6 +243,7 @@ export default function AppointmentsScreen() {
                     onReschedule={handleReschedule}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
+                    onDismissTask={(task) => dismissTask(appt.id, task)}
                   />
 
                   {activePrep === appt.id && (
@@ -300,6 +302,7 @@ export default function AppointmentsScreen() {
                       onReschedule={handleReschedule}
                       onEdit={handleEdit}
                       onDelete={handleDelete}
+                      onDismissTask={(task) => dismissTask(appt.id, task)}
                     />
 
                     {activeLog === appt.id && (

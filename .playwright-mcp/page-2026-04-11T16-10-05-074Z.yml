@@ -1,0 +1,22 @@
+- generic [ref=e4]:
+  - generic [ref=e5]:
+    - img "WellNest" [ref=e7]
+    - heading "WellNest" [level=1] [ref=e8]
+    - paragraph [ref=e9]: Health Records. Smarter Insights. Better Decisions.
+  - generic [ref=e10]:
+    - button "📱 Phone" [ref=e11] [cursor=pointer]
+    - button "✉️ Email" [ref=e12] [cursor=pointer]
+  - generic [ref=e13]:
+    - generic [ref=e14]: Mobile number
+    - generic [ref=e15]:
+      - button "🇮🇳 +91" [ref=e17] [cursor=pointer]:
+        - generic [ref=e18]: 🇮🇳
+        - generic [ref=e19]: "+91"
+        - img [ref=e20]
+      - textbox "9876543210" [active] [ref=e22]
+    - paragraph [ref=e23]: We'll send you a one-time code via SMS
+  - button "Send Code" [disabled]
+  - generic [ref=e26]: or
+  - button "Continue with Google" [ref=e28] [cursor=pointer]:
+    - img [ref=e29]
+    - text: Continue with Google

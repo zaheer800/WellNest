@@ -24,7 +24,7 @@ const colorClasses: Record<BadgeColor, string> = {
   red: 'bg-red-100 text-red-700',
   blue: 'bg-blue-100 text-blue-700',
   gray: 'bg-gray-100 text-gray-600',
-  indigo: 'bg-indigo-100 text-indigo-700',
+  indigo: 'bg-brand-teal-light text-brand-navy',
 };
 
 const sizeClasses: Record<BadgeSize, string> = {

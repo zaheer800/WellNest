@@ -1,39 +1,41 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
-import { HeartPulse } from 'lucide-react'
+import WellNestIcon from '@/components/ui/WellNestIcon'
 
 export default function SplashScreen() {
   const navigate = useNavigate()
-  const { initialized, session, user } = useAuthStore()
+  const { initialized, session, user, role } = useAuthStore()
 
   useEffect(() => {
     if (!initialized) return
     if (!session) {
       navigate('/login', { replace: true })
-    } else if (!user?.name) {
-      navigate('/onboarding', { replace: true })
-    } else {
+    } else if (role === 'doctor') {
+      navigate('/doctor-dashboard', { replace: true })
+    } else if (role === 'family') {
+      navigate('/family-dashboard', { replace: true })
+    } else if (user?.name) {
       navigate('/dashboard', { replace: true })
+    } else {
+      navigate('/onboarding', { replace: true })
     }
-  }, [initialized, session, user, navigate])
+  }, [initialized, session, user, role, navigate])
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-500 to-purple-600">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-brand-navy">
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center mb-2">
-          <div className="w-20 h-20 bg-white rounded-[2rem] shadow-2xl flex items-center justify-center">
-            <HeartPulse className="w-10 h-10 text-indigo-500" />
-          </div>
+          <WellNestIcon size={96} className="shadow-2xl" />
         </div>
-        <h1 className="text-4xl font-bold text-white tracking-tight">WellNest</h1>
-        <p className="text-indigo-100 text-base">Your health. Your circle. Your journey.</p>
+        <h1 className="text-4xl font-semibold text-white tracking-tight">WellNest</h1>
+        <p className="text-white/50 text-sm font-medium">Health Records. Smarter Insights. Better Decisions.</p>
       </div>
       <div className="absolute bottom-16 flex space-x-1.5">
         {[0, 1, 2].map((i) => (
           <div
             key={i}
-            className="w-2 h-2 rounded-full bg-white/60 animate-pulse"
+            className="w-2 h-2 rounded-full bg-brand-teal animate-pulse"
             style={{ animationDelay: `${i * 200}ms` }}
           />
         ))}

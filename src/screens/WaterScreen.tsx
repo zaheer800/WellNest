@@ -133,7 +133,7 @@ export default function WaterScreen() {
                   autoFocus
                 />
                 <span className="text-sm text-gray-500">ml</span>
-                <button onClick={handleGoalSave} className="text-sm text-indigo-600 font-medium">Save</button>
+                <button onClick={handleGoalSave} className="text-sm text-brand-teal font-medium">Save</button>
               </>
             ) : (
               <button onClick={() => setEditingGoal(true)} className="text-sm text-gray-500 hover:text-gray-700">
@@ -183,7 +183,7 @@ export default function WaterScreen() {
                 />
                 <button
                   onClick={() => setShowTimePicker(false)}
-                  className="text-xs font-medium text-indigo-600 hover:text-indigo-800 transition"
+                  className="text-xs font-medium text-brand-teal hover:text-brand-navy transition"
                 >
                   Done
                 </button>
@@ -274,7 +274,7 @@ export default function WaterScreen() {
                         <button
                           onClick={confirmEdit}
                           disabled={saving}
-                          className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 disabled:opacity-50 transition"
+                          className="text-xs font-semibold text-brand-teal hover:text-brand-navy disabled:opacity-50 transition"
                         >
                           {saving ? 'Saving…' : 'Save'}
                         </button>

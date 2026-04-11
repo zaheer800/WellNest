@@ -106,7 +106,7 @@ const SpineMap: React.FC<SpineMapProps> = ({ levels, onLevelClick, className = '
                   className={[
                     'flex items-center gap-3 px-3 py-2 rounded-xl bg-white border border-gray-100',
                     isClickable
-                      ? 'cursor-pointer hover:shadow-sm hover:border-indigo-200 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400'
+                      ? 'cursor-pointer hover:shadow-sm hover:border-indigo-200 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal'
                       : '',
                   ].join(' ')}
                 >

@@ -65,7 +65,7 @@ const SideEffectMonitor: React.FC<SideEffectMonitorProps> = ({ sideEffects, onAd
         {!se.resolved && (
           <button
             onClick={() => onResolve(se.id)}
-            className="text-xs text-indigo-500 hover:text-indigo-700 font-medium transition"
+            className="text-xs text-brand-teal hover:text-brand-navy font-medium transition"
           >
             Mark resolved
           </button>

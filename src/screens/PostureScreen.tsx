@@ -133,11 +133,11 @@ export default function PostureScreen() {
         {!isTracking ? (
           <div className="space-y-6">
             <div className="pt-8 pb-10 px-6 text-center bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100/50 rounded-[2rem] shadow-sm relative overflow-hidden">
-              <div className="w-24 h-24 mx-auto bg-white rounded-full flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] mb-6 text-indigo-500 relative z-10">
+              <div className="w-24 h-24 mx-auto bg-white rounded-full flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.08)] mb-6 text-brand-teal relative z-10">
                 <UserCheck className="w-10 h-10" />
               </div>
               <h2 className="text-2xl font-bold text-gray-800 mb-3 relative z-10">Ready for work?</h2>
-              <p className="text-gray-500 mb-8 text-[15px] leading-relaxed relative z-10">
+              <p className="text-gray-500 mb-8 text-base leading-relaxed relative z-10">
                 Start tracking to monitor your continuous sitting time and get reminders to stretch every 45 minutes.
               </p>
               
@@ -145,7 +145,7 @@ export default function PostureScreen() {
                 type="button" 
                 onClick={handleStartSitting} 
                 disabled={isLoading} 
-                className="relative z-10 w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl py-4 font-bold text-lg shadow-[0_4px_20px_rgba(79,70,229,0.3)] transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="relative z-10 w-full bg-brand-teal hover:bg-brand-teal-dark text-white rounded-2xl py-4 font-bold text-lg shadow-[0_4px_20px_rgba(79,70,229,0.3)] transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Setting up...' : 'Start Tracking'}
               </button>
@@ -177,7 +177,7 @@ export default function PostureScreen() {
             {/* The Timer Dashboard */}
             <div className="bg-gradient-to-br from-gray-900 to-indigo-900 rounded-[2rem] p-8 text-center text-white relative shadow-xl overflow-hidden">
               {/* Animated background blob */}
-              <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500 rounded-full blur-[80px] opacity-50"></div>
+              <div className="absolute -top-24 -right-24 w-48 h-48 bg-brand-teal rounded-full blur-[80px] opacity-50"></div>
               
               <div className="absolute top-5 left-5 flex items-center gap-2 bg-black/20 rounded-full px-3 py-1.5 backdrop-blur-md border border-white/10">
                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -194,7 +194,7 @@ export default function PostureScreen() {
                   label={
                     <div className="flex flex-col items-center">
                        <span className="text-6xl font-extrabold tracking-tighter text-white">{sittingMins}</span>
-                       <span className="text-indigo-200 text-sm font-bold uppercase tracking-widest mt-1">min</span>
+                       <span className="text-brand-teal/50 text-sm font-bold uppercase tracking-widest mt-1">min</span>
                     </div>
                   }
                 />
@@ -206,7 +206,7 @@ export default function PostureScreen() {
                      <BellRing className="w-5 h-5" /> Time to stand up & stretch!
                   </div>
                 ) : (
-                  <p className="text-indigo-200 font-medium text-lg">Goal: Stand up every 45m</p>
+                  <p className="text-brand-teal/50 font-medium text-lg">Goal: Stand up every 45m</p>
                 )}
               </div>
             </div>
@@ -244,16 +244,16 @@ export default function PostureScreen() {
                         e.preventDefault();
                         toggleCheck(item.key);
                       }}
-                      className={`flex items-center gap-4 p-4 rounded-[1.25rem] cursor-pointer transition-all border-2 select-none ${isChecked ? 'bg-indigo-50 border-indigo-200 shadow-sm' : 'bg-white border-gray-100 shadow-[0_2px_10px_rgb(0,0,0,0.02)] active:scale-[0.98]'}`}
+                      className={`flex items-center gap-4 p-4 rounded-[1.25rem] cursor-pointer transition-all border-2 select-none ${isChecked ? 'bg-brand-teal-light border-indigo-200 shadow-sm' : 'bg-white border-gray-100 shadow-[0_2px_10px_rgb(0,0,0,0.02)] active:scale-[0.98]'}`}
                     >
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center shadow-inner transition-transform duration-300 ${isChecked ? 'bg-indigo-600 scale-110' : 'bg-gray-100'}`}>
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center shadow-inner transition-transform duration-300 ${isChecked ? 'bg-brand-teal scale-110' : 'bg-gray-100'}`}>
                         {isChecked && (
                           <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
                         )}
                       </div>
-                      <span className={`text-[15px] font-semibold transition-colors duration-300 ${isChecked ? 'text-indigo-900 line-through decoration-indigo-200 decoration-2' : 'text-gray-700'}`}>{item.label}</span>
+                      <span className={`text-base font-semibold transition-colors duration-300 ${isChecked ? 'text-indigo-900 line-through decoration-indigo-200 decoration-2' : 'text-gray-700'}`}>{item.label}</span>
                     </label>
                   )
                 })}

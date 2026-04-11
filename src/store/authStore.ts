@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { Session } from '@supabase/supabase-js'
-import { supabase, getUser, upsertUser, getFamilyMemberByUserId, getDoctorByUserId } from '@/services/supabase'
+import { supabase, getUser, upsertUser, generateMedicalIdToken, getFamilyMemberByUserId, getDoctorByUserId } from '@/services/supabase'
 import type { User, UserProfile, FamilyMember } from '@/types/user.types'
 
 export type AppRole = 'patient' | 'family' | 'doctor' | null
@@ -22,9 +22,12 @@ interface AuthActions {
   initialize: () => Promise<void>
   signInWithOtp: (email: string) => Promise<void>
   verifyOtp: (email: string, token: string) => Promise<void>
+  signInWithPhone: (phone: string) => Promise<void>
+  verifyPhoneOtp: (phone: string, token: string) => Promise<void>
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
   updateProfile: (profile: Partial<UserProfile>) => Promise<void>
+  generateMedicalId: () => Promise<void>
   acceptInvite: (token: string) => Promise<void>
   acceptDoctorInvite: (token: string) => Promise<void>
   /** Switch active view between patient, family, and doctor roles */
@@ -198,6 +201,33 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   /**
+   * Sends a one-time password via SMS to the given phone number.
+   * Phone must be in E.164 format: +[country code][number] e.g. +919876543210
+   */
+  signInWithPhone: async (phone: string) => {
+    set({ loading: true })
+    try {
+      const { error } = await supabase.auth.signInWithOtp({ phone })
+      if (error) throw error
+    } finally {
+      set({ loading: false })
+    }
+  },
+
+  /**
+   * Verifies the SMS OTP token submitted by the user.
+   */
+  verifyPhoneOtp: async (phone: string, token: string) => {
+    set({ loading: true })
+    try {
+      const { error } = await supabase.auth.verifyOtp({ phone, token, type: 'sms' })
+      if (error) throw error
+    } finally {
+      set({ loading: false })
+    }
+  },
+
+  /**
    * Initiates the Google OAuth flow. Supabase redirects the browser;
    * the onAuthStateChange listener handles the resulting session.
    */
@@ -273,6 +303,19 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     try {
       const updatedUser = await upsertUser(session.user.id, profile)
       set({ user: updatedUser })
+    } finally {
+      set({ loading: false })
+    }
+  },
+
+  generateMedicalId: async () => {
+    const { session, user } = get()
+    if (!session?.user) throw new Error('Not authenticated')
+
+    set({ loading: true })
+    try {
+      const token = await generateMedicalIdToken(session.user.id)
+      set({ user: user ? { ...user, medical_id_token: token } : user })
     } finally {
       set({ loading: false })
     }

@@ -79,7 +79,7 @@ const AddSideEffectModal: React.FC<AddSideEffectModalProps> = ({ medicationId, o
               onChange={(e) => setSideEffect(e.target.value)}
               placeholder="e.g., Nausea, Headache, Dizziness..."
               disabled={loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-50"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal disabled:bg-gray-50"
               rows={3}
             />
           </div>
@@ -97,7 +97,7 @@ const AddSideEffectModal: React.FC<AddSideEffectModalProps> = ({ medicationId, o
                     checked={severity === s}
                     onChange={(e) => setSeverity(e.target.value as typeof s)}
                     disabled={loading}
-                    className="w-4 h-4 text-indigo-600 disabled:opacity-50"
+                    className="w-4 h-4 text-brand-teal disabled:opacity-50"
                   />
                   <span className="text-sm text-gray-700 capitalize">{s}</span>
                 </label>
@@ -117,7 +117,7 @@ const AddSideEffectModal: React.FC<AddSideEffectModalProps> = ({ medicationId, o
                   checked={source === 'experienced'}
                   onChange={(e) => setSource(e.target.value as typeof source)}
                   disabled={loading}
-                  className="w-4 h-4 text-indigo-600 disabled:opacity-50"
+                  className="w-4 h-4 text-brand-teal disabled:opacity-50"
                 />
                 <span className="text-sm text-gray-700">I experienced it</span>
               </label>
@@ -129,7 +129,7 @@ const AddSideEffectModal: React.FC<AddSideEffectModalProps> = ({ medicationId, o
                   checked={source === 'read_about'}
                   onChange={(e) => setSource(e.target.value as typeof source)}
                   disabled={loading}
-                  className="w-4 h-4 text-indigo-600 disabled:opacity-50"
+                  className="w-4 h-4 text-brand-teal disabled:opacity-50"
                 />
                 <span className="text-sm text-gray-700">I read about it</span>
               </label>
@@ -146,7 +146,7 @@ const AddSideEffectModal: React.FC<AddSideEffectModalProps> = ({ medicationId, o
               onChange={(e) => setGuidance(e.target.value)}
               placeholder="Any additional notes or instructions..."
               disabled={loading}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-50"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal disabled:bg-gray-50"
               rows={2}
             />
           </div>

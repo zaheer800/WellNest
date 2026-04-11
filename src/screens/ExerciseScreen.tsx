@@ -45,7 +45,7 @@ export default function ExerciseScreen() {
     }
   }
 
-  const inputClass = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500'
+  const inputClass = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal'
 
   return (
     <PageWrapper title="Exercise">
@@ -95,7 +95,7 @@ export default function ExerciseScreen() {
             <label className="flex items-center gap-3 cursor-pointer">
               <div
                 onClick={() => setIsPhysio(!isPhysio)}
-                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition ${isPhysio ? 'bg-indigo-500 border-indigo-500' : 'border-gray-300'}`}
+                className={`w-5 h-5 rounded border-2 flex items-center justify-center transition ${isPhysio ? 'bg-brand-teal border-brand-teal' : 'border-gray-300'}`}
               >
                 {isPhysio && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
               </div>
@@ -122,7 +122,7 @@ export default function ExerciseScreen() {
               {exerciseLogs.map((log) => (
                 <div key={log.id} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-600">{log.is_physiotherapy ? <PersonStanding className="w-4 h-4 text-indigo-600" /> : <Activity className="w-4 h-4 text-green-600" />}</div>
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-600">{log.is_physiotherapy ? <PersonStanding className="w-4 h-4 text-brand-teal" /> : <Activity className="w-4 h-4 text-green-600" />}</div>
                     <div>
                       <p className="text-sm font-medium text-gray-800">{log.exercise_type}</p>
                       {log.duration_minutes && <p className="text-xs text-gray-400">{log.duration_minutes} min</p>}

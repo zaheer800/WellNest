@@ -135,7 +135,7 @@ export default function SymptomsScreen() {
               <button
                 key={cat.key}
                 onClick={() => { setSelectedCategory(cat.key); setSelectedSymptom('') }}
-                className={`flex flex-col items-center gap-1.5 py-3 rounded-xl text-xs font-medium transition ${selectedCategory === cat.key ? 'bg-indigo-500 text-white' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
+                className={`flex flex-col items-center gap-1.5 py-3 rounded-xl text-xs font-medium transition ${selectedCategory === cat.key ? 'bg-brand-teal text-white' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
               >
                 <div className={selectedCategory === cat.key ? 'text-white' : 'text-gray-500'}>{cat.icon}</div>
                 {cat.label}
@@ -152,14 +152,14 @@ export default function SymptomsScreen() {
               <button
                 key={s.name}
                 onClick={() => setSelectedSymptom(s.name)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${selectedSymptom === s.name ? 'bg-indigo-500 border-indigo-500 text-white' : 'border-gray-200 text-gray-600 hover:border-indigo-300'}`}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${selectedSymptom === s.name ? 'bg-brand-teal border-brand-teal text-white' : 'border-gray-200 text-gray-600 hover:border-indigo-300'}`}
               >
                 {s.name}
               </button>
             ))}
           </div>
           <input
-            className="mt-3 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="mt-3 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal"
             placeholder="Or type a symptom..."
             value={selectedSymptom}
             onChange={(e) => setSelectedSymptom(e.target.value)}
@@ -196,7 +196,7 @@ export default function SymptomsScreen() {
           </div>
           <textarea
             rows={4}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-y min-h-[96px]"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal resize-y min-h-[96px]"
             placeholder="Any additional details — as much as you need..."
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -262,13 +262,13 @@ export default function SymptomsScreen() {
                               value={editDate}
                               max={new Date().toISOString().slice(0, 10)}
                               onChange={(e) => setEditDate(e.target.value)}
-                              className="flex-1 min-w-0 border border-gray-200 rounded-xl px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                              className="flex-1 min-w-0 border border-gray-200 rounded-xl px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal"
                             />
                             <input
                               type="time"
                               value={editTime}
                               onChange={(e) => setEditTime(e.target.value)}
-                              className="flex-1 min-w-0 border border-gray-200 rounded-xl px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                              className="flex-1 min-w-0 border border-gray-200 rounded-xl px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal"
                             />
                           </div>
                         </div>
@@ -276,7 +276,7 @@ export default function SymptomsScreen() {
                         {/* Notes */}
                         <textarea
                           rows={3}
-                          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
+                          className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal resize-none"
                           placeholder="Notes (optional)..."
                           value={editNotes}
                           onChange={(e) => setEditNotes(e.target.value)}
@@ -287,7 +287,7 @@ export default function SymptomsScreen() {
                           <button
                             onClick={() => confirmEdit(log.id)}
                             disabled={editSaving}
-                            className="flex-1 py-2 rounded-xl bg-indigo-500 text-white text-xs font-semibold disabled:opacity-60"
+                            className="flex-1 py-2 rounded-xl bg-brand-teal text-white text-xs font-semibold disabled:opacity-60"
                           >
                             {editSaving ? 'Saving…' : 'Save changes'}
                           </button>
@@ -312,7 +312,7 @@ export default function SymptomsScreen() {
                           <span className="text-xs text-gray-400">{formatRelative(log.logged_at)}</span>
                           <button
                             onClick={() => startEdit(log)}
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 transition"
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-brand-teal hover:bg-brand-teal-light transition"
                             aria-label="Edit symptom"
                           >
                             <Pencil className="w-3.5 h-3.5" />

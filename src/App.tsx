@@ -22,6 +22,10 @@ import FamilyScreen from '@/screens/FamilyScreen'
 import DoctorScreen from '@/screens/DoctorScreen'
 import DietScreen from '@/screens/DietScreen'
 import MoreScreen from '@/screens/MoreScreen'
+import ProfileScreen from '@/screens/ProfileScreen'
+import SOSScreen from '@/screens/SOSScreen'
+import MedicalIdScreen from '@/screens/MedicalIdScreen'
+import AuthCallbackScreen from '@/screens/AuthCallbackScreen'
 import JoinScreen from '@/screens/JoinScreen'
 import JoinDoctorScreen from '@/screens/JoinDoctorScreen'
 import FamilyDashboardScreen from '@/screens/FamilyDashboardScreen'
@@ -39,7 +43,10 @@ function FamilyRoute({ children }: { children: React.ReactNode }) {
   const { session, roles, initialized } = useAuthStore()
   if (!initialized) return null
   if (!session) return <Navigate to="/login" replace />
-  if (!roles.includes('family')) return <Navigate to="/dashboard" replace />
+  if (!roles.includes('family')) {
+    if (roles.includes('doctor')) return <Navigate to="/doctor-dashboard" replace />
+    return <Navigate to="/dashboard" replace />
+  }
   return <>{children}</>
 }
 
@@ -48,7 +55,10 @@ function DoctorRoute({ children }: { children: React.ReactNode }) {
   const { session, roles, initialized } = useAuthStore()
   if (!initialized) return null
   if (!session) return <Navigate to="/login" replace />
-  if (!roles.includes('doctor')) return <Navigate to="/dashboard" replace />
+  if (!roles.includes('doctor')) {
+    if (roles.includes('family')) return <Navigate to="/family-dashboard" replace />
+    return <Navigate to="/dashboard" replace />
+  }
   return <>{children}</>
 }
 
@@ -57,7 +67,11 @@ function PatientRoute({ children }: { children: React.ReactNode }) {
   const { session, roles, initialized } = useAuthStore()
   if (!initialized) return null
   if (!session) return <Navigate to="/login" replace />
-  if (!roles.includes('patient')) return <Navigate to="/family-dashboard" replace />
+  if (!roles.includes('patient')) {
+    if (roles.includes('doctor')) return <Navigate to="/doctor-dashboard" replace />
+    if (roles.includes('family')) return <Navigate to="/family-dashboard" replace />
+    return <Navigate to="/login" replace />
+  }
   return <>{children}</>
 }
 
@@ -89,8 +103,10 @@ export default function App() {
         <Route path="/" element={<SplashScreen />} />
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/onboarding" element={<OnboardingScreen />} />
+        <Route path="/auth/callback" element={<AuthCallbackScreen />} />
         <Route path="/join" element={<JoinScreen />} />
         <Route path="/join-doctor" element={<JoinDoctorScreen />} />
+        <Route path="/medical-id/:token" element={<MedicalIdScreen />} />
 
         {/* Family member portal */}
         <Route path="/family-dashboard" element={<FamilyRoute><FamilyDashboardScreen /></FamilyRoute>} />
@@ -114,6 +130,8 @@ export default function App() {
         <Route path="/family" element={<PatientRoute><FamilyScreen /></PatientRoute>} />
         <Route path="/doctor" element={<PatientRoute><DoctorScreen /></PatientRoute>} />
         <Route path="/more" element={<PatientRoute><MoreScreen /></PatientRoute>} />
+        <Route path="/profile" element={<PatientRoute><ProfileScreen /></PatientRoute>} />
+        <Route path="/sos" element={<PatientRoute><SOSScreen /></PatientRoute>} />
 
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />

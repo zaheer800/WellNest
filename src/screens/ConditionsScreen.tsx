@@ -18,7 +18,7 @@ export default function ConditionsScreen() {
             onClick={() => setViewMode('graph')}
             className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition ${
               viewMode === 'graph'
-                ? 'bg-indigo-500 text-white'
+                ? 'bg-brand-teal text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
@@ -28,7 +28,7 @@ export default function ConditionsScreen() {
             onClick={() => setViewMode('list')}
             className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition ${
               viewMode === 'list'
-                ? 'bg-indigo-500 text-white'
+                ? 'bg-brand-teal text-white'
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >

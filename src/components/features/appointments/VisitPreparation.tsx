@@ -24,7 +24,7 @@ function Section({ title, icon, items, numbered }: {
       <ul className="space-y-1.5">
         {items.map((item, i) => (
           <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-            <span className="flex-shrink-0 text-indigo-400 font-medium mt-0.5">
+            <span className="flex-shrink-0 text-brand-teal font-medium mt-0.5">
               {numbered ? `${i + 1}.` : '•'}
             </span>
             <span>{item}</span>

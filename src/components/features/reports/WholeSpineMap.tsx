@@ -81,7 +81,7 @@ const WholeSpineMap: React.FC<WholeSpineMapProps> = ({ patientId }) => {
   if (loading) {
     return (
       <div className="flex items-center gap-2 py-6 text-gray-400 text-sm">
-        <div className="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+        <div className="w-4 h-4 border-2 border-brand-teal border-t-transparent rounded-full animate-spin" />
         Loading spine map…
       </div>
     )

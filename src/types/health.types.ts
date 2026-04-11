@@ -1,3 +1,11 @@
+export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'bedtime'
+
+export interface MedicationScheduleConfig {
+  times_of_day?: TimeOfDay[]
+  times_per_day?: 1 | 2 | 3 | 4
+  specific_days?: number[]
+}
+
 export interface Medication {
   id: string
   patient_id: string
@@ -5,7 +13,7 @@ export interface Medication {
   dose: string | null
   unit: string | null
   frequency: 'daily' | 'alternate_days' | 'weekly' | 'custom'
-  schedule_config: Record<string, unknown>
+  schedule_config: MedicationScheduleConfig
   start_date: string | null
   end_date: string | null
   is_active: boolean

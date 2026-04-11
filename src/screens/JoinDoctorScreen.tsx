@@ -49,6 +49,8 @@ export default function JoinDoctorScreen() {
     if (!email.trim()) return
     setFormError(null)
     try {
+      // Persist token so AuthCallback can return here if the confirm-email link is clicked
+      sessionStorage.setItem('pendingInvite', JSON.stringify({ type: 'doctor', token }))
       await signInWithOtp(email.trim())
       setStep('otp')
     } catch (e: any) {
@@ -61,6 +63,7 @@ export default function JoinDoctorScreen() {
     setFormError(null)
     try {
       await verifyOtp(email.trim(), otp.trim())
+      sessionStorage.removeItem('pendingInvite')
       setStep('accepting')
       await acceptDoctorInvite(token)
       switchRole('doctor')

@@ -75,7 +75,7 @@ export default function ProgressScreen() {
               onClick={() => setTimeframe('week')}
               className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition ${
                 timeframe === 'week'
-                  ? 'bg-indigo-500 text-white'
+                  ? 'bg-brand-teal text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -85,7 +85,7 @@ export default function ProgressScreen() {
               onClick={() => setTimeframe('month')}
               className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition ${
                 timeframe === 'month'
-                  ? 'bg-indigo-500 text-white'
+                  ? 'bg-brand-teal text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -95,7 +95,7 @@ export default function ProgressScreen() {
               onClick={() => setTimeframe('all')}
               className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition ${
                 timeframe === 'all'
-                  ? 'bg-indigo-500 text-white'
+                  ? 'bg-brand-teal text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -180,7 +180,7 @@ export default function ProgressScreen() {
           <h3 className="font-semibold text-gray-800 mb-4">Streaks</h3>
           <div className="space-y-2">
             {[
-              { name: 'Medications', streak: streaks.medications, icon: <Pill className="w-5 h-5 text-indigo-500" /> },
+              { name: 'Medications', streak: streaks.medications, icon: <Pill className="w-5 h-5 text-brand-teal" /> },
               { name: 'Water Intake', streak: streaks.water, icon: <CupSoda className="w-5 h-5 text-blue-500" /> },
               { name: 'Exercise', streak: streaks.exercise, icon: <Activity className="w-5 h-5 text-green-500" /> },
               { name: 'Posture', streak: streaks.posture, icon: <UserCheck className="w-5 h-5 text-teal-500" /> },
@@ -240,8 +240,8 @@ export default function ProgressScreen() {
         <Card>
           <h3 className="font-semibold text-gray-800 mb-4">Medication Compliance</h3>
           <div className="space-y-3">
-            <div className="bg-indigo-50 rounded-xl p-4 text-center">
-              <p className="text-2xl font-bold text-indigo-600">{medicationCompliance}%</p>
+            <div className="bg-brand-teal-light rounded-xl p-4 text-center">
+              <p className="text-2xl font-bold text-brand-teal">{medicationCompliance}%</p>
               <p className="text-xs text-gray-600 mt-1">Today's compliance</p>
             </div>
             {medications.filter(m => m.is_active).length > 0 && (

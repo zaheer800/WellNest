@@ -67,6 +67,12 @@ interface InjectionActions {
     guidance?: string
   }) => Promise<void>
   resolveSideEffect: (id: string) => Promise<void>
+  /** Log a dose with a custom actual date — handles on-time and backdated doses */
+  logDose: (
+    course: InjectionCourseWithProgress,
+    administeredAt: string,
+    administeredBy: 'self' | 'nurse' | 'doctor' | 'family',
+  ) => Promise<void>
 }
 
 type InjectionStore = InjectionState & InjectionActions
@@ -232,5 +238,50 @@ export const useInjectionStore = create<InjectionStore>((set, get) => ({
         s.id === id ? { ...s, resolved: true, resolved_at: new Date().toISOString() } : s,
       ),
     }))
+  },
+
+  logDose: async (course, administeredAt, administeredBy) => {
+    set({ loading: true, error: null })
+    try {
+      const doseNumber = course.doses_completed + 1
+      // scheduled_date is the originally planned date; administeredAt is the actual date taken
+      const scheduled_date = course.next_dose_date ?? administeredAt.split('T')[0]
+
+      const newLog = await dbAddInjectionCourseLog({
+        course_id: course.id,
+        patient_id: course.patient_id,
+        dose_number: doseNumber,
+        scheduled_date,
+      })
+
+      await dbMarkDoseAdministered(newLog.id, {
+        administered_at: administeredAt,
+        administered_by: administeredBy,
+      })
+
+      const newDosesCompleted = course.doses_completed + 1
+      await dbUpdateInjectionCourse(course.id, { doses_completed: newDosesCompleted })
+
+      set((state) => ({
+        courses: state.courses.map((c) =>
+          c.id !== course.id
+            ? c
+            : {
+                ...c,
+                doses_completed: newDosesCompleted,
+                progress_pct: calculateProgressPct(newDosesCompleted, c.total_doses),
+                next_dose_date:
+                  newDosesCompleted < c.total_doses
+                    ? calculateNextDoseDate(c.start_date, c.frequency, newDosesCompleted)
+                    : null,
+              },
+        ),
+      }))
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : 'Failed to log injection dose' })
+      throw err
+    } finally {
+      set({ loading: false })
+    }
   },
 }))

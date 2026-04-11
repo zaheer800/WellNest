@@ -101,7 +101,7 @@ export default function FamilyDashboardScreen() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
         <div className="text-center space-y-3">
           <p className="text-gray-600 font-medium">No family access found.</p>
-          <button onClick={() => navigate('/login')} className="text-indigo-600 text-sm underline">Go to login</button>
+          <button onClick={() => navigate('/login')} className="text-brand-teal text-sm underline">Go to login</button>
         </div>
       </div>
     )
@@ -134,14 +134,14 @@ export default function FamilyDashboardScreen() {
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
+          <Loader2 className="w-6 h-6 text-brand-teal animate-spin" />
         </div>
       ) : (
         <div className="px-4 py-4 space-y-4 max-w-lg mx-auto">
 
           {/* Access summary */}
-          <div className="bg-indigo-50 rounded-2xl px-4 py-3">
-            <p className="text-xs text-indigo-700 font-medium">
+          <div className="bg-brand-teal-light rounded-2xl px-4 py-3">
+            <p className="text-xs text-brand-navy font-medium">
               You have been given access to view {patientName}'s health data.
               Only sections they've permitted are shown below.
             </p>
@@ -150,7 +150,7 @@ export default function FamilyDashboardScreen() {
           {/* Health Score */}
           {visibility.health_score && (
             <SectionCard
-              icon={<TrendingUp className="w-5 h-5 text-indigo-500" />}
+              icon={<TrendingUp className="w-5 h-5 text-brand-teal" />}
               title="Daily Health Score"
               patientId={patientId}
             />
@@ -189,7 +189,7 @@ export default function FamilyDashboardScreen() {
             {messages.length > 0 && (
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {messages.map((msg) => (
-                  <div key={msg.id} className="bg-indigo-50 rounded-xl px-3 py-2">
+                  <div key={msg.id} className="bg-brand-teal-light rounded-xl px-3 py-2">
                     <p className="text-sm text-gray-700">"{msg.message}"</p>
                     <p className="text-xs text-gray-400 mt-1">
                       {msg.family_members?.name ?? 'You'} · {timeAgo(msg.sent_at)}
@@ -213,12 +213,12 @@ export default function FamilyDashboardScreen() {
                 onChange={(e) => setMessageText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder={`Encourage ${patientName}…`}
-                className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal"
               />
               <button
                 onClick={handleSendMessage}
                 disabled={sendingMessage || !messageText.trim()}
-                className="px-4 py-2.5 bg-indigo-600 text-white rounded-xl disabled:opacity-50 transition"
+                className="px-4 py-2.5 bg-brand-teal text-white rounded-xl disabled:opacity-50 transition"
                 aria-label="Send message"
               >
                 {sendingMessage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}

@@ -62,7 +62,7 @@ const EnvironmentCapture: React.FC<EnvironmentCaptureProps> = ({ value, onChange
                   className={[
                     'px-3 py-1.5 rounded-xl text-sm font-medium border transition',
                     isSelected
-                      ? 'bg-indigo-500 text-white border-indigo-500'
+                      ? 'bg-brand-teal text-white border-brand-teal'
                       : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300',
                   ].join(' ')}
                   aria-pressed={isSelected}

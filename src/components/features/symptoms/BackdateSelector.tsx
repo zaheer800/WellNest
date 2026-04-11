@@ -41,7 +41,7 @@ const BackdateSelector: React.FC<BackdateSelectorProps> = ({ value, onChange }) 
           className={[
             'flex-1 py-2 px-3 rounded-xl text-sm font-medium border transition',
             mode === 'today'
-              ? 'bg-indigo-500 text-white border-indigo-500'
+              ? 'bg-brand-teal text-white border-brand-teal'
               : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300',
           ].join(' ')}
         >
@@ -53,7 +53,7 @@ const BackdateSelector: React.FC<BackdateSelectorProps> = ({ value, onChange }) 
           className={[
             'flex-1 py-2 px-3 rounded-xl text-sm font-medium border transition',
             mode === 'earlier'
-              ? 'bg-indigo-500 text-white border-indigo-500'
+              ? 'bg-brand-teal text-white border-brand-teal'
               : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300',
           ].join(' ')}
         >
@@ -69,13 +69,13 @@ const BackdateSelector: React.FC<BackdateSelectorProps> = ({ value, onChange }) 
             max={todayStr}
             value={value ?? ''}
             onChange={handleDateChange}
-            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal"
           />
           {validationError && (
             <p className="text-xs text-red-500">{validationError}</p>
           )}
           {duration && (
-            <p className="text-xs text-indigo-600 font-medium">{duration}</p>
+            <p className="text-xs text-brand-teal font-medium">{duration}</p>
           )}
         </div>
       )}

@@ -29,7 +29,7 @@ function getLastSeen(iso: string | null): string {
 }
 
 const AVATAR_COLORS = [
-  'bg-indigo-400',
+  'bg-brand-teal',
   'bg-pink-400',
   'bg-emerald-400',
   'bg-amber-400',
@@ -48,7 +48,7 @@ const FamilyCircle: React.FC<FamilyCircleProps> = ({ members, onInvite }) => {
           <button
             type="button"
             onClick={onInvite}
-            className="mt-1 px-5 py-2.5 bg-indigo-500 text-white rounded-xl text-sm font-semibold hover:bg-indigo-600 transition"
+            className="mt-1 px-5 py-2.5 bg-brand-teal text-white rounded-xl text-sm font-semibold hover:bg-brand-teal transition"
           >
             Invite Family Member
           </button>
@@ -76,7 +76,7 @@ const FamilyCircle: React.FC<FamilyCircleProps> = ({ members, onInvite }) => {
         <button
           type="button"
           onClick={onInvite}
-          className="w-full mt-1 py-2.5 border-2 border-dashed border-gray-200 rounded-xl text-xs font-medium text-gray-400 hover:border-indigo-300 hover:text-indigo-400 transition"
+          className="w-full mt-1 py-2.5 border-2 border-dashed border-gray-200 rounded-xl text-xs font-medium text-gray-400 hover:border-indigo-300 hover:text-brand-teal transition"
         >
           + Invite another member
         </button>
