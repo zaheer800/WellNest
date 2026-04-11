@@ -77,7 +77,7 @@ export default function DashboardScreen() {
 
   return (
     <PageWrapper>
-      <div className="px-5 pt-8 pb-32 space-y-8 bg-gray-50/30 min-h-screen">
+      <div className="px-5 pt-8 pb-6 space-y-8 bg-gray-50/30 min-h-screen">
         
         {/* Header Section */}
         <div className="flex items-start justify-between pb-1">
@@ -479,6 +479,13 @@ export default function DashboardScreen() {
           <span className="text-lg">🆘</span>
           Emergency SOS
         </button>
+
+        {/* Footer links */}
+        <div className="flex items-center justify-center gap-3 pb-2">
+          <button onClick={() => navigate('/privacy')} className="text-xs text-gray-400 hover:text-gray-600 transition">Privacy Policy</button>
+          <span className="text-gray-300 text-xs">·</span>
+          <button onClick={() => navigate('/terms')} className="text-xs text-gray-400 hover:text-gray-600 transition">Terms of Service</button>
+        </div>
 
       </div>
 
