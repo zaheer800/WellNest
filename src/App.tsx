@@ -30,6 +30,8 @@ import JoinScreen from '@/screens/JoinScreen'
 import JoinDoctorScreen from '@/screens/JoinDoctorScreen'
 import FamilyDashboardScreen from '@/screens/FamilyDashboardScreen'
 import DoctorDashboardScreen from '@/screens/DoctorDashboardScreen'
+import PrivacyScreen from '@/screens/PrivacyScreen'
+import TermsScreen from '@/screens/TermsScreen'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, initialized } = useAuthStore()
@@ -107,6 +109,8 @@ export default function App() {
         <Route path="/join" element={<JoinScreen />} />
         <Route path="/join-doctor" element={<JoinDoctorScreen />} />
         <Route path="/medical-id/:token" element={<MedicalIdScreen />} />
+        <Route path="/privacy" element={<PrivacyScreen />} />
+        <Route path="/terms" element={<TermsScreen />} />
 
         {/* Family member portal */}
         <Route path="/family-dashboard" element={<FamilyRoute><FamilyDashboardScreen /></FamilyRoute>} />
