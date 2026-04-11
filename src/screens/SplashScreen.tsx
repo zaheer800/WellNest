@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
+import WellNestIcon from '@/components/ui/WellNestIcon'
 
 export default function SplashScreen() {
   const navigate = useNavigate()
@@ -21,11 +22,7 @@ export default function SplashScreen() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-brand-navy">
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center mb-2">
-          <img
-            src="/icons/wellnest-icon.png"
-            alt="WellNest"
-            className="w-24 h-24 rounded-[1.75rem] shadow-2xl"
-          />
+          <WellNestIcon size={96} className="shadow-2xl" />
         </div>
         <h1 className="text-4xl font-semibold text-white tracking-tight">WellNest</h1>
         <p className="text-white/50 text-sm font-medium">Health Records. Smarter Insights. Better Decisions.</p>

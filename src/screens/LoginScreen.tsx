@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import Button from '@/components/ui/Button'
+import WellNestIcon from '@/components/ui/WellNestIcon'
 import { ChevronDown } from 'lucide-react'
 
 // ─── Country codes ─────────────────────────────────────────────────────────────
@@ -217,11 +218,7 @@ export default function LoginScreen() {
         {/* Logo */}
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <img
-              src="/icons/wellnest-icon.png"
-              alt="WellNest"
-              className="w-20 h-20 rounded-[1.75rem] shadow-[0_8px_30px_rgba(14,165,183,0.25)]"
-            />
+            <WellNestIcon size={80} className="shadow-[0_8px_30px_rgba(14,165,183,0.25)]" />
           </div>
           <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">WellNest</h1>
           <p className="text-gray-400 text-sm mt-1">Health Records. Smarter Insights. Better Decisions.</p>

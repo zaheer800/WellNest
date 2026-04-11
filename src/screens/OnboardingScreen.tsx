@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '@/store/authStore'
 import { ChevronUp, ChevronDown, ArrowLeft, Plus, Trash2, Phone } from 'lucide-react'
+import WellNestIcon from '@/components/ui/WellNestIcon'
 import type { EmergencyContact } from '@/types/user.types'
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -276,11 +277,7 @@ export default function OnboardingScreen() {
         return (
           <div className="flex flex-col items-center justify-center text-center gap-8 px-6 py-16">
             <div className="relative">
-              <img
-                src="/icons/wellnest-icon.png"
-                alt="WellNest"
-                className="w-28 h-28 rounded-[2rem] shadow-2xl"
-              />
+              <WellNestIcon size={112} className="shadow-2xl" />
               <div className="absolute -top-2 -right-2 w-7 h-7 bg-brand-green rounded-full flex items-center justify-center shadow-lg">
                 <span className="text-xs font-bold text-white">✓</span>
               </div>
