@@ -678,6 +678,7 @@ export async function updateAppointment(
     completed: boolean
     post_visit_notes: string
     follow_up_tasks: unknown[]
+    completed_follow_up_tasks: string[]
     pre_visit_report_generated: boolean
   }>,
 ) {
