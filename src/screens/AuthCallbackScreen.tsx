@@ -39,23 +39,14 @@ export default function AuthCallbackScreen() {
         }
 
         if (session) {
-          // If there's a pending invite (doctor/family clicked confirm-email before entering OTP),
-          // return them to the join screen to complete the invite acceptance.
-          const pending = sessionStorage.getItem('pendingInvite')
-          if (pending) {
-            try {
-              const { type, token } = JSON.parse(pending)
-              sessionStorage.removeItem('pendingInvite')
-              const dest = type === 'doctor' ? `/join-doctor?token=${token}` : `/join?token=${token}`
-              navigate(dest, { replace: true })
-              return
-            } catch {
-              sessionStorage.removeItem('pendingInvite')
-            }
+          // If the magic link was sent from a join screen, returnTo carries the destination.
+          // This works across Gmail's in-app browser and all other browser contexts.
+          const returnTo = new URLSearchParams(window.location.search).get('returnTo')
+          if (returnTo) {
+            navigate(returnTo, { replace: true })
+            return
           }
-          // Let the auth store's onAuthStateChange listener update state,
-          // then navigate. SplashScreen will redirect to the right portal
-          // based on the user's role.
+          // Standard login — SplashScreen routes to the right portal based on role.
           navigate('/', { replace: true })
         } else {
           // No session after waiting — token may have been invalid or expired

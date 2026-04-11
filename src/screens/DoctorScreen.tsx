@@ -96,7 +96,7 @@ export default function DoctorScreen() {
       })
       setDoctors((prev) => [...prev, newDoctor])
       const token = (newDoctor as any).invite_token
-      if (token) setNewInviteLink(`${window.location.origin}/join-doctor?token=${token}`)
+      if (token) setNewInviteLink(`${(import.meta.env.VITE_APP_URL ?? window.location.origin)}/join-doctor?token=${token}`)
       setAddForm({ name: '', specialty: '', hospital: '', email: '', notes: '' })
       setShowAdd(false)
     } catch {
@@ -320,10 +320,10 @@ export default function DoctorScreen() {
                     {/* Invite link panel */}
                     {viewingInviteId === doc.id && doc.invite_token && (
                       <InviteLinkPanel
-                        link={`${window.location.origin}/join-doctor?token=${doc.invite_token}`}
+                        link={`${(import.meta.env.VITE_APP_URL ?? window.location.origin)}/join-doctor?token=${doc.invite_token}`}
                         label="Send this link to the doctor"
                         copied={copiedId === doc.id}
-                        onCopy={() => copyLink(`${window.location.origin}/join-doctor?token=${doc.invite_token}`, doc.id)}
+                        onCopy={() => copyLink(`${(import.meta.env.VITE_APP_URL ?? window.location.origin)}/join-doctor?token=${doc.invite_token}`, doc.id)}
                         color="teal"
                       />
                     )}

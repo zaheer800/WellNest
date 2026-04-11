@@ -20,7 +20,7 @@ interface AuthState {
 
 interface AuthActions {
   initialize: () => Promise<void>
-  signInWithOtp: (email: string) => Promise<void>
+  signInWithOtp: (email: string, redirectTo?: string) => Promise<void>
   verifyOtp: (email: string, token: string) => Promise<void>
   signInWithPhone: (phone: string) => Promise<void>
   verifyPhoneOtp: (phone: string, token: string) => Promise<void>
@@ -172,10 +172,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
    * Sends a one-time password to the given email address.
    * Throws on error so the UI can display the message.
    */
-  signInWithOtp: async (email: string) => {
+  signInWithOtp: async (email: string, redirectTo?: string) => {
     set({ loading: true })
     try {
-      const { error } = await supabase.auth.signInWithOtp({ email })
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: redirectTo },
+      })
       if (error) throw error
     } finally {
       set({ loading: false })

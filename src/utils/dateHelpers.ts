@@ -1,6 +1,8 @@
+/** Returns today's date in the user's local timezone as YYYY-MM-DD */
 export function today(): string {
   const d = new Date()
-  return d.toISOString().slice(0, 10)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
 export function formatDate(date: string): string {
@@ -26,11 +28,13 @@ export function formatRelative(datetime: string): string {
   if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`
 
   const todayStr = today()
-  const dStr = d.toISOString().slice(0, 10)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const dStr = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 
   const todayDate = new Date(todayStr + 'T00:00:00')
   const yesterdayDate = new Date(todayDate.getTime() - 86400000)
-  const yesterdayStr = yesterdayDate.toISOString().slice(0, 10)
+  const yd = yesterdayDate
+  const yesterdayStr = `${yd.getFullYear()}-${pad(yd.getMonth() + 1)}-${pad(yd.getDate())}`
 
   if (dStr === yesterdayStr) return 'Yesterday'
 
@@ -63,10 +67,11 @@ export function endOfDay(date: string): string {
 
 export function last7Days(): string[] {
   const days: string[] = []
-  const now = new Date()
+  const pad = (n: number) => String(n).padStart(2, '0')
   for (let i = 6; i >= 0; i--) {
-    const d = new Date(now.getTime() - i * 86400000)
-    days.push(d.toISOString().slice(0, 10))
+    const d = new Date()
+    d.setDate(d.getDate() - i)
+    days.push(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`)
   }
   return days
 }
