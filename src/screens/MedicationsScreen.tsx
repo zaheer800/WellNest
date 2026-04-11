@@ -25,6 +25,7 @@ interface AddForm {
   frequency: Frequency
   times_per_day: 1 | 2 | 3 | 4
   times_of_day: TimeOfDay[]
+  start_date: string
   notes: string
 }
 
@@ -77,6 +78,7 @@ export default function MedicationsScreen() {
     frequency: 'daily',
     times_per_day: 1,
     times_of_day: [],
+    start_date: today(),
     notes: '',
   })
   const [showAddInjection, setShowAddInjection] = useState(false)
@@ -117,7 +119,7 @@ export default function MedicationsScreen() {
   }
 
   const resetForm = () =>
-    setForm({ name: '', dose: '', unit: 'tablet', frequency: 'daily', times_per_day: 1, times_of_day: [], notes: '' })
+    setForm({ name: '', dose: '', unit: 'tablet', frequency: 'daily', times_per_day: 1, times_of_day: [], start_date: today(), notes: '' })
 
   const handleAdd = async () => {
     if (!form.name.trim() || !patientId) return
@@ -134,7 +136,7 @@ export default function MedicationsScreen() {
         frequency: form.frequency,
         schedule_config: scheduleConfig,
         notes: form.notes || null,
-        start_date: date,
+        start_date: form.start_date || date,
         end_date: null,
         is_injection: false,
         known_side_effects: [],
@@ -232,6 +234,23 @@ export default function MedicationsScreen() {
             ))}
           </div>
         </div>
+
+        {/* Start date — only for weekly */}
+        {form.frequency === 'weekly' && (
+          <div>
+            <label className={labelClass}>Start date <span className="text-gray-400 font-normal">(first dose)</span></label>
+            <input
+              type="date"
+              className={inputClass}
+              value={form.start_date}
+              min={today()}
+              onChange={(e) => setForm({ ...form, start_date: e.target.value })}
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              The medication will repeat every 7 days from this date.
+            </p>
+          </div>
+        )}
 
         {/* Time of day chips — multi-select */}
         <div>

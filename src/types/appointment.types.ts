@@ -10,6 +10,7 @@ export interface Appointment {
   pre_visit_report_generated: boolean
   post_visit_notes: string | null
   follow_up_tasks: unknown[]
+  completed_follow_up_tasks: string[]
   created_at: string
 }
 

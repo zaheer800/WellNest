@@ -25,7 +25,8 @@ interface AppointmentActions {
     appointment_type?: string | null
     notes?: string | null
   }) => Promise<void>
-  completeAppointment: (id: string, notes: string) => Promise<void>
+  completeAppointment: (id: string, notes: string, tasks: string[]) => Promise<void>
+  dismissTask: (appointmentId: string, task: string) => Promise<void>
   editAppointment: (id: string, updates: { appointment_date: string; appointment_type: string | null; notes: string | null }) => Promise<void>
   deleteAppointment: (id: string) => Promise<void>
   fetchPreparation: (appointmentId: string) => Promise<void>
@@ -34,7 +35,7 @@ interface AppointmentActions {
 
 type AppointmentStore = AppointmentState & AppointmentActions
 
-export const useAppointmentStore = create<AppointmentStore>((set) => ({
+export const useAppointmentStore = create<AppointmentStore>((set, get) => ({
   appointments: [],
   preparations: {},
   loading: false,
@@ -57,13 +58,32 @@ export const useAppointmentStore = create<AppointmentStore>((set) => ({
     set((state) => ({ appointments: [...state.appointments, newAppt as Appointment] }))
   },
 
-  completeAppointment: async (id, notes) => {
-    await dbUpdateAppointment(id, { completed: true, post_visit_notes: notes })
+  completeAppointment: async (id, notes, tasks) => {
+    await dbUpdateAppointment(id, { completed: true, post_visit_notes: notes, follow_up_tasks: tasks })
     set((state) => ({
       appointments: state.appointments.map((a) =>
-        a.id === id ? { ...a, completed: true, post_visit_notes: notes } : a,
+        a.id === id ? { ...a, completed: true, post_visit_notes: notes, follow_up_tasks: tasks } : a,
       ),
     }))
+  },
+
+  dismissTask: async (appointmentId, task) => {
+    const appt = get().appointments.find((a) => a.id === appointmentId)
+    if (!appt) return
+    const updatedPending = (appt.follow_up_tasks as string[]).filter((t) => t !== task)
+    const updatedCompleted = [...(appt.completed_follow_up_tasks ?? []), task]
+    // Optimistic update first so closing the accordion doesn't revert the check
+    set((state) => ({
+      appointments: state.appointments.map((a) =>
+        a.id === appointmentId
+          ? { ...a, follow_up_tasks: updatedPending, completed_follow_up_tasks: updatedCompleted }
+          : a,
+      ),
+    }))
+    await dbUpdateAppointment(appointmentId, {
+      follow_up_tasks: updatedPending,
+      completed_follow_up_tasks: updatedCompleted,
+    })
   },
 
   editAppointment: async (id, updates) => {

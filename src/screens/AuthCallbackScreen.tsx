@@ -39,9 +39,23 @@ export default function AuthCallbackScreen() {
         }
 
         if (session) {
+          // If there's a pending invite (doctor/family clicked confirm-email before entering OTP),
+          // return them to the join screen to complete the invite acceptance.
+          const pending = sessionStorage.getItem('pendingInvite')
+          if (pending) {
+            try {
+              const { type, token } = JSON.parse(pending)
+              sessionStorage.removeItem('pendingInvite')
+              const dest = type === 'doctor' ? `/join-doctor?token=${token}` : `/join?token=${token}`
+              navigate(dest, { replace: true })
+              return
+            } catch {
+              sessionStorage.removeItem('pendingInvite')
+            }
+          }
           // Let the auth store's onAuthStateChange listener update state,
-          // then navigate. SplashScreen will redirect to /onboarding or
-          // /dashboard based on profile completeness.
+          // then navigate. SplashScreen will redirect to the right portal
+          // based on the user's role.
           navigate('/', { replace: true })
         } else {
           // No session after waiting — token may have been invalid or expired

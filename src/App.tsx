@@ -43,7 +43,10 @@ function FamilyRoute({ children }: { children: React.ReactNode }) {
   const { session, roles, initialized } = useAuthStore()
   if (!initialized) return null
   if (!session) return <Navigate to="/login" replace />
-  if (!roles.includes('family')) return <Navigate to="/dashboard" replace />
+  if (!roles.includes('family')) {
+    if (roles.includes('doctor')) return <Navigate to="/doctor-dashboard" replace />
+    return <Navigate to="/dashboard" replace />
+  }
   return <>{children}</>
 }
 
@@ -52,7 +55,10 @@ function DoctorRoute({ children }: { children: React.ReactNode }) {
   const { session, roles, initialized } = useAuthStore()
   if (!initialized) return null
   if (!session) return <Navigate to="/login" replace />
-  if (!roles.includes('doctor')) return <Navigate to="/dashboard" replace />
+  if (!roles.includes('doctor')) {
+    if (roles.includes('family')) return <Navigate to="/family-dashboard" replace />
+    return <Navigate to="/dashboard" replace />
+  }
   return <>{children}</>
 }
 
@@ -61,7 +67,11 @@ function PatientRoute({ children }: { children: React.ReactNode }) {
   const { session, roles, initialized } = useAuthStore()
   if (!initialized) return null
   if (!session) return <Navigate to="/login" replace />
-  if (!roles.includes('patient')) return <Navigate to="/family-dashboard" replace />
+  if (!roles.includes('patient')) {
+    if (roles.includes('doctor')) return <Navigate to="/doctor-dashboard" replace />
+    if (roles.includes('family')) return <Navigate to="/family-dashboard" replace />
+    return <Navigate to="/login" replace />
+  }
   return <>{children}</>
 }
 

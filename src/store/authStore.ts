@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { Session } from '@supabase/supabase-js'
-import { supabase, getUser, upsertUser, getFamilyMemberByUserId, getDoctorByUserId } from '@/services/supabase'
+import { supabase, getUser, upsertUser, generateMedicalIdToken, getFamilyMemberByUserId, getDoctorByUserId } from '@/services/supabase'
 import type { User, UserProfile, FamilyMember } from '@/types/user.types'
 
 export type AppRole = 'patient' | 'family' | 'doctor' | null
@@ -27,6 +27,7 @@ interface AuthActions {
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
   updateProfile: (profile: Partial<UserProfile>) => Promise<void>
+  generateMedicalId: () => Promise<void>
   acceptInvite: (token: string) => Promise<void>
   acceptDoctorInvite: (token: string) => Promise<void>
   /** Switch active view between patient, family, and doctor roles */
@@ -302,6 +303,19 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     try {
       const updatedUser = await upsertUser(session.user.id, profile)
       set({ user: updatedUser })
+    } finally {
+      set({ loading: false })
+    }
+  },
+
+  generateMedicalId: async () => {
+    const { session, user } = get()
+    if (!session?.user) throw new Error('Not authenticated')
+
+    set({ loading: true })
+    try {
+      const token = await generateMedicalIdToken(session.user.id)
+      set({ user: user ? { ...user, medical_id_token: token } : user })
     } finally {
       set({ loading: false })
     }

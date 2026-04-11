@@ -51,6 +51,8 @@ export default function JoinScreen() {
     if (!email.trim()) return
     setFormError(null)
     try {
+      // Persist token so AuthCallback can return here if the confirm-email link is clicked
+      sessionStorage.setItem('pendingInvite', JSON.stringify({ type: 'family', token }))
       await signInWithOtp(email.trim())
       setStep('otp')
     } catch (e: any) {
@@ -63,6 +65,7 @@ export default function JoinScreen() {
     setFormError(null)
     try {
       await verifyOtp(email.trim(), otp.trim())
+      sessionStorage.removeItem('pendingInvite')
       setStep('accepting')
       await acceptInvite(token)
       switchRole('family')

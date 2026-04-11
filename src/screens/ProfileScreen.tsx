@@ -8,6 +8,23 @@ import Button from '@/components/ui/Button'
 import { LogOut, User, Ruler, Weight, QrCode, Copy, Check, Plus, Trash2, Phone, ExternalLink } from 'lucide-react'
 import type { EmergencyContact } from '@/types/user.types'
 
+type ContactErrors = { name?: string; phone?: string }[]
+
+const PHONE_RE = /^\+?[\d\s\-(). ]{7,20}$/
+
+function validateContacts(contacts: EmergencyContact[]): ContactErrors {
+  return contacts.map((c) => {
+    const errs: { name?: string; phone?: string } = {}
+    if (!c.name.trim()) errs.name = 'Name is required'
+    if (!c.phone.trim()) {
+      errs.phone = 'Phone number is required'
+    } else if (!PHONE_RE.test(c.phone.trim())) {
+      errs.phone = 'Enter a valid phone number'
+    }
+    return errs
+  })
+}
+
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 const RELATIONSHIPS = ['Parent', 'Spouse', 'Child', 'Sibling', 'Friend', 'Other']
 
@@ -41,7 +58,7 @@ function bmiCategory(bmi: number): { label: string; color: string } {
 
 export default function ProfileScreen() {
   const navigate = useNavigate()
-  const { user, updateProfile, signOut, loading } = useAuthStore()
+  const { user, updateProfile, generateMedicalId, signOut, loading } = useAuthStore()
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [signingOut, setSigningOut] = useState(false)
@@ -53,6 +70,7 @@ export default function ProfileScreen() {
 
   // Emergency contacts state
   const [contacts, setContacts] = useState<EmergencyContact[]>([])
+  const [contactErrors, setContactErrors] = useState<ContactErrors>([])
 
   const { register, handleSubmit, watch, reset, formState: { errors, isDirty } } = useForm<ProfileForm>({
     defaultValues: {
@@ -100,11 +118,27 @@ export default function ProfileScreen() {
 
   const addContact = () => {
     if (contacts.length >= 3) return
-    setContacts([...contacts, { name: '', phone: '', relationship: 'Parent' }])
+    const next = [...contacts, { name: '', phone: '', relationship: 'Parent' }]
+    setContacts(next)
+    setContactErrors(validateContacts(next))
   }
-  const removeContact = (i: number) => setContacts(contacts.filter((_, idx) => idx !== i))
-  const updateContact = (i: number, field: keyof EmergencyContact, val: string) =>
-    setContacts(contacts.map((c, idx) => idx === i ? { ...c, [field]: val } : c))
+  const removeContact = (i: number) => {
+    const next = contacts.filter((_, idx) => idx !== i)
+    setContacts(next)
+    setContactErrors(validateContacts(next))
+  }
+  const updateContact = (i: number, field: keyof EmergencyContact, val: string) => {
+    const next = contacts.map((c, idx) => idx === i ? { ...c, [field]: val } : c)
+    setContacts(next)
+    // Only clear the error for this field once user starts typing
+    setContactErrors((prev) => {
+      const updated = [...prev]
+      if (!updated[i]) updated[i] = {}
+      if (field === 'name' && val.trim()) delete updated[i].name
+      if (field === 'phone' && val.trim()) delete updated[i].phone
+      return updated
+    })
+  }
 
   const medicalIdUrl = user?.medical_id_token
     ? `${window.location.origin}/medical-id/${user.medical_id_token}`
@@ -124,6 +158,16 @@ export default function ProfileScreen() {
   const onSubmit = async (data: ProfileForm) => {
     setSubmitError(null)
     setSuccessMsg(null)
+
+    // Validate contacts — block save if any are partially filled or have invalid phone
+    const errs = validateContacts(contacts)
+    const hasErrors = errs.some((e) => e.name || e.phone)
+    if (hasErrors) {
+      setContactErrors(errs)
+      setSubmitError('Please fix the errors in Emergency Contacts before saving.')
+      return
+    }
+
     const validContacts = contacts.filter((c) => c.name.trim() && c.phone.trim())
     try {
       await updateProfile({
@@ -369,20 +413,30 @@ export default function ProfileScreen() {
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                  <input
-                    type="text"
-                    placeholder="Full name"
-                    value={c.name}
-                    onChange={(e) => updateContact(i, 'name', e.target.value)}
-                    className={inputClass}
-                  />
-                  <input
-                    type="tel"
-                    placeholder="Phone number"
-                    value={c.phone}
-                    onChange={(e) => updateContact(i, 'phone', e.target.value)}
-                    className={inputClass}
-                  />
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Full name"
+                      value={c.name}
+                      onChange={(e) => updateContact(i, 'name', e.target.value)}
+                      className={[inputClass, contactErrors[i]?.name ? 'border-red-400 focus:ring-red-400' : ''].join(' ')}
+                    />
+                    {contactErrors[i]?.name && (
+                      <p className="text-red-500 text-xs mt-1">{contactErrors[i].name}</p>
+                    )}
+                  </div>
+                  <div>
+                    <input
+                      type="tel"
+                      placeholder="e.g. +91 98765 43210"
+                      value={c.phone}
+                      onChange={(e) => updateContact(i, 'phone', e.target.value)}
+                      className={[inputClass, contactErrors[i]?.phone ? 'border-red-400 focus:ring-red-400' : ''].join(' ')}
+                    />
+                    {contactErrors[i]?.phone && (
+                      <p className="text-red-500 text-xs mt-1">{contactErrors[i].phone}</p>
+                    )}
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     {RELATIONSHIPS.map((r) => (
                       <button
@@ -425,24 +479,24 @@ export default function ProfileScreen() {
         </form>
 
         {/* Medical ID QR */}
-        {medicalIdUrl && (
-          <Card>
-            <div className="flex items-center gap-2 mb-4">
-              <QrCode className="w-5 h-5 text-brand-teal" />
-              <p className="text-sm font-bold text-gray-800">Medical ID</p>
+        <Card>
+          <div className="flex items-center gap-2 mb-3">
+            <QrCode className="w-5 h-5 text-brand-teal" />
+            <p className="text-sm font-bold text-gray-800">Medical ID</p>
+            {medicalIdUrl && (
               <span className="ml-auto text-xs text-brand-teal bg-brand-teal-light px-2 py-0.5 rounded-full font-semibold border border-indigo-100">Public</span>
-            </div>
-            <p className="text-xs text-gray-500 mb-4 leading-relaxed">
-              Anyone who scans this QR code can view your emergency medical info — no login needed. Share it on your phone lock screen or print it on a card.
-            </p>
+            )}
+          </div>
+          <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+            A public QR code that shows your emergency medical info — no login needed. Share it on your phone lock screen or print it on a card.
+          </p>
+          {medicalIdUrl && qrUrl ? (
             <div className="flex flex-col items-center gap-4">
-              {qrUrl && (
-                <img
-                  src={qrUrl}
-                  alt="Medical ID QR code"
-                  className="w-44 h-44 rounded-2xl border border-gray-100 shadow-sm"
-                />
-              )}
+              <img
+                src={qrUrl}
+                alt="Medical ID QR code"
+                className="w-44 h-44 rounded-2xl border border-gray-100 shadow-sm"
+              />
               <div className="flex gap-2 w-full">
                 <button
                   onClick={copyLink}
@@ -461,8 +515,17 @@ export default function ProfileScreen() {
                 </a>
               </div>
             </div>
-          </Card>
-        )}
+          ) : (
+            <Button
+              variant="secondary"
+              fullWidth
+              loading={loading}
+              onClick={() => generateMedicalId()}
+            >
+              <QrCode className="w-4 h-4 mr-2" /> Generate QR Code
+            </Button>
+          )}
+        </Card>
 
         {/* Sign out */}
         <Card>

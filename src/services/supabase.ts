@@ -167,6 +167,20 @@ export async function getMedicalIdData(token: string): Promise<{
   return response.json()
 }
 
+/**
+ * Generates a new random Medical ID token for the user and persists it.
+ * Returns the generated token string.
+ */
+export async function generateMedicalIdToken(uid: string): Promise<string> {
+  const token = crypto.randomUUID()
+  const { error } = await supabase
+    .from('users')
+    .update({ medical_id_token: token })
+    .eq('id', uid)
+  if (error) throw error
+  return token
+}
+
 // ─── Medications ───────────────────────────────────────────────────────────────
 
 export async function getMedications(patientId: string) {

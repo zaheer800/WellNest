@@ -10,7 +10,11 @@
       "Bash(node -e \"const l = require\\('./node_modules/lucide-react'\\); console.log\\(Object.keys\\(l\\).filter\\(k => ['Sparkles','Salad','Armchair','FlaskConical','HeartPulse','Link2','UserRoundCog'].includes\\(k\\)\\)\\)\")",
       "Bash(curl -s http://localhost:5173)",
       "Bash(npx tsc:*)",
-      "Bash(curl -s http://localhost:5174)"
+      "Bash(curl -s http://localhost:5174)",
+      "mcp__plugin_playwright_playwright__browser_take_screenshot",
+      "mcp__plugin_playwright_playwright__browser_evaluate",
+      "Bash(node -e \"import\\('./tailwind.config.js'\\).then\\(m => console.log\\('LOADED OK:', JSON.stringify\\(Object.keys\\(m.default.theme?.extend ?? {}\\)\\)\\)\\).catch\\(e => console.error\\('LOAD ERROR:', e.message\\)\\)\")",
+      "Bash(npx tailwindcss:*)"
     ]
   }
 }

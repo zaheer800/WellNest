@@ -128,12 +128,11 @@ export default function SOSScreen() {
                 onPointerUp={cancelHold}
                 onPointerLeave={cancelHold}
                 className={[
-                  'absolute inset-0 m-auto w-36 h-36 rounded-full flex flex-col items-center justify-center gap-1 transition-all',
+                  'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-36 h-36 rounded-full flex flex-col items-center justify-center gap-1 transition-all',
                   holding
                     ? 'bg-white scale-95 shadow-[0_0_60px_rgba(255,255,255,0.4)]'
                     : 'bg-white/20 border-2 border-white/40 active:scale-95',
                 ].join(' ')}
-                style={{ top: '50%', left: '50%', transform: 'translate(-50%,-50%)' }}
                 aria-label="Hold for SOS"
               >
                 <span className={`text-3xl font-black ${holding ? 'text-red-600' : 'text-white'}`}>SOS</span>

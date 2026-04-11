@@ -31,6 +31,7 @@ export default function AppointmentsScreen() {
     editAppointment,
     deleteAppointment,
     completeAppointment,
+    dismissTask,
     fetchPreparation,
     markPrepViewed,
   } = useAppointmentStore()
@@ -129,10 +130,10 @@ export default function AppointmentsScreen() {
     }
   }
 
-  const handleCompleteVisit = async (id: string, notes: string, _tasks: string[], medications: NewMedication[]) => {
+  const handleCompleteVisit = async (id: string, notes: string, tasks: string[], medications: NewMedication[]) => {
     setSavingLog(true)
     try {
-      await completeAppointment(id, notes)
+      await completeAppointment(id, notes, tasks)
       // Add any medications prescribed during the visit
       for (const med of medications) {
         if (med.name.trim()) {
@@ -242,6 +243,7 @@ export default function AppointmentsScreen() {
                     onReschedule={handleReschedule}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
+                    onDismissTask={(task) => dismissTask(appt.id, task)}
                   />
 
                   {activePrep === appt.id && (
@@ -300,6 +302,7 @@ export default function AppointmentsScreen() {
                       onReschedule={handleReschedule}
                       onEdit={handleEdit}
                       onDelete={handleDelete}
+                      onDismissTask={(task) => dismissTask(appt.id, task)}
                     />
 
                     {activeLog === appt.id && (
