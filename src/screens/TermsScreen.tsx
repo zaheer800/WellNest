@@ -22,118 +22,169 @@ export default function TermsScreen() {
 
       <div className="max-w-2xl mx-auto px-5 py-8 space-y-8 text-gray-700">
 
-        <div>
-          <p className="text-xs text-gray-400 mb-1">Last updated: April 2026</p>
+        {/* Intro */}
+        <div className="space-y-3">
+          <p className="text-xs text-gray-400">Effective date: 12 April 2026 &nbsp;·&nbsp; Version 1.0</p>
           <p className="text-sm leading-relaxed">
-            Welcome to WellNest. By accessing or using WellNest at{' '}
-            <span className="font-medium text-brand-teal">wellnest.zakapedia.in</span>, you agree
-            to be bound by these Terms of Service. Please read them carefully.
+            These Terms of Service ("Terms") govern your access to and use of WellNest ("the Service"),
+            operated at <span className="font-medium text-brand-teal">wellnest.zakapedia.in</span>.
+            By accessing or using the Service, you agree to be legally bound by these Terms. If you do
+            not agree, you must discontinue use of the Service immediately.
           </p>
         </div>
 
-        <Section title="1. About WellNest">
-          <p>
-            WellNest is a personal health management application that helps you track medications,
-            symptoms, appointments, lab reports, and lifestyle metrics. It provides AI-assisted
-            insights to help you understand your health data and communicate with your care team.
+        {/* Medical Disclaimer Banner */}
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4 space-y-1">
+          <p className="text-sm font-bold text-amber-800">Important Medical Disclaimer</p>
+          <p className="text-sm text-amber-700 leading-relaxed">
+            WellNest is a personal health record management and wellness tracking application. It is{' '}
+            <strong>not</strong> a licensed medical device, clinical diagnostic tool, or substitute for
+            professional medical advice, diagnosis, or treatment. The information and AI-generated
+            insights within this application are provided for informational and organisational purposes
+            only and must not be relied upon as medical guidance. Always consult a qualified and
+            registered healthcare professional before making any medical decision. In the event of a
+            medical emergency, contact your local emergency services immediately — do not rely on
+            this application.
           </p>
-          <p className="mt-2 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 text-amber-800">
-            <strong>Medical Disclaimer:</strong> WellNest is not a medical device and does not
-            provide medical advice, diagnosis, or treatment. Always consult a qualified healthcare
-            professional for medical decisions. Do not rely solely on WellNest in an emergency —
-            call your local emergency services immediately.
+        </div>
+
+        <Section title="1. Description of Service">
+          <p>
+            WellNest is a personal health management platform that enables users to record and track
+            medications, symptoms, appointments, lab reports, imaging results, dietary compliance,
+            exercise, and lifestyle metrics. It provides AI-assisted analysis of health data for
+            personal reference and facilitates controlled sharing with authorised family members
+            and healthcare professionals.
           </p>
         </Section>
 
         <Section title="2. Eligibility">
           <p>
-            You must be at least 13 years old to use WellNest. By using the app, you confirm that
-            you meet this requirement. If you are under 18, you should use WellNest only with the
-            involvement of a parent or guardian.
+            To use the Service, you must be at least 13 years of age. Users between the ages of 13
+            and 18 may only use the Service under the supervision of a parent or legal guardian, who
+            accepts these Terms on their behalf. By using the Service, you represent and warrant that
+            you meet these requirements.
           </p>
         </Section>
 
-        <Section title="3. Your Account">
+        <Section title="3. Account Responsibilities">
           <ul className="list-disc list-inside space-y-1.5">
-            <li>You are responsible for maintaining the confidentiality of your account.</li>
-            <li>You agree to provide accurate and current information during registration.</li>
-            <li>You must notify us immediately if you suspect unauthorised access to your account.</li>
-            <li>One person may not maintain multiple accounts.</li>
+            <li>You are solely responsible for maintaining the confidentiality of your account credentials.</li>
+            <li>You agree to provide accurate, current, and complete information during registration and to keep it updated.</li>
+            <li>You must notify us immediately at <a href="mailto:info@zakapedia.in" className="text-brand-teal font-medium">info@zakapedia.in</a> if you suspect any unauthorised access to or use of your account.</li>
+            <li>You may not share your account with or transfer it to any other person.</li>
+            <li>We reserve the right to suspend or terminate accounts that violate these Terms.</li>
           </ul>
         </Section>
 
-        <Section title="4. Health Data">
+        <Section title="4. Health Data and Ownership">
           <ul className="list-disc list-inside space-y-1.5">
-            <li>You own all health data you enter into WellNest.</li>
-            <li>You are responsible for the accuracy of information you enter.</li>
-            <li>You control what data is shared with family members and doctors you invite.</li>
-            <li>You may export or delete your data at any time through your profile settings.</li>
+            <li>You retain full ownership of all health and personal data you enter into the Service.</li>
+            <li>You are solely responsible for the accuracy and completeness of information you record.</li>
+            <li>WellNest does not verify, validate, or endorse the accuracy of any health data you enter.</li>
+            <li>You may export or request deletion of your data at any time in accordance with our Privacy Policy.</li>
           </ul>
         </Section>
 
-        <Section title="5. Sharing with Others">
+        <Section title="5. AI-Generated Content">
           <p>
-            WellNest allows you to invite family members and doctors to view portions of your health
-            data. By sending an invite:
+            Certain features of the Service use artificial intelligence to generate visit preparations,
+            report summaries, medication insights, and health scores. You acknowledge that:
           </p>
           <ul className="list-disc list-inside space-y-1.5 mt-2">
-            <li>You consent to the invited person accessing the data sections you permit.</li>
-            <li>You are responsible for ensuring invites are sent to the correct people.</li>
-            <li>You can revoke any granted access at any time from the Family or Doctor screens.</li>
+            <li>AI-generated content is informational only and does not constitute medical advice.</li>
+            <li>Such content may contain inaccuracies, omissions, or errors and should always be reviewed by a qualified healthcare professional.</li>
+            <li>WellNest makes no warranties regarding the accuracy, completeness, or fitness for purpose of AI-generated outputs.</li>
           </ul>
         </Section>
 
-        <Section title="6. AI-Generated Content">
+        <Section title="6. Sharing with Family and Healthcare Professionals">
           <p>
-            WellNest uses AI to generate visit preparations, report summaries, and health insights.
-            These are informational aids only and:
+            The Service allows you to invite family members and doctors to view portions of your
+            health profile. By using this feature:
           </p>
           <ul className="list-disc list-inside space-y-1.5 mt-2">
-            <li>Should not replace professional medical advice.</li>
-            <li>May contain errors or omissions — always verify with your healthcare provider.</li>
-            <li>Are generated based on the data you have entered and may not reflect your complete health picture.</li>
+            <li>You expressly consent to the data sections you permit being accessible to the invited person.</li>
+            <li>You are solely responsible for verifying the identity of individuals you invite.</li>
+            <li>You may revoke any granted access at any time through the Family or Doctor settings in the app.</li>
+            <li>WellNest is not responsible for any actions taken by authorised contacts based on data they access.</li>
           </ul>
         </Section>
 
         <Section title="7. Acceptable Use">
-          <p>You agree not to:</p>
+          <p>You agree not to use the Service to:</p>
           <ul className="list-disc list-inside space-y-1.5 mt-2">
-            <li>Use WellNest for any unlawful purpose.</li>
-            <li>Attempt to gain unauthorised access to other users' data.</li>
-            <li>Upload malicious code or interfere with the app's operation.</li>
-            <li>Misrepresent your identity when inviting doctors or family members.</li>
+            <li>Violate any applicable local, national, or international law or regulation.</li>
+            <li>Attempt to gain unauthorised access to any other user's data or the Service's infrastructure.</li>
+            <li>Upload, transmit, or distribute malicious code, viruses, or harmful software.</li>
+            <li>Misrepresent your identity or affiliation when inviting others to access your health data.</li>
+            <li>Use the Service in any manner that could disable, overburden, or impair its operation.</li>
           </ul>
         </Section>
 
-        <Section title="8. Service Availability">
+        <Section title="8. Intellectual Property">
           <p>
-            We aim to keep WellNest available at all times but do not guarantee uninterrupted
-            access. We may perform maintenance, updates, or face outages beyond our control. We
-            are not liable for any loss resulting from service unavailability.
+            All content, design, software, and technology underlying the Service — excluding your
+            personal health data — is the intellectual property of WellNest and is protected by
+            applicable copyright, trademark, and other laws. You may not reproduce, distribute, or
+            create derivative works from any part of the Service without our express written consent.
           </p>
         </Section>
 
-        <Section title="9. Limitation of Liability">
+        <Section title="9. Service Availability and Modifications">
           <p>
-            To the maximum extent permitted by law, WellNest and its developers shall not be liable
-            for any indirect, incidental, or consequential damages arising from your use of the
-            application, including but not limited to health decisions made based on app content.
+            We strive to maintain continuous availability of the Service but do not guarantee
+            uninterrupted access. We reserve the right to modify, suspend, or discontinue any part
+            of the Service at any time, with or without notice. We shall not be liable to you or any
+            third party for any modification, suspension, or discontinuation of the Service.
           </p>
         </Section>
 
-        <Section title="10. Changes to Terms">
+        <Section title="10. Disclaimer of Warranties">
           <p>
-            We may update these Terms from time to time. Continued use of WellNest after changes
-            are posted constitutes your acceptance of the revised Terms. We will notify you of
-            material changes via the app.
+            The Service is provided on an "as is" and "as available" basis without warranties of any
+            kind, either express or implied. We expressly disclaim all warranties, including but not
+            limited to implied warranties of merchantability, fitness for a particular purpose, and
+            non-infringement. We do not warrant that the Service will be error-free, secure, or
+            continuously available.
           </p>
         </Section>
 
-        <Section title="11. Contact">
-          <p>For questions about these Terms, contact us at:</p>
-          <div className="mt-2 bg-gray-50 rounded-xl px-4 py-3">
-            <p className="text-sm font-medium text-gray-800">WellNest Support</p>
-            <p className="text-sm text-brand-teal mt-0.5">wellnest.zakapedia.in</p>
+        <Section title="11. Limitation of Liability">
+          <p>
+            To the fullest extent permitted by applicable law, WellNest and its operators, directors,
+            and contributors shall not be liable for any indirect, incidental, special, consequential,
+            or punitive damages arising from or related to your use of or inability to use the Service,
+            including but not limited to health decisions made in reliance on information or
+            AI-generated content within the application, even if advised of the possibility of such damages.
+          </p>
+        </Section>
+
+        <Section title="12. Governing Law">
+          <p>
+            These Terms shall be governed by and construed in accordance with the laws of India,
+            without regard to its conflict of law principles. Any disputes arising under these Terms
+            shall be subject to the exclusive jurisdiction of the courts located in India.
+          </p>
+        </Section>
+
+        <Section title="13. Changes to These Terms">
+          <p>
+            We reserve the right to revise these Terms at any time. Revised Terms will be posted with
+            an updated effective date. Your continued use of the Service following the posting of
+            revised Terms constitutes your acceptance. We will provide notice of material changes
+            through the application.
+          </p>
+        </Section>
+
+        <Section title="14. Contact Us">
+          <p>
+            For questions, concerns, or legal notices regarding these Terms of Service, please contact:
+          </p>
+          <div className="mt-3 bg-gray-50 rounded-2xl px-5 py-4 space-y-1">
+            <p className="text-sm font-bold text-gray-800">WellNest — Legal</p>
+            <a href="mailto:info@zakapedia.in" className="text-sm text-brand-teal font-medium">info@zakapedia.in</a>
+            <p className="text-sm text-gray-500">wellnest.zakapedia.in</p>
           </div>
         </Section>
 
