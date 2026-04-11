@@ -66,7 +66,7 @@ function formatSchedule(config: MedicationScheduleConfig): string {
 export default function MedicationsScreen() {
   const { user } = useAuthStore()
   const { medications, loading, error, fetchMedications, markTaken, addMedication, removeMedication } = useMedicationStore()
-  const { courses: injectionCourses, sideEffects, loading: injectionLoading, error: injectionError, fetchCourses, addCourse, markDoseToday, fetchSideEffects, addSideEffect, resolveSideEffect } = useInjectionStore()
+  const { courses: injectionCourses, sideEffects, loading: injectionLoading, error: injectionError, fetchCourses, addCourse, logDose, fetchSideEffects, addSideEffect, resolveSideEffect } = useInjectionStore()
 
   const [showAdd, setShowAdd] = useState(false)
   const [tab, setTab] = useState<'medications' | 'injections' | 'sideeffects'>('medications')
@@ -549,7 +549,7 @@ export default function MedicationsScreen() {
                   <InjectionCourse
                     key={course.id}
                     course={course}
-                    onMarkDose={() => markDoseToday(course)}
+                    onLogDose={(administeredAt, by) => logDose(course, administeredAt, by)}
                   />
                 ))}
               </div>
