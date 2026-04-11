@@ -197,12 +197,13 @@ export default function OnboardingScreen() {
   const [goal,      setGoal]      = useState<string | null>(null)
   const [contacts,  setContacts]  = useState<EmergencyContact[]>([])
 
-  // Redirect if already onboarded
+  // Redirect if already onboarded — only fires at step 0 (before user starts),
+  // so a profile save mid-flow doesn't race against goNext()
   useEffect(() => {
-    if (user?.name && user?.height_cm && user?.weight_kg) {
+    if (step === 0 && user?.name && user?.height_cm && user?.weight_kg) {
       navigate('/dashboard', { replace: true })
     }
-  }, [user, navigate])
+  }, [user, navigate, step])
 
   // Clamp day when month/year changes
   useEffect(() => {

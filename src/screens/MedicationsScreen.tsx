@@ -36,8 +36,6 @@ const FREQUENCY_OPTIONS: { value: Frequency; label: string }[] = [
   { value: 'weekly', label: 'Weekly' },
 ]
 
-const TIMES_PER_DAY_OPTIONS: (1 | 2 | 3 | 4)[] = [1, 2, 3, 4]
-
 const TIME_OF_DAY_OPTIONS: { value: TimeOfDay; label: string; emoji: string }[] = [
   { value: 'morning', label: 'Morning', emoji: '🌅' },
   { value: 'afternoon', label: 'Afternoon', emoji: '☀️' },
@@ -45,8 +43,8 @@ const TIME_OF_DAY_OPTIONS: { value: TimeOfDay; label: string; emoji: string }[] 
   { value: 'bedtime', label: 'Bedtime', emoji: '🌙' },
 ]
 
-// Patient-friendly order: common form factors first, clinical units last
-const UNIT_OPTIONS = ['tablet', 'capsule', 'ml', 'drop', 'puff', 'sachet', 'mg', 'mcg', 'IU', 'g']
+// Patient-friendly: form factors only — dose strength is freetext in the dose field
+const UNIT_OPTIONS = ['tablet', 'capsule', 'ml', 'drop', 'puff', 'sachet', 'patch', 'injection', 'other']
 
 const TIME_OF_DAY_LABEL: Record<TimeOfDay, string> = {
   morning: 'Morning',
@@ -124,7 +122,7 @@ export default function MedicationsScreen() {
   const handleAdd = async () => {
     if (!form.name.trim() || !patientId) return
     const scheduleConfig: MedicationScheduleConfig = {
-      times_per_day: form.times_per_day,
+      times_per_day: (form.times_of_day.length > 0 ? form.times_of_day.length : 1) as 1 | 2 | 3 | 4,
       times_of_day: form.times_of_day.length > 0 ? form.times_of_day : undefined,
     }
     try {
@@ -187,28 +185,31 @@ export default function MedicationsScreen() {
           />
         </div>
 
-        {/* Dose + Unit */}
+        {/* Form type + Dose */}
         <div className="flex gap-3">
-          <div className="flex-1">
-            <label className={labelClass}>Dose <span className="text-gray-400 font-normal">(optional)</span></label>
-            <input
-              className={inputClass}
-              placeholder="e.g. 500"
-              value={form.dose}
-              onChange={(e) => setForm({ ...form, dose: e.target.value })}
-            />
-          </div>
-          <div className="w-32">
-            <label className={labelClass}>Unit <span className="text-gray-400 font-normal">(optional)</span></label>
+          <div className="w-36">
+            <label className={labelClass}>Form</label>
             <select
               className={inputClass}
               value={form.unit}
               onChange={(e) => setForm({ ...form, unit: e.target.value })}
             >
-              {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u}</option>)}
+              {UNIT_OPTIONS.map((u) => (
+                <option key={u} value={u}>{u.charAt(0).toUpperCase() + u.slice(1)}</option>
+              ))}
             </select>
           </div>
+          <div className="flex-1">
+            <label className={labelClass}>Strength <span className="text-gray-400 font-normal">(optional)</span></label>
+            <input
+              className={inputClass}
+              placeholder="e.g. 500mg, 10ml"
+              value={form.dose}
+              onChange={(e) => setForm({ ...form, dose: e.target.value })}
+            />
+          </div>
         </div>
+        <p className="text-xs text-gray-400 -mt-2">Strength is printed on the packet — skip if unsure.</p>
 
         {/* Frequency chips */}
         <div>
@@ -232,35 +233,11 @@ export default function MedicationsScreen() {
           </div>
         </div>
 
-        {/* Times per day chips — only for daily */}
-        {form.frequency === 'daily' && (
-          <div>
-            <label className={labelClass}>How many times a day?</label>
-            <div className="flex gap-2">
-              {TIMES_PER_DAY_OPTIONS.map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setForm({ ...form, times_per_day: n })}
-                  className={[
-                    'flex-1 py-2.5 rounded-xl border text-sm font-semibold transition-all',
-                    form.times_per_day === n
-                      ? 'border-indigo-400 bg-indigo-50 text-indigo-700'
-                      : 'border-gray-200 text-gray-600 hover:border-gray-300',
-                  ].join(' ')}
-                >
-                  {n}x
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Time of day chips — multi-select */}
         <div>
           <label className={labelClass}>
             When do you take it?
-            <span className="text-gray-400 font-normal ml-1">(select all that apply)</span>
+            <span className="text-gray-400 font-normal ml-1">Select all that apply</span>
           </label>
           <div className="grid grid-cols-2 gap-2">
             {TIME_OF_DAY_OPTIONS.map((opt) => {
