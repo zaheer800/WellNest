@@ -1,10 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import Anthropic from 'npm:@anthropic-ai/sdk'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { corsHeaders, requireAuth, assertOwnership } from '../_shared/auth.ts'
 
 interface GenerateConditionConnectionsBody {
   patient_id: string
@@ -14,9 +10,11 @@ interface GenerateConditionConnectionsBody {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+
+  // ── Auth ────────────────────────────────────────────────────────────────────
+  const auth = await requireAuth(req)
+  if (auth instanceof Response) return auth
 
   try {
     const body: GenerateConditionConnectionsBody = await req.json()
@@ -24,13 +22,24 @@ serve(async (req) => {
     if (!body.patient_id || !body.all_findings) {
       return new Response(
         JSON.stringify({ error: 'patient_id and all_findings are required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }
 
+    // ── Ownership check ───────────────────────────────────────────────────────
+    const ownershipError = assertOwnership(body.patient_id, auth.userId)
+    if (ownershipError) return ownershipError
+
+    const apiKey = Deno.env.get('CLAUDE_API_KEY')
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: 'CLAUDE_API_KEY is not configured' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+    const anthropic = new Anthropic({ apiKey })
+
     const prompt = `You are a medical knowledge engine.
-Given a patient's health findings, identify meaningful
-causal or correlational connections between them.
+Given a patient's health findings, identify meaningful causal or correlational connections between them.
 
 Patient findings:
 ${JSON.stringify(body.all_findings, null, 2)}
@@ -46,27 +55,15 @@ For each meaningful connection return:
   "evidence_source": "lab_report" | "imaging" | "symptom_pattern" | "clinical"
 }
 
-source_condition / target_condition: short code e.g. "low_b12",
-  "l4_l5_disc_bulge", "peripheral_neuropathy", "urinary_frequency".
+source_condition / target_condition: short code e.g. "low_b12", "l4_l5_disc_bulge".
 source_label / target_label: human-readable e.g. "Low Vitamin B12".
-plain_language: one simple sentence e.g.
-  "Low B12 damages the protective myelin sheath around nerves,
-  slowing their conduction speed."
+plain_language: one simple sentence explaining the connection.
 
-Only include connections that are clinically meaningful and
-supported by the patient's actual findings.
+Only include connections supported by the patient's actual findings.
 Do not invent connections not supported by the data.
 
 Patient context: Age ${body.age ?? 'unknown'}, Gender ${body.gender ?? 'unknown'}
 Return a JSON array only. No preamble, no explanation.`
-
-    const apiKey = Deno.env.get('CLAUDE_API_KEY')
-    if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'CLAUDE_API_KEY is not configured' }), {
-        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-    const anthropic = new Anthropic({ apiKey })
 
     let message
     try {
@@ -79,7 +76,7 @@ Return a JSON array only. No preamble, no explanation.`
       if (apiError?.status === 429) {
         return new Response(
           JSON.stringify({ error: 'RATE_LIMIT', message: 'Too many requests. Please wait a moment and try again.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
         )
       }
       throw apiError
@@ -97,7 +94,7 @@ Return a JSON array only. No preamble, no explanation.`
     if (!jsonMatch) {
       return new Response(
         JSON.stringify({ error: 'Could not parse JSON from Claude response', raw: responseText }),
-        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }
 
@@ -105,12 +102,12 @@ Return a JSON array only. No preamble, no explanation.`
 
     return new Response(
       JSON.stringify({ patient_id: body.patient_id, connections }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   } catch (error) {
     return new Response(
       JSON.stringify({ error: (error as Error).message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   }
 })

@@ -23,7 +23,7 @@ export default function JoinScreen() {
       .then((record: any) => {
         setInvite({
           name: record.name,
-          patient_name: record.users?.name ?? 'your family member',
+          patient_name: record.patient_name ?? 'your family member',
         })
         if (session) {
           runAccept()

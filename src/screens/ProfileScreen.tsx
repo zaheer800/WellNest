@@ -77,6 +77,7 @@ function bmiCategory(bmi: number): { label: string; color: string } {
 export default function ProfileScreen() {
   const navigate = useNavigate()
   const { user, updateProfile, generateMedicalId, signOut, loading } = useAuthStore()
+  const [saving, setSaving] = useState(false)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [signingOut, setSigningOut] = useState(false)
@@ -238,6 +239,7 @@ export default function ProfileScreen() {
 
     const validContacts = contacts.filter((c) => c.name.trim() && c.phone.trim())
     const fullPhone = `${countryCode}${localDigits}`
+    setSaving(true)
     try {
       await updateProfile({
         name: data.name,
@@ -252,8 +254,14 @@ export default function ProfileScreen() {
       })
       setSuccessMsg('Profile updated')
       setTimeout(() => setSuccessMsg(null), 2500)
-    } catch (e) {
-      setSubmitError(e instanceof Error ? e.message : 'Could not save changes. Please try again.')
+    } catch (e: any) {
+      // AbortError fires when our 10s fetch timeout triggers
+      const isTimeout = e?.name === 'AbortError' || e?.message?.toLowerCase().includes('abort')
+      setSubmitError(isTimeout
+        ? 'Request timed out. Check your connection and try again.'
+        : (e?.message ?? 'Could not save changes. Please try again.'))
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -584,7 +592,7 @@ export default function ProfileScreen() {
             type="submit"
             variant="primary"
             fullWidth
-            loading={loading}
+            loading={saving}
           >
             Save Changes
           </Button>
@@ -624,6 +632,17 @@ export default function ProfileScreen() {
                   <ExternalLink className="w-4 h-4" /> Preview
                 </button>
               </div>
+              <button
+                onClick={() => {
+                  if (window.confirm('Reset Medical ID? The current QR code and link will stop working immediately. A new one will be generated.')) {
+                    generateMedicalId()
+                  }
+                }}
+                disabled={loading}
+                className="w-full text-xs text-gray-400 hover:text-red-500 transition py-1"
+              >
+                Reset link (invalidates current QR code)
+              </button>
             </div>
           ) : (
             <Button

@@ -1,10 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import Anthropic from 'npm:@anthropic-ai/sdk'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { corsHeaders, requireAuth } from '../_shared/auth.ts'
 
 interface LabParameter {
   name: string
@@ -35,9 +31,11 @@ interface CheckCriticalValuesResult {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+
+  // ── Auth ────────────────────────────────────────────────────────────────────
+  const auth = await requireAuth(req)
+  if (auth instanceof Response) return auth
 
   try {
     const body: CheckCriticalValuesBody = await req.json()
@@ -45,25 +43,20 @@ serve(async (req) => {
     if (!body.parameters || !Array.isArray(body.parameters)) {
       return new Response(
         JSON.stringify({ error: 'parameters must be a non-empty array' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }
 
     const criticals = body.parameters.filter(
-      (p) => p.status === 'critical_low' || p.status === 'critical_high'
+      (p) => p.status === 'critical_low' || p.status === 'critical_high',
     )
 
     if (criticals.length === 0) {
-      const result: CheckCriticalValuesResult = {
-        critical_found: false,
-        critical_parameters: [],
-      }
-      return new Response(JSON.stringify(result), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      return new Response(
+        JSON.stringify({ critical_found: false, critical_parameters: [] }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
     }
-
-    const prompt = `You are a clinical decision support system. For each critical lab value, provide the appropriate action. Patient has these critical values: ${JSON.stringify(criticals)}. Return JSON array where each item has: name, status, value, action (what patient should do in plain language), urgency ('monitor'|'contact_doctor_today'|'emergency')`
 
     const apiKey = Deno.env.get('CLAUDE_API_KEY')
     if (!apiKey) {
@@ -72,6 +65,17 @@ serve(async (req) => {
       })
     }
     const anthropic = new Anthropic({ apiKey })
+
+    const prompt = `You are a clinical decision support system. For each critical lab value, provide the appropriate action.
+
+Patient has these critical values: ${JSON.stringify(criticals)}
+
+Return JSON array where each item has:
+- name: string
+- status: string
+- value: number or string
+- action: string (what patient should do, in plain language)
+- urgency: "monitor" | "contact_doctor_today" | "emergency"`
 
     let message
     try {
@@ -84,7 +88,7 @@ serve(async (req) => {
       if (apiError?.status === 429) {
         return new Response(
           JSON.stringify({ error: 'RATE_LIMIT', message: 'Too many requests. Please wait a moment and try again.' }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
         )
       }
       throw apiError
@@ -95,31 +99,27 @@ serve(async (req) => {
       .map((block) => (block as { type: 'text'; text: string }).text)
       .join('')
 
-    // Extract JSON array from the response
-    const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/) ||
+    const jsonMatch =
+      responseText.match(/```(?:json)?\s*([\s\S]*?)```/) ||
       responseText.match(/(\[[\s\S]*\])/)
 
     if (!jsonMatch) {
       return new Response(
         JSON.stringify({ error: 'Could not parse JSON from Claude response', raw: responseText }),
-        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }
 
     const enrichedCriticals: EnrichedCriticalParameter[] = JSON.parse(jsonMatch[1])
 
-    const result: CheckCriticalValuesResult = {
-      critical_found: true,
-      critical_parameters: enrichedCriticals,
-    }
-
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    return new Response(
+      JSON.stringify({ critical_found: true, critical_parameters: enrichedCriticals }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    )
   } catch (error) {
-    return new Response(JSON.stringify({ error: (error as Error).message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    return new Response(
+      JSON.stringify({ error: (error as Error).message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    )
   }
 })

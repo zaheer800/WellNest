@@ -24,7 +24,7 @@ export default function JoinDoctorScreen() {
         setInvite({
           name: record.name,
           specialty: record.specialty,
-          patient_name: record.users?.name ?? 'your patient',
+          patient_name: record.patient_name ?? 'your patient',
         })
         if (session) {
           runAccept()
