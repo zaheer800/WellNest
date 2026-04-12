@@ -5,8 +5,26 @@ import { useAuthStore } from '@/store/authStore'
 import PageWrapper from '@/components/layout/PageWrapper'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import { LogOut, User, Ruler, Weight, QrCode, Copy, Check, Plus, Trash2, Phone, ExternalLink } from 'lucide-react'
+import { LogOut, User, Ruler, Weight, QrCode, Copy, Check, Plus, Trash2, Phone, ExternalLink, ChevronDown } from 'lucide-react'
 import type { EmergencyContact } from '@/types/user.types'
+
+const COUNTRY_CODES = [
+  { code: '+91', flag: '🇮🇳', name: 'India' },
+  { code: '+1', flag: '🇺🇸', name: 'USA' },
+  { code: '+44', flag: '🇬🇧', name: 'UK' },
+  { code: '+61', flag: '🇦🇺', name: 'Australia' },
+  { code: '+971', flag: '🇦🇪', name: 'UAE' },
+  { code: '+966', flag: '🇸🇦', name: 'Saudi Arabia' },
+  { code: '+65', flag: '🇸🇬', name: 'Singapore' },
+  { code: '+60', flag: '🇲🇾', name: 'Malaysia' },
+  { code: '+92', flag: '🇵🇰', name: 'Pakistan' },
+  { code: '+880', flag: '🇧🇩', name: 'Bangladesh' },
+  { code: '+94', flag: '🇱🇰', name: 'Sri Lanka' },
+  { code: '+64', flag: '🇳🇿', name: 'New Zealand' },
+  { code: '+49', flag: '🇩🇪', name: 'Germany' },
+  { code: '+33', flag: '🇫🇷', name: 'France' },
+  { code: '+81', flag: '🇯🇵', name: 'Japan' },
+]
 
 type ContactErrors = { name?: string; phone?: string }[]
 
@@ -68,6 +86,12 @@ export default function ProfileScreen() {
   const [allergies, setAllergies] = useState<string[]>([])
   const [allergyInput, setAllergyInput] = useState('')
 
+  // Phone state
+  const [countryCode, setCountryCode] = useState('+91')
+  const [phoneLocal, setPhoneLocal] = useState('')
+  const [phoneError, setPhoneError] = useState<string | null>(null)
+  const [showCountryPicker, setShowCountryPicker] = useState(false)
+
   // Emergency contacts state
   const [contacts, setContacts] = useState<EmergencyContact[]>([])
   const [contactErrors, setContactErrors] = useState<ContactErrors>([])
@@ -96,6 +120,16 @@ export default function ProfileScreen() {
       })
       setAllergies(user.allergies ?? [])
       setContacts(user.emergency_contacts ?? [])
+      // Parse existing phone into country code + local
+      if (user.phone) {
+        const match = COUNTRY_CODES.find((c) => user.phone!.startsWith(c.code))
+        if (match) {
+          setCountryCode(match.code)
+          setPhoneLocal(user.phone.slice(match.code.length))
+        } else {
+          setPhoneLocal(user.phone)
+        }
+      }
     }
   }, [user, reset])
 
@@ -150,14 +184,48 @@ export default function ProfileScreen() {
 
   const copyLink = async () => {
     if (!medicalIdUrl) return
-    await navigator.clipboard.writeText(medicalIdUrl)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(medicalIdUrl)
+      } else {
+        // Fallback for non-secure contexts or browsers without clipboard API
+        const ta = document.createElement('textarea')
+        ta.value = medicalIdUrl
+        ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0'
+        document.body.appendChild(ta)
+        ta.focus()
+        ta.select()
+        document.execCommand('copy')
+        document.body.removeChild(ta)
+      }
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // Last resort: show the URL so the user can copy it manually
+      prompt('Copy this link:', medicalIdUrl)
+    }
+  }
+
+  const openPreview = () => {
+    if (!medicalIdUrl) return
+    window.open(medicalIdUrl, '_blank', 'noopener,noreferrer')
   }
 
   const onSubmit = async (data: ProfileForm) => {
     setSubmitError(null)
     setSuccessMsg(null)
+    setPhoneError(null)
+
+    // Validate phone (mandatory)
+    const localDigits = phoneLocal.replace(/\D/g, '')
+    if (!localDigits) {
+      setPhoneError('Phone number is required')
+      return
+    }
+    if (localDigits.length < 6) {
+      setPhoneError('Enter a valid phone number')
+      return
+    }
 
     // Validate contacts — block save if any are partially filled or have invalid phone
     const errs = validateContacts(contacts)
@@ -169,9 +237,11 @@ export default function ProfileScreen() {
     }
 
     const validContacts = contacts.filter((c) => c.name.trim() && c.phone.trim())
+    const fullPhone = `${countryCode}${localDigits}`
     try {
       await updateProfile({
         name: data.name,
+        phone: fullPhone,
         date_of_birth: data.date_of_birth || undefined,
         gender: (data.gender as ProfileForm['gender']) || undefined,
         height_cm: data.height_cm ? Number(data.height_cm) : undefined,
@@ -255,6 +325,48 @@ export default function ProfileScreen() {
                   {...register('name', { required: 'Name is required' })}
                 />
                 {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+              </div>
+
+              <div>
+                <label className={labelClass}>Phone number <span className="text-red-500">*</span></label>
+                <div className="flex gap-2">
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowCountryPicker(!showCountryPicker)}
+                      className="h-full flex items-center gap-1 border border-gray-200 rounded-xl px-3 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-teal whitespace-nowrap"
+                    >
+                      <span>{COUNTRY_CODES.find((c) => c.code === countryCode)?.flag}</span>
+                      <span className="font-medium text-gray-700">{countryCode}</span>
+                      <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                    </button>
+                    {showCountryPicker && (
+                      <div className="absolute z-20 top-full left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-y-auto max-h-52 min-w-[200px]">
+                        {COUNTRY_CODES.map((c) => (
+                          <button
+                            key={c.code}
+                            type="button"
+                            onClick={() => { setCountryCode(c.code); setShowCountryPicker(false) }}
+                            className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-gray-50 transition ${countryCode === c.code ? 'bg-brand-teal-light font-semibold text-brand-navy' : 'text-gray-700'}`}
+                          >
+                            <span>{c.flag}</span>
+                            <span>{c.name}</span>
+                            <span className="ml-auto text-gray-400 text-xs">{c.code}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    placeholder="98765 43210"
+                    value={phoneLocal}
+                    onChange={(e) => { setPhoneLocal(e.target.value); setPhoneError(null) }}
+                    className={[inputClass, 'flex-1', phoneError ? 'border-red-400 focus:ring-red-400' : ''].join(' ')}
+                  />
+                </div>
+                {phoneError && <p className="text-red-500 text-xs mt-1">{phoneError}</p>}
               </div>
 
               <div>
@@ -505,14 +617,12 @@ export default function ProfileScreen() {
                   {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                   {copied ? 'Copied!' : 'Copy link'}
                 </button>
-                <a
-                  href={medicalIdUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={openPreview}
                   className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-brand-teal text-white text-sm font-semibold hover:bg-brand-teal-dark transition active:scale-95"
                 >
                   <ExternalLink className="w-4 h-4" /> Preview
-                </a>
+                </button>
               </div>
             </div>
           ) : (

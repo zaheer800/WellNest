@@ -6,7 +6,7 @@ type Pipeline = 'lab' | 'imaging'
 
 interface ReportUploadProps {
   patientId: string
-  onUploadComplete: (fileUrl: string, pipeline: Pipeline) => void
+  onUploadComplete: (fileUrl: string, pipeline: Pipeline, filePath: string) => void
 }
 
 const PIPELINE_OPTIONS: { value: Pipeline; label: string; hint: string }[] = [
@@ -17,6 +17,7 @@ const PIPELINE_OPTIONS: { value: Pipeline; label: string; hint: string }[] = [
 const ReportUpload: React.FC<ReportUploadProps> = ({ patientId, onUploadComplete }) => {
   const [file, setFile] = useState<File | null>(null)
   const [fileUrl, setFileUrl] = useState<string | null>(null)
+  const [filePath, setFilePath] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const [pipeline, setPipeline] = useState<Pipeline>('lab')
   const [confirmed, setConfirmed] = useState(false)
@@ -40,8 +41,12 @@ const ReportUpload: React.FC<ReportUploadProps> = ({ patientId, onUploadComplete
 
       if (uploadErr) throw uploadErr
 
-      const { data: urlData } = supabase.storage.from('reports').getPublicUrl(path)
-      setFileUrl(urlData.publicUrl)
+      const { data: urlData, error: urlErr } = await supabase.storage
+        .from('reports')
+        .createSignedUrl(path, 60 * 60 * 24 * 7) // 7-day signed URL for AI processing
+      if (urlErr) throw urlErr
+      setFilePath(path)
+      setFileUrl(urlData.signedUrl)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed. Please try again.')
       setFile(null)
@@ -51,14 +56,15 @@ const ReportUpload: React.FC<ReportUploadProps> = ({ patientId, onUploadComplete
   }
 
   const handleConfirm = () => {
-    if (!fileUrl) return
+    if (!fileUrl || !filePath) return
     setConfirmed(true)
-    onUploadComplete(fileUrl, pipeline)
+    onUploadComplete(fileUrl, pipeline, filePath)
   }
 
   const handleReset = () => {
     setFile(null)
     setFileUrl(null)
+    setFilePath(null)
     setConfirmed(false)
     setError(null)
     setPipeline('lab')

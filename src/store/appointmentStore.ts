@@ -27,6 +27,7 @@ interface AppointmentActions {
   }) => Promise<void>
   completeAppointment: (id: string, notes: string, tasks: string[]) => Promise<void>
   dismissTask: (appointmentId: string, task: string) => Promise<void>
+  undismissTask: (appointmentId: string, task: string) => Promise<void>
   editAppointment: (id: string, updates: { appointment_date: string; appointment_type: string | null; notes: string | null }) => Promise<void>
   deleteAppointment: (id: string) => Promise<void>
   fetchPreparation: (appointmentId: string) => Promise<void>
@@ -73,6 +74,24 @@ export const useAppointmentStore = create<AppointmentStore>((set, get) => ({
     const updatedPending = (appt.follow_up_tasks as string[]).filter((t) => t !== task)
     const updatedCompleted = [...(appt.completed_follow_up_tasks ?? []), task]
     // Optimistic update first so closing the accordion doesn't revert the check
+    set((state) => ({
+      appointments: state.appointments.map((a) =>
+        a.id === appointmentId
+          ? { ...a, follow_up_tasks: updatedPending, completed_follow_up_tasks: updatedCompleted }
+          : a,
+      ),
+    }))
+    await dbUpdateAppointment(appointmentId, {
+      follow_up_tasks: updatedPending,
+      completed_follow_up_tasks: updatedCompleted,
+    })
+  },
+
+  undismissTask: async (appointmentId, task) => {
+    const appt = get().appointments.find((a) => a.id === appointmentId)
+    if (!appt) return
+    const updatedCompleted = (appt.completed_follow_up_tasks ?? []).filter((t) => t !== task)
+    const updatedPending = [...(appt.follow_up_tasks as string[]), task]
     set((state) => ({
       appointments: state.appointments.map((a) =>
         a.id === appointmentId

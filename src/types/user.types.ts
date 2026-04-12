@@ -8,6 +8,7 @@ export interface User {
   id: string
   email: string
   name: string
+  phone: string | null
   date_of_birth: string | null
   gender: 'male' | 'female' | 'other' | null
   height_cm: number | null
@@ -23,6 +24,8 @@ export interface User {
 
 export interface UserProfile {
   name?: string
+  phone?: string
+  consent_accepted_at?: string
   date_of_birth?: string
   gender?: 'male' | 'female' | 'other'
   height_cm?: number

@@ -73,6 +73,11 @@ interface InjectionActions {
     administeredAt: string,
     administeredBy: 'self' | 'nurse' | 'doctor' | 'family',
   ) => Promise<void>
+  /** Edit an existing injection course's metadata */
+  editCourse: (
+    id: string,
+    updates: { total_doses?: number; frequency?: 'daily' | 'alternate_days' | 'weekly'; notes?: string }
+  ) => Promise<void>
 }
 
 type InjectionStore = InjectionState & InjectionActions
@@ -236,6 +241,15 @@ export const useInjectionStore = create<InjectionStore>((set, get) => ({
     set((state) => ({
       sideEffects: state.sideEffects.map((s) =>
         s.id === id ? { ...s, resolved: true, resolved_at: new Date().toISOString() } : s,
+      ),
+    }))
+  },
+
+  editCourse: async (id, updates) => {
+    await dbUpdateInjectionCourse(id, updates)
+    set((state) => ({
+      courses: state.courses.map((c) =>
+        c.id === id ? { ...c, ...updates } : c,
       ),
     }))
   },

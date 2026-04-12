@@ -35,7 +35,7 @@ interface HealthActions {
   addWater: (patientId: string, amountMl: number, fluidType?: string, loggedAt?: string) => Promise<void>
   editWater: (id: string, amountMl: number, loggedAt: string) => Promise<void>
   removeWater: (id: string) => Promise<void>
-  logSymptom: (log: { patient_id: string; symptom_name: string; symptom_category: string; severity: number; notes?: string }) => Promise<void>
+  logSymptom: (log: { patient_id: string; symptom_name: string; symptom_category: string; severity: number; notes?: string; environment?: Record<string, unknown> }) => Promise<void>
   editSymptom: (id: string, updates: { symptom_name?: string; symptom_category?: string; severity?: number; notes?: string | null; logged_at?: string }) => Promise<void>
   deleteSymptom: (id: string) => Promise<void>
   logExercise: (log: { patient_id: string; exercise_type: string; is_physiotherapy?: boolean; duration_minutes?: number; notes?: string }) => Promise<void>

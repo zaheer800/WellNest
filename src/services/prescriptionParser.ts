@@ -14,8 +14,11 @@ export async function uploadPrescription(patientId: string, file: File): Promise
 
   if (error) throw new Error(`Upload failed: ${error.message}`)
 
-  const { data } = supabase.storage.from('reports').getPublicUrl(path)
-  return data.publicUrl
+  const { data, error: urlErr } = await supabase.storage
+    .from('reports')
+    .createSignedUrl(path, 60 * 60 * 24 * 7) // 7-day signed URL for AI processing
+  if (urlErr) throw new Error(`URL generation failed: ${urlErr.message}`)
+  return data.signedUrl
 }
 
 /**

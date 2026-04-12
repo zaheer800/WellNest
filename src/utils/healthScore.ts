@@ -3,7 +3,7 @@ import { today } from '@/utils/dateHelpers'
 
 export function calcMedicationScore(medications: MedicationWithLog[]): number {
   const active = medications.filter((m) => m.is_active)
-  if (active.length === 0) return 0 // No meds = 0 points (not full credit)
+  if (active.length === 0) return 25 // No medications — healthy user gets full credit
 
   let expectedCount = 0
   let takenCount = 0

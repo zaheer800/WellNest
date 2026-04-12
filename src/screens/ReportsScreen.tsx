@@ -8,6 +8,8 @@ import LabReportView from '@/components/features/reports/LabParameterView'
 import ImagingReportView from '@/components/features/reports/ImagingFindingView'
 import CriticalValueAlert from '@/components/features/reports/CriticalValueAlert'
 import WholeSpineMap from '@/components/features/reports/WholeSpineMap'
+import { getReportDownloadUrl } from '@/services/supabase'
+import { Download } from 'lucide-react'
 
 export default function ReportsScreen() {
   const { user } = useAuthStore()
@@ -46,10 +48,27 @@ export default function ReportsScreen() {
     return Math.floor((Date.now() - dob.getTime()) / (1000 * 60 * 60 * 24 * 365.25))
   }
 
-  const handleUploadComplete = (fileUrl: string, pipeline: 'lab' | 'imaging') => {
+  const handleUploadComplete = (fileUrl: string, pipeline: 'lab' | 'imaging', filePath: string) => {
     clearProcessingState()
-    processReport(user.id, fileUrl, pipeline, getUserAge(), user.gender ?? undefined)
+    processReport(user.id, fileUrl, pipeline, getUserAge(), user.gender ?? undefined, filePath)
     setViewMode(pipeline === 'lab' ? 'lab' : 'imaging')
+  }
+
+  const handleDownload = async (filePath: string, filename: string) => {
+    try {
+      const url = await getReportDownloadUrl(filePath)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      a.target = '_blank'
+      a.rel = 'noopener noreferrer'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    } catch {
+      // fallback — open in new tab
+      window.open(await getReportDownloadUrl(filePath), '_blank', 'noopener,noreferrer')
+    }
   }
 
   const handleSelectReport = async (report: any, pipeline: 'lab' | 'imaging') => {
@@ -169,13 +188,12 @@ export default function ReportsScreen() {
               </Card>
             )}
             {labReports.map((report) => (
-              <Card
-                key={report.id}
-                onClick={() => handleSelectReport(report, 'lab')}
-                className="cursor-pointer hover:shadow-md transition"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
+              <Card key={report.id} className="hover:shadow-md transition">
+                <div
+                  className="flex justify-between items-start cursor-pointer"
+                  onClick={() => handleSelectReport(report, 'lab')}
+                >
+                  <div className="flex-1 min-w-0 pr-2">
                     <p className="font-semibold text-gray-800">
                       {report.ai_summary || report.detected_type || 'Lab Report'}
                     </p>
@@ -183,7 +201,7 @@ export default function ReportsScreen() {
                       {new Date(report.report_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     {report.anomaly_count > 0 && (
                       <span className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full">
                         {report.anomaly_count} abnormal
@@ -200,6 +218,14 @@ export default function ReportsScreen() {
                     </span>
                   </div>
                 </div>
+                {report.file_path && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDownload(report.file_path, report.ai_summary || 'lab-report') }}
+                    className="mt-3 flex items-center gap-1.5 text-xs text-brand-teal font-medium hover:underline"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Download original file
+                  </button>
+                )}
               </Card>
             ))}
 
@@ -234,13 +260,12 @@ export default function ReportsScreen() {
               </Card>
             )}
             {imagingReports.map((report: any) => (
-              <Card
-                key={report.id}
-                onClick={() => handleSelectReport(report, 'imaging')}
-                className="cursor-pointer hover:shadow-md transition"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
+              <Card key={report.id} className="hover:shadow-md transition">
+                <div
+                  className="flex justify-between items-start cursor-pointer"
+                  onClick={() => handleSelectReport(report, 'imaging')}
+                >
+                  <div className="flex-1 min-w-0 pr-2">
                     <p className="font-semibold text-gray-800">
                       {report.ai_summary
                         ? report.ai_summary.slice(0, 60) + (report.ai_summary.length > 60 ? '…' : '')
@@ -251,7 +276,7 @@ export default function ReportsScreen() {
                       {report.body_region ? ` · ${report.body_region}` : ''}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     {report.surgical_urgency && (
                       <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full animate-pulse font-semibold">
                         ⚠️ Urgent
@@ -264,6 +289,14 @@ export default function ReportsScreen() {
                     )}
                   </div>
                 </div>
+                {report.file_path && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDownload(report.file_path, report.ai_summary || 'imaging-report') }}
+                    className="mt-3 flex items-center gap-1.5 text-xs text-brand-teal font-medium hover:underline"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Download original file
+                  </button>
+                )}
               </Card>
             ))}
 

@@ -3,6 +3,7 @@ import type { Medication, MedicationLog, MedicationWithLog, MedicationScheduleCo
 import {
   getMedications,
   addMedication as dbAddMedication,
+  updateMedication as dbUpdateMedication,
   deleteMedication as dbDeleteMedication,
   getMedicationLogs,
   upsertMedicationLog,
@@ -18,6 +19,7 @@ interface MedicationActions {
   fetchMedications: (patientId: string, date: string) => Promise<void>
   markTaken: (medicationId: string, patientId: string, date: string, taken: boolean) => Promise<void>
   addMedication: (med: Omit<Medication, 'id' | 'created_at' | 'is_active' | 'refill_reminder_days' | 'schedule_config'> & { schedule_config?: MedicationScheduleConfig }) => Promise<void>
+  updateMedication: (id: string, updates: Partial<Pick<Medication, 'name' | 'dose' | 'unit' | 'frequency' | 'notes' | 'start_date'> & { schedule_config?: MedicationScheduleConfig }>) => Promise<void>
   removeMedication: (id: string) => Promise<void>
 }
 
@@ -75,6 +77,15 @@ export const useMedicationStore = create<MedicationStore>((set) => ({
     } finally {
       set({ loading: false })
     }
+  },
+
+  updateMedication: async (id, updates) => {
+    const updated = await dbUpdateMedication(id, updates as Parameters<typeof dbUpdateMedication>[1])
+    set((state) => ({
+      medications: state.medications.map((m) =>
+        m.id === id ? { ...m, ...(updated as Medication) } : m,
+      ),
+    }))
   },
 
   removeMedication: async (id) => {

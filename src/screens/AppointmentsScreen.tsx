@@ -32,6 +32,7 @@ export default function AppointmentsScreen() {
     deleteAppointment,
     completeAppointment,
     dismissTask,
+    undismissTask,
     fetchPreparation,
     markPrepViewed,
   } = useAppointmentStore()
@@ -244,6 +245,7 @@ export default function AppointmentsScreen() {
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     onDismissTask={(task) => dismissTask(appt.id, task)}
+                    onUndismissTask={(task) => undismissTask(appt.id, task)}
                   />
 
                   {activePrep === appt.id && (
@@ -303,6 +305,7 @@ export default function AppointmentsScreen() {
                       onEdit={handleEdit}
                       onDelete={handleDelete}
                       onDismissTask={(task) => dismissTask(appt.id, task)}
+                    onUndismissTask={(task) => undismissTask(appt.id, task)}
                     />
 
                     {activeLog === appt.id && (
