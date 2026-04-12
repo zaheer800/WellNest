@@ -1,8 +1,11 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Shield } from 'lucide-react'
 
 export default function PrivacyScreen() {
   const navigate = useNavigate()
+
+  useEffect(() => { window.scrollTo(0, 0) }, [])
 
   return (
     <div className="min-h-screen bg-white">

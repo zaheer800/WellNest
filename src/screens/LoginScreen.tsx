@@ -3,30 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import Button from '@/components/ui/Button'
 import WellNestIcon from '@/components/ui/WellNestIcon'
-import { ChevronDown } from 'lucide-react'
-
-// ─── Country codes ─────────────────────────────────────────────────────────────
-
-const COUNTRY_CODES = [
-  { code: '+91',  flag: '🇮🇳', name: 'India' },
-  { code: '+1',   flag: '🇺🇸', name: 'US / Canada' },
-  { code: '+44',  flag: '🇬🇧', name: 'UK' },
-  { code: '+971', flag: '🇦🇪', name: 'UAE' },
-  { code: '+65',  flag: '🇸🇬', name: 'Singapore' },
-  { code: '+60',  flag: '🇲🇾', name: 'Malaysia' },
-  { code: '+92',  flag: '🇵🇰', name: 'Pakistan' },
-  { code: '+61',  flag: '🇦🇺', name: 'Australia' },
-  { code: '+880', flag: '🇧🇩', name: 'Bangladesh' },
-  { code: '+94',  flag: '🇱🇰', name: 'Sri Lanka' },
-  { code: '+966', flag: '🇸🇦', name: 'Saudi Arabia' },
-  { code: '+974', flag: '🇶🇦', name: 'Qatar' },
-  { code: '+973', flag: '🇧🇭', name: 'Bahrain' },
-  { code: '+49',  flag: '🇩🇪', name: 'Germany' },
-  { code: '+33',  flag: '🇫🇷', name: 'France' },
-  { code: '+81',  flag: '🇯🇵', name: 'Japan' },
-  { code: '+86',  flag: '🇨🇳', name: 'China' },
-  { code: '+82',  flag: '🇰🇷', name: 'South Korea' },
-]
 
 // ─── OTP input — 6 individual boxes ──────────────────────────────────────────
 
@@ -85,31 +61,17 @@ function OtpBoxes({ value, onChange }: { value: string; onChange: (v: string) =>
 
 // ─── Main component ────────────────────────────────────────────────────────────
 
-type AuthTab = 'phone' | 'email'
 type FlowStep = 'input' | 'otp'
 
 export default function LoginScreen() {
   const navigate = useNavigate()
-  const { signInWithOtp, verifyOtp, signInWithPhone, verifyPhoneOtp, signInWithGoogle, loading } = useAuthStore()
+  const { signInWithOtp, verifyOtp, signInWithGoogle, loading } = useAuthStore()
 
-  const [tab, setTab] = useState<AuthTab>('phone')
   const [flowStep, setFlowStep] = useState<FlowStep>('input')
-
-  // Phone state
-  const [countryCode, setCountryCode] = useState('+91')
-  const [phoneNumber, setPhoneNumber] = useState('')
-  const [showCountryPicker, setShowCountryPicker] = useState(false)
-
-  // Email state
   const [email, setEmail] = useState('')
-
-  // Shared OTP state
   const [otp, setOtp] = useState('')
   const [error, setError] = useState('')
 
-  const selectedCountry = COUNTRY_CODES.find((c) => c.code === countryCode) ?? COUNTRY_CODES[0]
-  const fullPhone = `${countryCode}${phoneNumber.replace(/\D/g, '')}`
-  const canSubmitPhone = phoneNumber.replace(/\D/g, '').length >= 7
   const canSubmitEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
   const canVerify = otp.replace(/\s/g, '').length === 6
 
@@ -123,11 +85,7 @@ export default function LoginScreen() {
   const handleSendOtp = async () => {
     setError('')
     try {
-      if (tab === 'phone') {
-        await signInWithPhone(fullPhone)
-      } else {
-        await signInWithOtp(email)
-      }
+      await signInWithOtp(email)
       setFlowStep('otp')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not send code. Please try again.')
@@ -137,11 +95,7 @@ export default function LoginScreen() {
   const handleVerify = async () => {
     setError('')
     try {
-      if (tab === 'phone') {
-        await verifyPhoneOtp(fullPhone, otp.trim())
-      } else {
-        await verifyOtp(email, otp.trim())
-      }
+      await verifyOtp(email, otp.trim())
       navigate('/onboarding', { replace: true })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Incorrect code. Please try again.')
@@ -157,21 +111,18 @@ export default function LoginScreen() {
   // ── OTP verification screen ────────────────────────────────────────────────
 
   if (flowStep === 'otp') {
-    const sentTo = tab === 'phone'
-      ? `${selectedCountry.flag} ${countryCode} ${phoneNumber}`
-      : email
     return (
       <div className="min-h-screen bg-gradient-to-b from-brand-teal-light/50 via-white to-white flex flex-col items-center justify-center px-6 relative overflow-hidden">
         <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-brand-teal-light rounded-full blur-3xl opacity-60 pointer-events-none" />
         <div className="w-full max-w-sm space-y-8 relative">
           <div className="text-center">
             <div className="w-16 h-16 bg-brand-teal-light rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl">{tab === 'phone' ? '📱' : '✉️'}</span>
+              <span className="text-3xl">✉️</span>
             </div>
             <h2 className="text-2xl font-bold text-gray-900">Enter the code</h2>
             <p className="text-gray-500 text-sm mt-2 leading-relaxed">
               We sent a 6-digit code to<br />
-              <span className="font-semibold text-gray-700">{sentTo}</span>
+              <span className="font-semibold text-gray-700">{email}</span>
             </p>
           </div>
 
@@ -200,7 +151,7 @@ export default function LoginScreen() {
               onClick={handleBack}
               className="text-sm text-gray-400 hover:text-gray-600"
             >
-              ← Change {tab === 'phone' ? 'number' : 'email'}
+              ← Change email
             </button>
           </div>
         </div>
@@ -224,90 +175,21 @@ export default function LoginScreen() {
           <p className="text-gray-400 text-sm mt-1">Health Records. Smarter Insights. Better Decisions.</p>
         </div>
 
-        {/* Tab switcher */}
-        <div className="flex bg-gray-100 rounded-2xl p-1">
-          {(['phone', 'email'] as AuthTab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => { setTab(t); setError('') }}
-              className={[
-                'flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all',
-                tab === t ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700',
-              ].join(' ')}
-            >
-              {t === 'phone' ? '📱  Phone' : '✉️  Email'}
-            </button>
-          ))}
-        </div>
-
-        {/* Phone input */}
-        {tab === 'phone' && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Mobile number</label>
-            <div className="flex gap-2">
-              {/* Country code button */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowCountryPicker(!showCountryPicker)}
-                  className="h-full px-3 flex items-center gap-1.5 border border-gray-200 rounded-xl bg-gray-50 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-100 transition whitespace-nowrap"
-                >
-                  <span className="text-base">{selectedCountry.flag}</span>
-                  <span>{countryCode}</span>
-                  <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-                </button>
-
-                {showCountryPicker && (
-                  <div className="absolute top-full left-0 mt-1 w-52 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 max-h-64 overflow-y-auto">
-                    {COUNTRY_CODES.map((c) => (
-                      <button
-                        key={c.code}
-                        onClick={() => { setCountryCode(c.code); setShowCountryPicker(false) }}
-                        className={[
-                          'w-full flex items-center gap-3 px-4 py-3 text-sm text-left hover:bg-brand-teal-light transition',
-                          c.code === countryCode ? 'bg-brand-teal-light font-semibold text-brand-navy' : 'text-gray-700',
-                        ].join(' ')}
-                      >
-                        <span className="text-base">{c.flag}</span>
-                        <span className="flex-1 truncate">{c.name}</span>
-                        <span className="text-gray-400 font-medium">{c.code}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Number input */}
-              <input
-                type="tel"
-                inputMode="numeric"
-                placeholder="9876543210"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
-                className="flex-1 border border-gray-200 rounded-xl px-4 py-3.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-teal focus:border-transparent transition"
-                autoFocus
-              />
-            </div>
-            <p className="text-xs text-gray-400 mt-2">We'll send you a one-time code via SMS</p>
-          </div>
-        )}
-
         {/* Email input */}
-        {tab === 'email' && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email address</label>
-            <input
-              type="email"
-              autoComplete="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-teal focus:border-transparent transition"
-              autoFocus
-            />
-            <p className="text-xs text-gray-400 mt-2">We'll email you a one-time sign-in code</p>
-          </div>
-        )}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Email address</label>
+          <input
+            type="email"
+            autoComplete="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && canSubmitEmail && handleSendOtp()}
+            className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-teal focus:border-transparent transition"
+            autoFocus
+          />
+          <p className="text-xs text-gray-400 mt-2">We'll email you a one-time sign-in code</p>
+        </div>
 
         {error && (
           <p className="text-red-600 text-sm bg-red-50 border border-red-100 rounded-xl px-4 py-3">
@@ -319,7 +201,7 @@ export default function LoginScreen() {
           variant="primary"
           fullWidth
           loading={loading}
-          disabled={tab === 'phone' ? !canSubmitPhone : !canSubmitEmail}
+          disabled={!canSubmitEmail}
           onClick={handleSendOtp}
         >
           Send Code
@@ -347,11 +229,6 @@ export default function LoginScreen() {
           Continue with Google
         </button>
       </div>
-
-      {/* Close country picker on outside tap */}
-      {showCountryPicker && (
-        <div className="fixed inset-0 z-40" onClick={() => setShowCountryPicker(false)} />
-      )}
     </div>
   )
 }

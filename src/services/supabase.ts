@@ -101,6 +101,8 @@ export async function upsertUser(
     if (profile.height_cm !== undefined) updateData.height_cm = profile.height_cm
     if (profile.weight_kg !== undefined) updateData.weight_kg = profile.weight_kg
     if (profile.blood_type !== undefined) updateData.blood_type = profile.blood_type
+    if (profile.phone !== undefined) updateData.phone = profile.phone
+    if (profile.consent_accepted_at !== undefined) updateData.consent_accepted_at = profile.consent_accepted_at
     if (profile.allergies !== undefined) updateData.allergies = profile.allergies
     if (profile.emergency_contacts !== undefined) updateData.emergency_contacts = profile.emergency_contacts
 
@@ -127,6 +129,8 @@ export async function upsertUser(
     if (profile.height_cm !== undefined) insertData.height_cm = profile.height_cm
     if (profile.weight_kg !== undefined) insertData.weight_kg = profile.weight_kg
     if (profile.blood_type !== undefined) insertData.blood_type = profile.blood_type
+    if (profile.phone !== undefined) insertData.phone = profile.phone
+    if (profile.consent_accepted_at !== undefined) insertData.consent_accepted_at = profile.consent_accepted_at
     if (profile.allergies !== undefined) insertData.allergies = profile.allergies
     if (profile.emergency_contacts !== undefined) insertData.emergency_contacts = profile.emergency_contacts
 
@@ -207,6 +211,29 @@ export async function addMedication(med: {
   known_side_effects?: string[]
 }) {
   const { data, error } = await supabase.from('medications').insert(med).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function updateMedication(
+  id: string,
+  updates: Partial<{
+    name: string
+    dose: string | null
+    unit: string | null
+    frequency: string
+    schedule_config: Record<string, unknown>
+    notes: string | null
+    start_date: string
+    end_date: string | null
+  }>
+) {
+  const { data, error } = await supabase
+    .from('medications')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
   if (error) throw error
   return data
 }
@@ -757,6 +784,7 @@ export async function addFamilyMember(member: {
     .insert({
       ...member,
       invite_token: inviteToken,
+      is_active: true,
       visibility_config: member.visibility_config ?? { health_score: true, medications: true, critical_alerts: true, reports: false },
     })
     .select()
@@ -825,11 +853,15 @@ export async function updateFamilyMember(id: string, updates: {
 }
 
 export async function removeFamilyMember(id: string) {
+  // Mark inactive and clear the linked user so the same person can re-join later
   const { error } = await supabase
     .from('family_members')
-    .update({ is_active: false })
+    .update({ is_active: false, user_id: null, accepted_at: null })
     .eq('id', id)
   if (error) throw error
+
+  // Delete any messages sent by this family member so they don't persist in the chat
+  await supabase.from('messages').delete().eq('family_member_id', id)
 }
 
 export async function getMessages(patientId: string, limit = 20) {
@@ -1053,6 +1085,7 @@ export async function insertLabReport(row: {
   report_date: string
   report_type: string
   image_url: string
+  file_path?: string
   processing_status: string
 }) {
   const { data, error } = await supabase
@@ -1117,6 +1150,7 @@ export async function insertImagingReport(row: {
   report_date: string
   imaging_type: string
   image_url: string
+  file_path?: string
   processing_status: string
 }) {
   const { data, error } = await supabase
@@ -1134,6 +1168,14 @@ export async function updateImagingReport(id: string, updates: Record<string, an
     .update(updates)
     .eq('id', id)
   if (error) throw error
+}
+
+export async function getReportDownloadUrl(filePath: string): Promise<string> {
+  const { data, error } = await supabase.storage
+    .from('reports')
+    .createSignedUrl(filePath, 60 * 60) // 1-hour download URL
+  if (error) throw error
+  return data.signedUrl
 }
 
 export async function insertImagingFindings(findings: {

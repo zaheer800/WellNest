@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuthStore } from '@/store/authStore'
 import { useHealthStore } from '@/store/healthStore'
+import { useSymptomProgressionStore } from '@/store/symptomProgressionStore'
 import PageWrapper from '@/components/layout/PageWrapper'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -9,7 +10,8 @@ import { SymptomLibrary } from '@/constants/symptoms'
 import type { SymptomCategory } from '@/types/health.types'
 import { formatRelative } from '@/utils/dateHelpers'
 
-import { Droplets, Brain, Bone, ActivitySquare, HeartPulse, Stethoscope, Check, AlertCircle, Pencil, Trash2, X } from 'lucide-react'
+import { Droplets, Brain, Bone, ActivitySquare, HeartPulse, Stethoscope, Check, AlertCircle, Pencil, Trash2, X, ChevronDown } from 'lucide-react'
+import EnvironmentCapture from '@/components/features/symptoms/EnvironmentCapture'
 
 const CATEGORIES: { key: SymptomCategory; label: string; icon: React.ReactNode }[] = [
   { key: 'urinary', label: 'Urinary', icon: <Droplets className="w-5 h-5" /> },
@@ -36,11 +38,14 @@ const SEVERITY_LABELS: Record<number, { label: string; color: string }> = {
 export default function SymptomsScreen() {
   const { user } = useAuthStore()
   const { symptomLogs, logSymptom, editSymptom, deleteSymptom, fetchTodayData } = useHealthStore()
+  const { syncProgression } = useSymptomProgressionStore()
 
   const [selectedCategory, setSelectedCategory] = useState<SymptomCategory>('general')
   const [selectedSymptom, setSelectedSymptom] = useState('')
   const [severity, setSeverity] = useState(3)
   const [notes, setNotes] = useState('')
+  const [environment, setEnvironment] = useState<{ temperature?: string; location?: string; activity?: string }>({})
+  const [showEnvironment, setShowEnvironment] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -72,10 +77,15 @@ export default function SymptomsScreen() {
         symptom_category: selectedCategory,
         severity,
         notes: notes.trim() || undefined,
+        environment: Object.keys(environment).length > 0 ? environment : undefined,
       })
+      // Update progression aggregate (feeds AI trend analysis)
+      syncProgression(patientId, selectedSymptom, severity).catch(() => {})
       setSelectedSymptom('')
       setNotes('')
       setSeverity(3)
+      setEnvironment({})
+      setShowEnvironment(false)
       setSuccess(true)
       setTimeout(() => setSuccess(false), 2000)
     } catch (err: any) {
@@ -205,6 +215,29 @@ export default function SymptomsScreen() {
             <div className="mt-2 text-red-600 text-xs bg-red-50 rounded-lg px-3 py-2 flex items-start gap-1.5">
               <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
               {saveError}
+            </div>
+          )}
+        </Card>
+
+        {/* Environment (collapsible) */}
+        <Card>
+          <button
+            type="button"
+            onClick={() => setShowEnvironment(!showEnvironment)}
+            className="w-full flex items-center justify-between"
+          >
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-gray-700">Environment</h3>
+              {(environment.temperature || environment.location || environment.activity) && (
+                <span className="text-xs bg-brand-teal text-white px-2 py-0.5 rounded-full font-medium">Set</span>
+              )}
+            </div>
+            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showEnvironment ? 'rotate-180' : ''}`} />
+          </button>
+          <p className="text-xs text-gray-400 mt-0.5">Optional — helps identify triggers over time</p>
+          {showEnvironment && (
+            <div className="mt-3">
+              <EnvironmentCapture value={environment} onChange={setEnvironment} />
             </div>
           )}
         </Card>

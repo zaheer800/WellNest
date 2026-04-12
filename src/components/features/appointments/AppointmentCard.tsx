@@ -11,6 +11,7 @@ interface AppointmentCardProps {
   onEdit: (appointment: Appointment) => void
   onDelete: (id: string) => void
   onDismissTask?: (task: string) => void
+  onUndismissTask?: (task: string) => void
 }
 
 function formatDateTime(iso: string): string {
@@ -30,14 +31,14 @@ function isWithin48Hours(iso: string): boolean {
 }
 
 const AppointmentCard: React.FC<AppointmentCardProps> = ({
-  appointment, onPrepare, onComplete, onReschedule, onEdit, onDelete, onDismissTask,
+  appointment, onPrepare, onComplete, onReschedule, onEdit, onDelete, onDismissTask, onUndismissTask,
 }) => {
-  // Tracks tasks the user has tapped by text — stable across index shifts
-  const [checking, setChecking] = useState<Set<string>>(new Set())
-
   const handleDismissTask = (task: string) => {
-    setChecking((prev) => new Set([...prev, task]))
     onDismissTask?.(task)
+  }
+
+  const handleUndismissTask = (task: string) => {
+    onUndismissTask?.(task)
   }
   const isPast = new Date(appointment.appointment_date) < new Date()
   const isMissed = isPast && !appointment.completed
@@ -156,32 +157,18 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
        (Array.isArray(appointment.completed_follow_up_tasks) && appointment.completed_follow_up_tasks.length > 0) ? (
         <div className="bg-amber-50 rounded-xl px-3 py-2.5 space-y-2">
           <p className="text-xs text-amber-700 font-semibold">Follow-up tasks</p>
-          {(appointment.follow_up_tasks as string[]).map((task) => {
-            const done = checking.has(task)
-            return (
-              <div key={task} className="flex items-center gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => handleDismissTask(task)}
-                  className={[
-                    'w-4 h-4 rounded-full border-2 flex-shrink-0 transition-all active:scale-90 flex items-center justify-center',
-                    done
-                      ? 'bg-amber-400 border-amber-500'
-                      : 'border-amber-400 hover:bg-amber-400 hover:border-amber-500',
-                  ].join(' ')}
-                  aria-label="Mark task done"
-                >
-                  {done && (
-                    <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  )}
-                </button>
-                <p className={`text-xs flex-1 transition-all ${done ? 'line-through text-gray-400' : 'text-gray-700'}`}>{task}</p>
-              </div>
-            )
-          })}
-          {/* Completed tasks */}
+          {(appointment.follow_up_tasks as string[]).map((task) => (
+            <div key={task} className="flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => handleDismissTask(task)}
+                className="w-4 h-4 rounded-full border-2 border-amber-400 hover:bg-amber-400 hover:border-amber-500 flex-shrink-0 transition-all active:scale-90 flex items-center justify-center"
+                aria-label="Mark task done"
+              />
+              <p className="text-xs flex-1 text-gray-700">{task}</p>
+            </div>
+          ))}
+          {/* Completed tasks — tap to uncheck */}
           {Array.isArray(appointment.completed_follow_up_tasks) && appointment.completed_follow_up_tasks.length > 0 && (
             <>
               {(appointment.follow_up_tasks as string[]).length > 0 && (
@@ -189,11 +176,17 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
               )}
               {appointment.completed_follow_up_tasks.map((task, i) => (
                 <div key={`done-${i}`} className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-amber-400 border-2 border-amber-500 flex-shrink-0 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => handleUndismissTask(task)}
+                    className="w-4 h-4 rounded-full bg-amber-400 border-2 border-amber-500 flex-shrink-0 flex items-center justify-center hover:bg-amber-200 hover:border-amber-300 transition-all active:scale-90"
+                    aria-label="Unmark task done"
+                    title="Tap to uncheck"
+                  >
                     <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
-                  </div>
+                  </button>
                   <p className="text-xs flex-1 line-through text-gray-400">{task}</p>
                 </div>
               ))}

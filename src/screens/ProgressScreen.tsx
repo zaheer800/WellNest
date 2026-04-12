@@ -24,10 +24,11 @@ export default function ProgressScreen() {
   const patientId = user?.id ?? ''
   const date = today()
 
+  const { fetchProgressions } = useSymptomProgressionStore()
+
   useEffect(() => {
     if (patientId) {
-      // Fetch data for progress display
-      // Note: Most data is already fetched by other screens, but we could add specific progress data fetching here
+      fetchProgressions(patientId)
     }
   }, [patientId])
 
@@ -268,9 +269,24 @@ export default function ProgressScreen() {
 
         {/* Environmental Triggers */}
         <Card>
-          <h3 className="font-semibold text-gray-800 mb-4">Environmental Triggers</h3>
-          <div className="text-center py-8 bg-gray-50 rounded-xl">
-            <p className="text-gray-500 text-sm">Log environmental factors when you record symptoms to identify patterns.</p>
+          <h3 className="font-semibold text-gray-800 mb-1">Environmental Triggers</h3>
+          <p className="text-xs text-gray-400 mb-4">Capture temperature, location and activity when logging symptoms — AI will identify patterns over time.</p>
+          <div className="bg-brand-teal-light rounded-xl p-4 space-y-3">
+            <p className="text-sm font-semibold text-brand-navy">How it works</p>
+            <div className="space-y-2.5">
+              <div className="flex items-start gap-3">
+                <span className="w-5 h-5 rounded-full bg-brand-teal text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">1</span>
+                <p className="text-xs text-gray-600 leading-relaxed">When you log a symptom, tap <span className="font-semibold text-gray-800">Environment</span> to record temperature, location and activity.</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="w-5 h-5 rounded-full bg-brand-teal text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+                <p className="text-xs text-gray-600 leading-relaxed">After a few weeks of data, WellNest AI will highlight which conditions correlate with flare-ups.</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="w-5 h-5 rounded-full bg-brand-teal text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+                <p className="text-xs text-gray-600 leading-relaxed">Patterns will appear here so you can share them with your doctor.</p>
+              </div>
+            </div>
           </div>
         </Card>
       </div>

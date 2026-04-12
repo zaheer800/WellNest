@@ -12,7 +12,7 @@ import AddSideEffectModal from '@/components/features/medications/AddSideEffectM
 import { today } from '@/utils/dateHelpers'
 import { shouldTakeMedicationToday } from '@/utils/healthScore'
 import type { TimeOfDay, MedicationScheduleConfig } from '@/types/health.types'
-import { Pill, Syringe, Clock } from 'lucide-react'
+import { Pill, Syringe, Clock, Pencil, X as XIcon } from 'lucide-react'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -66,11 +66,23 @@ function formatSchedule(config: MedicationScheduleConfig): string {
 
 export default function MedicationsScreen() {
   const { user } = useAuthStore()
-  const { medications, loading, error, fetchMedications, markTaken, addMedication, removeMedication } = useMedicationStore()
-  const { courses: injectionCourses, sideEffects, loading: injectionLoading, error: injectionError, fetchCourses, addCourse, logDose, fetchSideEffects, addSideEffect, resolveSideEffect } = useInjectionStore()
+  const { medications, loading, error, fetchMedications, markTaken, addMedication, updateMedication, removeMedication } = useMedicationStore()
+  const { courses: injectionCourses, sideEffects, loading: injectionLoading, error: injectionError, fetchCourses, addCourse, logDose, editCourse, fetchSideEffects, addSideEffect, resolveSideEffect } = useInjectionStore()
 
   const [showAdd, setShowAdd] = useState(false)
   const [tab, setTab] = useState<'medications' | 'injections' | 'sideeffects'>('medications')
+
+  // Medication edit state
+  const [editingMedId, setEditingMedId] = useState<string | null>(null)
+  const [editMedForm, setEditMedForm] = useState<AddForm>({
+    name: '', dose: '', unit: 'tablet', frequency: 'daily', times_per_day: 1, times_of_day: [], start_date: today(), notes: '',
+  })
+  const [editMedSaving, setEditMedSaving] = useState(false)
+
+  // Injection edit state
+  const [editingInjectionId, setEditingInjectionId] = useState<string | null>(null)
+  const [editInjectionForm, setEditInjectionForm] = useState({ total_doses: '', frequency: 'daily' as Frequency, notes: '' })
+  const [editInjectionSaving, setEditInjectionSaving] = useState(false)
   const [form, setForm] = useState<AddForm>({
     name: '',
     dose: '',
@@ -145,6 +157,77 @@ export default function MedicationsScreen() {
       setShowAdd(false)
     } catch {
       // error shown via store state
+    }
+  }
+
+  const startEditMed = (med: typeof medications[0]) => {
+    setEditingMedId(med.id)
+    const sc = med.schedule_config ?? {}
+    setEditMedForm({
+      name: med.name,
+      dose: med.dose ?? '',
+      unit: med.unit ?? 'tablet',
+      frequency: med.frequency as Frequency,
+      times_per_day: ((sc as any).times_per_day ?? 1) as 1 | 2 | 3 | 4,
+      times_of_day: ((sc as any).times_of_day ?? []) as TimeOfDay[],
+      start_date: med.start_date ?? today(),
+      notes: med.notes ?? '',
+    })
+  }
+
+  const handleEditMedSave = async () => {
+    if (!editingMedId || !editMedForm.name.trim()) return
+    setEditMedSaving(true)
+    try {
+      const scheduleConfig: MedicationScheduleConfig = {
+        times_per_day: (editMedForm.times_of_day.length > 0 ? editMedForm.times_of_day.length : 1) as 1 | 2 | 3 | 4,
+        times_of_day: editMedForm.times_of_day.length > 0 ? editMedForm.times_of_day : undefined,
+      }
+      await updateMedication(editingMedId, {
+        name: editMedForm.name,
+        dose: editMedForm.dose || null,
+        unit: editMedForm.unit || null,
+        frequency: editMedForm.frequency,
+        schedule_config: scheduleConfig,
+        notes: editMedForm.notes || null,
+        start_date: editMedForm.start_date || today(),
+      })
+      setEditingMedId(null)
+    } catch { /* error handled by store */ } finally {
+      setEditMedSaving(false)
+    }
+  }
+
+  const toggleEditTimeOfDay = (t: TimeOfDay) => {
+    setEditMedForm((prev) => ({
+      ...prev,
+      times_of_day: prev.times_of_day.includes(t)
+        ? prev.times_of_day.filter((x) => x !== t)
+        : [...prev.times_of_day, t],
+    }))
+  }
+
+  const startEditInjection = (course: typeof injectionCourses[0]) => {
+    setEditingInjectionId(course.id)
+    setEditInjectionForm({
+      total_doses: String(course.total_doses),
+      frequency: course.frequency as Frequency,
+      notes: course.notes ?? '',
+    })
+  }
+
+  const handleEditInjectionSave = async () => {
+    if (!editingInjectionId || !editInjectionForm.total_doses) return
+    setEditInjectionSaving(true)
+    try {
+      await editCourse(editingInjectionId, {
+        total_doses: parseInt(editInjectionForm.total_doses),
+        frequency: editInjectionForm.frequency,
+        notes: editInjectionForm.notes || undefined,
+      })
+      setEditingInjectionId(null)
+    } catch { /* error handled by store */ } finally {
+      setEditInjectionSaving(false)
     }
   }
 
@@ -409,6 +492,73 @@ export default function MedicationsScreen() {
                   const taken = med.log?.taken ?? false
                   const isDueToday = shouldTakeMedicationToday(med, todayDate)
                   const scheduleLabel = formatSchedule(med.schedule_config ?? {})
+                  const isEditing = editingMedId === med.id
+
+                  if (isEditing) {
+                    return (
+                      <Card key={med.id}>
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="font-semibold text-gray-800 text-sm">Edit Medication</h3>
+                          <button onClick={() => setEditingMedId(null)} className="text-gray-400 hover:text-gray-600 transition">
+                            <XIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="space-y-3">
+                          <div>
+                            <label className={labelClass}>Medication name *</label>
+                            <input className={inputClass} value={editMedForm.name} onChange={(e) => setEditMedForm({ ...editMedForm, name: e.target.value })} />
+                          </div>
+                          <div className="flex gap-3">
+                            <div className="w-36">
+                              <label className={labelClass}>Form</label>
+                              <select className={inputClass} value={editMedForm.unit} onChange={(e) => setEditMedForm({ ...editMedForm, unit: e.target.value })}>
+                                {UNIT_OPTIONS.map((u) => <option key={u} value={u}>{u.charAt(0).toUpperCase() + u.slice(1)}</option>)}
+                              </select>
+                            </div>
+                            <div className="flex-1">
+                              <label className={labelClass}>Strength <span className="text-gray-400 font-normal">(optional)</span></label>
+                              <input className={inputClass} placeholder="e.g. 500mg" value={editMedForm.dose} onChange={(e) => setEditMedForm({ ...editMedForm, dose: e.target.value })} />
+                            </div>
+                          </div>
+                          <div>
+                            <label className={labelClass}>How often?</label>
+                            <div className="flex gap-2">
+                              {FREQUENCY_OPTIONS.map((opt) => (
+                                <button key={opt.value} type="button" onClick={() => setEditMedForm({ ...editMedForm, frequency: opt.value })}
+                                  className={['flex-1 py-2 px-2 rounded-xl border text-sm font-medium transition-all', editMedForm.frequency === opt.value ? 'border-brand-teal bg-brand-teal-light text-brand-navy' : 'border-gray-200 text-gray-600'].join(' ')}>
+                                  {opt.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div>
+                            <label className={labelClass}>When do you take it? <span className="text-gray-400 font-normal">Select all that apply</span></label>
+                            <div className="grid grid-cols-2 gap-2">
+                              {TIME_OF_DAY_OPTIONS.map((opt) => {
+                                const selected = editMedForm.times_of_day.includes(opt.value)
+                                return (
+                                  <button key={opt.value} type="button" onClick={() => toggleEditTimeOfDay(opt.value)}
+                                    className={['flex items-center gap-2 py-2.5 px-3 rounded-xl border text-sm font-medium transition-all', selected ? 'border-brand-teal bg-brand-teal-light text-brand-navy' : 'border-gray-200 text-gray-600'].join(' ')}>
+                                    <span>{opt.emoji}</span>{opt.label}
+                                    {selected && <span className="ml-auto w-4 h-4 rounded-full bg-brand-teal flex items-center justify-center flex-shrink-0"><svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg></span>}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </div>
+                          <div>
+                            <label className={labelClass}>Notes <span className="text-gray-400 font-normal">(optional)</span></label>
+                            <input className={inputClass} placeholder="e.g. Take with food" value={editMedForm.notes} onChange={(e) => setEditMedForm({ ...editMedForm, notes: e.target.value })} />
+                          </div>
+                          <div className="flex gap-3 pt-1">
+                            <Button variant="secondary" fullWidth onClick={() => setEditingMedId(null)}>Cancel</Button>
+                            <Button variant="primary" fullWidth onClick={handleEditMedSave} loading={editMedSaving} disabled={!editMedForm.name.trim()}>Save</Button>
+                          </div>
+                        </div>
+                      </Card>
+                    )
+                  }
+
                   return (
                     <Card key={med.id} padding="sm">
                       <div className="flex items-center gap-3">
@@ -457,16 +607,25 @@ export default function MedicationsScreen() {
                           </div>
                         </div>
 
-                        {/* Remove */}
-                        <button
-                          onClick={() => removeMedication(med.id)}
-                          className="text-gray-300 hover:text-red-400 p-1.5 transition flex-shrink-0"
-                          aria-label="Remove medication"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
+                        {/* Edit + Remove */}
+                        <div className="flex items-center gap-0.5 flex-shrink-0">
+                          <button
+                            onClick={() => startEditMed(med)}
+                            className="text-gray-300 hover:text-brand-teal p-1.5 transition"
+                            aria-label="Edit medication"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => removeMedication(med.id)}
+                            className="text-gray-300 hover:text-red-400 p-1.5 transition"
+                            aria-label="Remove medication"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
                     </Card>
                   )
@@ -565,11 +724,62 @@ export default function MedicationsScreen() {
             ) : (
               <div className="space-y-3">
                 {injectionCourses.map((course) => (
-                  <InjectionCourse
-                    key={course.id}
-                    course={course}
-                    onLogDose={(administeredAt, by) => logDose(course, administeredAt, by)}
-                  />
+                  <div key={course.id}>
+                    {editingInjectionId === course.id ? (
+                      <Card>
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="font-semibold text-gray-800 text-sm">Edit Injection Course</h3>
+                          <button onClick={() => setEditingInjectionId(null)} className="text-gray-400 hover:text-gray-600 transition">
+                            <XIcon className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="space-y-3">
+                          <div className="flex gap-3">
+                            <div className="flex-1">
+                              <label className={labelClass}>Total doses *</label>
+                              <input type="number" className={inputClass} value={editInjectionForm.total_doses}
+                                onChange={(e) => setEditInjectionForm({ ...editInjectionForm, total_doses: e.target.value })} />
+                              <p className="text-xs text-gray-400 mt-1">Completed doses will be preserved</p>
+                            </div>
+                            <div className="flex-1">
+                              <label className={labelClass}>Frequency</label>
+                              <div className="flex flex-col gap-1.5">
+                                {FREQUENCY_OPTIONS.map((opt) => (
+                                  <button key={opt.value} type="button" onClick={() => setEditInjectionForm({ ...editInjectionForm, frequency: opt.value })}
+                                    className={['py-2 px-3 rounded-xl border text-sm font-medium transition-all text-left', editInjectionForm.frequency === opt.value ? 'border-brand-teal bg-brand-teal-light text-brand-navy' : 'border-gray-200 text-gray-600'].join(' ')}>
+                                    {opt.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          <div>
+                            <label className={labelClass}>Notes <span className="text-gray-400 font-normal">(optional)</span></label>
+                            <input className={inputClass} placeholder="e.g. Subcutaneous injection" value={editInjectionForm.notes}
+                              onChange={(e) => setEditInjectionForm({ ...editInjectionForm, notes: e.target.value })} />
+                          </div>
+                          <div className="flex gap-3 pt-1">
+                            <Button variant="secondary" fullWidth onClick={() => setEditingInjectionId(null)}>Cancel</Button>
+                            <Button variant="primary" fullWidth onClick={handleEditInjectionSave} loading={editInjectionSaving}>Save</Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ) : (
+                      <div className="relative">
+                        <button
+                          onClick={() => startEditInjection(course)}
+                          className="absolute top-3 right-3 z-10 p-1.5 rounded-lg text-gray-300 hover:text-brand-teal hover:bg-brand-teal-light transition"
+                          aria-label="Edit injection course"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <InjectionCourse
+                          course={course}
+                          onLogDose={(administeredAt, by) => logDose(course, administeredAt, by)}
+                        />
+                      </div>
+                    )}
+                  </div>
                 ))}
               </div>
             )}

@@ -177,7 +177,7 @@ export default function FamilyScreen() {
       })
       setMembers((prev) => [...prev, newMember as FamilyMember])
       const token = (newMember as any).invite_token
-      if (token) setNewInviteLink(`${window.location.origin}/join?token=${token}`)
+      if (token) setNewInviteLink(`${(import.meta.env.VITE_APP_URL ?? window.location.origin)}/join?token=${token}`)
       setAddForm({ name: '', email: '', relationship: '', visibility: { ...defaultVisibility } })
       setShowAdd(false)
     } catch {
@@ -439,10 +439,10 @@ export default function FamilyScreen() {
                     {/* Invite link panel */}
                     {viewingInviteId === member.id && member.invite_token && (
                       <InviteLinkPanel
-                        link={`${window.location.origin}/join?token=${member.invite_token}`}
+                        link={`${(import.meta.env.VITE_APP_URL ?? window.location.origin)}/join?token=${member.invite_token}`}
                         label={`Send this link to ${member.name}`}
                         copied={copiedId === member.id}
-                        onCopy={() => copyLink(`${window.location.origin}/join?token=${member.invite_token!}`, member.id)}
+                        onCopy={() => copyLink(`${(import.meta.env.VITE_APP_URL ?? window.location.origin)}/join?token=${member.invite_token!}`, member.id)}
                       />
                     )}
                     </>

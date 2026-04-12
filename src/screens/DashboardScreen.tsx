@@ -5,7 +5,7 @@ import { useHealthStore } from '@/store/healthStore'
 import { useMedicationStore } from '@/store/medicationStore'
 import { usePostureStore } from '@/store/postureStore'
 import { useAppointmentStore } from '@/store/appointmentStore'
-import { Star, Pill, Droplet, Activity, Salad, Armchair, Stethoscope, Ban, AlertTriangle, MapPin, Users, UserRoundCog, FlaskConical, HeartPulse, Link2, Sparkles, Bell, Calendar, ChevronRight, Utensils, LineChart } from 'lucide-react'
+import { Star, Pill, Droplet, Activity, Salad, Armchair, Stethoscope, Ban, AlertTriangle, MapPin, Users, UserRoundCog, FlaskConical, HeartPulse, Link2, Sparkles, Bell, Calendar, Utensils, LineChart, ChevronRight } from 'lucide-react'
 import CircularProgress from '@/components/ui/CircularProgress'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
@@ -173,43 +173,6 @@ export default function DashboardScreen() {
                 View all appointments →
               </button>
             )}
-          </div>
-        )}
-
-        {/* Upcoming appointments this week */}
-        {upcomingAppts.length > 0 && (
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">This week</span>
-              <button onClick={() => navigate('/appointments')} className="flex items-center gap-1 text-xs text-brand-teal font-semibold hover:text-brand-navy transition">
-                View all <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            <div className="space-y-2">
-              {upcomingAppts.map((appt) => {
-                const dt = new Date(appt.appointment_date)
-                const isToday = dt.toDateString() === now.toDateString()
-                const isTomorrow = dt.toDateString() === new Date(now.getTime() + 86400000).toDateString()
-                const dayLabel = isToday ? 'Today' : isTomorrow ? 'Tomorrow' : dt.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
-                const timeLabel = dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
-                return (
-                  <button
-                    key={appt.id}
-                    onClick={() => navigate('/appointments')}
-                    className="w-full flex items-center gap-3 bg-white border border-gray-100 rounded-2xl px-4 py-3 shadow-sm hover:border-brand-teal/40 active:scale-[0.99] transition-all text-left"
-                  >
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isToday ? 'bg-brand-teal text-white' : 'bg-brand-teal-light text-brand-teal'}`}>
-                      <Calendar className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-800 truncate">{appt.appointment_type ?? 'Appointment'}</p>
-                      <p className="text-xs text-gray-400">{dayLabel} · {timeLabel}</p>
-                    </div>
-                    {isToday && <span className="text-[10px] font-bold text-brand-teal bg-brand-teal-light px-2 py-0.5 rounded-full flex-shrink-0">Today</span>}
-                  </button>
-                )
-              })}
-            </div>
           </div>
         )}
 

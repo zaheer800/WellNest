@@ -2,11 +2,29 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '@/store/authStore'
-import { ChevronUp, ChevronDown, ArrowLeft, Plus, Trash2, Phone } from 'lucide-react'
+import { ChevronUp, ChevronDown, ArrowLeft, Plus, Trash2, Phone, ChevronDown as ChevronDownSm } from 'lucide-react'
 import WellNestIcon from '@/components/ui/WellNestIcon'
 import type { EmergencyContact } from '@/types/user.types'
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
+
+const COUNTRY_CODES = [
+  { code: '+91',  flag: '🇮🇳', name: 'India' },
+  { code: '+1',   flag: '🇺🇸', name: 'US / Canada' },
+  { code: '+44',  flag: '🇬🇧', name: 'UK' },
+  { code: '+971', flag: '🇦🇪', name: 'UAE' },
+  { code: '+65',  flag: '🇸🇬', name: 'Singapore' },
+  { code: '+60',  flag: '🇲🇾', name: 'Malaysia' },
+  { code: '+92',  flag: '🇵🇰', name: 'Pakistan' },
+  { code: '+61',  flag: '🇦🇺', name: 'Australia' },
+  { code: '+880', flag: '🇧🇩', name: 'Bangladesh' },
+  { code: '+94',  flag: '🇱🇰', name: 'Sri Lanka' },
+  { code: '+966', flag: '🇸🇦', name: 'Saudi Arabia' },
+  { code: '+974', flag: '🇶🇦', name: 'Qatar' },
+  { code: '+49',  flag: '🇩🇪', name: 'Germany' },
+  { code: '+33',  flag: '🇫🇷', name: 'France' },
+  { code: '+81',  flag: '🇯🇵', name: 'Japan' },
+]
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
@@ -196,7 +214,16 @@ export default function OnboardingScreen() {
   const [heightCm,  setHeightCm]  = useState(170)
   const [weightKg,  setWeightKg]  = useState(70)
   const [goal,      setGoal]      = useState<string | null>(null)
-  const [contacts,  setContacts]  = useState<EmergencyContact[]>([])
+  const [contacts,  setContacts]  = useState<(EmergencyContact & { country_code: string; phone_local: string })[]>([])
+  const [showPickerFor, setShowPickerFor] = useState<number | null>(null)
+
+  // User's own phone
+  const [userCountryCode,    setUserCountryCode]    = useState('+91')
+  const [userPhoneLocal,     setUserPhoneLocal]     = useState('')
+  const [showUserPhonePicker, setShowUserPhonePicker] = useState(false)
+
+  // Consent
+  const [consentAccepted, setConsentAccepted] = useState(false)
 
   // Redirect if already onboarded — only fires at step 0 (before user starts),
   // so a profile save mid-flow doesn't race against goNext()
@@ -220,14 +247,21 @@ export default function OnboardingScreen() {
     setSaving(true)
     try {
       const dob = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-      const validContacts = contacts.filter((c) => c.name.trim() && c.phone.trim())
+      const validContacts = contacts
+        .filter((c) => c.name.trim() && c.phone_local.trim())
+        .map(({ country_code, phone_local, ...rest }) => ({
+          ...rest,
+          phone: `${country_code}${phone_local.replace(/\D/g, '')}`,
+        }))
       await updateProfile({
         name: name.trim(),
+        phone: `${userCountryCode}${userPhoneLocal.replace(/\D/g, '')}`,
         date_of_birth: dob,
         gender: gender ?? undefined,
         height_cm: heightCm,
         weight_kg: weightKg,
         emergency_contacts: validContacts,
+        consent_accepted_at: new Date().toISOString(),
       })
       goNext()
     } catch (e) {
@@ -243,7 +277,13 @@ export default function OnboardingScreen() {
     if (contacts.length === 0) { goNext(); return }
     setSaving(true)
     try {
-      await updateProfile({ emergency_contacts: contacts })
+      const mapped = contacts
+        .filter((c) => c.name.trim() && c.phone_local.trim())
+        .map(({ country_code, phone_local, ...rest }) => ({
+          ...rest,
+          phone: `${country_code}${phone_local.replace(/\D/g, '')}`,
+        }))
+      await updateProfile({ emergency_contacts: mapped })
       goNext()
     } catch {
       // Non-critical — skip silently and move forward
@@ -309,28 +349,79 @@ export default function OnboardingScreen() {
           </div>
         )
 
-      // ── 1: Name ───────────────────────────────────────────────────────────
+      // ── 1: Name + Phone ───────────────────────────────────────────────────
       case 1:
         return (
           <div className="flex flex-col gap-8 px-6 py-8">
             <div>
               <p className="text-brand-teal text-sm font-semibold mb-2">Step 1 of 7</p>
-              <h2 className="text-3xl font-black text-gray-900 leading-tight">What should<br />we call you?</h2>
-              <p className="text-gray-500 text-sm mt-2">We'll use your name throughout the app.</p>
+              <h2 className="text-3xl font-black text-gray-900 leading-tight">Let's get<br />started</h2>
+              <p className="text-gray-500 text-sm mt-2">We'll use these to personalise your experience.</p>
             </div>
 
-            <input
-              type="text"
-              autoFocus
-              placeholder="Your first name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full text-3xl font-bold text-gray-900 border-0 border-b-2 border-gray-200 focus:border-brand-teal pb-3 focus:outline-none bg-transparent placeholder:text-gray-300 transition-colors"
-            />
+            <div className="space-y-6">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Your name</label>
+                <input
+                  type="text"
+                  autoFocus
+                  placeholder="First name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full text-2xl font-bold text-gray-900 border-0 border-b-2 border-gray-200 focus:border-brand-teal pb-3 focus:outline-none bg-transparent placeholder:text-gray-300 transition-colors"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                  Phone number <span className="text-red-400 normal-case font-normal">(required — for emergency alerts)</span>
+                </label>
+                <div className="flex gap-2">
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowUserPhonePicker(!showUserPhonePicker)}
+                      className="h-full flex items-center gap-1 border border-gray-200 rounded-xl px-3 py-3 text-sm bg-white focus:outline-none whitespace-nowrap"
+                    >
+                      <span>{COUNTRY_CODES.find((c) => c.code === userCountryCode)?.flag}</span>
+                      <span className="font-semibold text-gray-700">{userCountryCode}</span>
+                      <ChevronDownSm className="w-3.5 h-3.5 text-gray-400" />
+                    </button>
+                    {showUserPhonePicker && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setShowUserPhonePicker(false)} />
+                        <div className="absolute top-full left-0 mt-1 w-52 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 max-h-56 overflow-y-auto">
+                          {COUNTRY_CODES.map((cc) => (
+                            <button
+                              key={cc.code}
+                              type="button"
+                              onClick={() => { setUserCountryCode(cc.code); setShowUserPhonePicker(false) }}
+                              className={['w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left hover:bg-brand-teal-light transition', cc.code === userCountryCode ? 'bg-brand-teal-light font-semibold text-brand-navy' : 'text-gray-700'].join(' ')}
+                            >
+                              <span>{cc.flag}</span>
+                              <span className="flex-1 truncate">{cc.name}</span>
+                              <span className="text-gray-400 text-xs">{cc.code}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    placeholder="98765 43210"
+                    value={userPhoneLocal}
+                    onChange={(e) => setUserPhoneLocal(e.target.value.replace(/\D/g, ''))}
+                    className="flex-1 border border-gray-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal"
+                  />
+                </div>
+              </div>
+            </div>
 
             <button
               onClick={goNext}
-              disabled={!name.trim()}
+              disabled={!name.trim() || userPhoneLocal.replace(/\D/g, '').length < 6}
               className="w-full bg-brand-teal text-white font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(14,165,183,0.3)] hover:bg-brand-teal-dark active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none mt-auto"
             >
               Continue →
@@ -564,14 +655,14 @@ export default function OnboardingScreen() {
       case 7: {
         const addContact = () => {
           if (contacts.length >= 3) return
-          setContacts([...contacts, { name: '', phone: '', relationship: 'Parent' }])
+          setContacts([...contacts, { name: '', phone: '', country_code: '+91', phone_local: '', relationship: 'Parent' }])
         }
         const removeContact = (i: number) =>
           setContacts(contacts.filter((_, idx) => idx !== i))
-        const updateContact = (i: number, field: keyof EmergencyContact, val: string) =>
+        const updateContact = (i: number, field: string, val: string) =>
           setContacts(contacts.map((c, idx) => idx === i ? { ...c, [field]: val } : c))
 
-        const validContacts = contacts.filter((c) => c.name.trim() && c.phone.trim())
+        const validContacts = contacts.filter((c) => c.name.trim() && c.phone_local.trim())
 
         return (
           <div className="flex flex-col gap-6 px-6 py-8">
@@ -582,51 +673,89 @@ export default function OnboardingScreen() {
             </div>
 
             <div className="space-y-4">
-              {contacts.map((c, i) => (
-                <div key={i} className="bg-white border border-gray-200 rounded-2xl p-4 space-y-3 shadow-sm">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center">
-                        <Phone className="w-3.5 h-3.5 text-red-500" />
+              {contacts.map((c, i) => {
+                const selectedCountry = COUNTRY_CODES.find((cc) => cc.code === c.country_code) ?? COUNTRY_CODES[0]
+                return (
+                  <div key={i} className="bg-white border border-gray-200 rounded-2xl p-4 space-y-3 shadow-sm">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center">
+                          <Phone className="w-3.5 h-3.5 text-red-500" />
+                        </div>
+                        <span className="text-sm font-bold text-gray-700">Contact {i + 1}</span>
                       </div>
-                      <span className="text-sm font-bold text-gray-700">Contact {i + 1}</span>
-                    </div>
-                    <button onClick={() => removeContact(i)} className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-red-500 transition">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Full name"
-                    value={c.name}
-                    onChange={(e) => updateContact(i, 'name', e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal"
-                  />
-                  <input
-                    type="tel"
-                    placeholder="Phone number"
-                    value={c.phone}
-                    onChange={(e) => updateContact(i, 'phone', e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal"
-                  />
-                  <div className="flex flex-wrap gap-2">
-                    {RELATIONSHIPS.map((r) => (
-                      <button
-                        key={r}
-                        onClick={() => updateContact(i, 'relationship', r)}
-                        className={[
-                          'px-3 py-1.5 rounded-full text-xs font-semibold border transition',
-                          c.relationship === r
-                            ? 'bg-brand-teal border-brand-teal text-white'
-                            : 'border-gray-200 text-gray-600',
-                        ].join(' ')}
-                      >
-                        {r}
+                      <button onClick={() => removeContact(i)} className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-red-500 transition">
+                        <Trash2 className="w-4 h-4" />
                       </button>
-                    ))}
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Full name *"
+                      value={c.name}
+                      onChange={(e) => updateContact(i, 'name', e.target.value)}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal"
+                    />
+                    {/* Country code + phone number — separate fields */}
+                    <div className="flex gap-2">
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setShowPickerFor(showPickerFor === i ? null : i)}
+                          className="h-full px-2.5 flex items-center gap-1 border border-gray-200 rounded-xl bg-gray-50 text-sm font-semibold text-gray-700 hover:bg-gray-100 transition whitespace-nowrap"
+                        >
+                          <span>{selectedCountry.flag}</span>
+                          <span>{c.country_code}</span>
+                          <ChevronDownSm className="w-3 h-3 text-gray-400" />
+                        </button>
+                        {showPickerFor === i && (
+                          <>
+                            <div className="fixed inset-0 z-40" onClick={() => setShowPickerFor(null)} />
+                            <div className="absolute top-full left-0 mt-1 w-52 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 max-h-56 overflow-y-auto">
+                              {COUNTRY_CODES.map((cc) => (
+                                <button
+                                  key={cc.code}
+                                  type="button"
+                                  onClick={() => { updateContact(i, 'country_code', cc.code); setShowPickerFor(null) }}
+                                  className={['w-full flex items-center gap-2.5 px-3 py-2.5 text-sm text-left hover:bg-brand-teal-light transition', cc.code === c.country_code ? 'bg-brand-teal-light font-semibold text-brand-navy' : 'text-gray-700'].join(' ')}
+                                >
+                                  <span>{cc.flag}</span>
+                                  <span className="flex-1 truncate">{cc.name}</span>
+                                  <span className="text-gray-400 text-xs">{cc.code}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        placeholder="Phone number *"
+                        value={c.phone_local}
+                        onChange={(e) => updateContact(i, 'phone_local', e.target.value.replace(/\D/g, ''))}
+                        className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-400 -mt-1">Used for WhatsApp / emergency call. Phone is required.</p>
+                    <div className="flex flex-wrap gap-2">
+                      {RELATIONSHIPS.map((r) => (
+                        <button
+                          key={r}
+                          onClick={() => updateContact(i, 'relationship', r)}
+                          className={[
+                            'px-3 py-1.5 rounded-full text-xs font-semibold border transition',
+                            c.relationship === r
+                              ? 'bg-brand-teal border-brand-teal text-white'
+                              : 'border-gray-200 text-gray-600',
+                          ].join(' ')}
+                        >
+                          {r}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
 
               {contacts.length < 3 && (
                 <button
@@ -642,9 +771,26 @@ export default function OnboardingScreen() {
               <p className="text-red-500 text-sm bg-red-50 border border-red-100 rounded-xl px-4 py-3">{error}</p>
             )}
 
+            {/* Consent */}
+            <label className="flex items-start gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={consentAccepted}
+                onChange={(e) => setConsentAccepted(e.target.checked)}
+                className="mt-0.5 w-5 h-5 rounded accent-brand-teal flex-shrink-0"
+              />
+              <span className="text-xs text-gray-500 leading-relaxed">
+                I agree to WellNest's{' '}
+                <a href="/terms" target="_blank" className="text-brand-teal font-medium underline">Terms of Service</a>
+                {' '}and{' '}
+                <a href="/privacy" target="_blank" className="text-brand-teal font-medium underline">Privacy Policy</a>.
+                I understand that my health data is stored securely and used only to provide this service.
+              </span>
+            </label>
+
             <button
               onClick={handleSave}
-              disabled={saving || loading}
+              disabled={saving || loading || !consentAccepted || (contacts.length > 0 && validContacts.length === 0)}
               className="w-full bg-brand-teal text-white font-bold text-base py-4 rounded-2xl shadow-[0_4px_20px_rgba(14,165,183,0.3)] hover:bg-brand-teal-dark active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none"
             >
               {saving || loading ? 'Saving…' : validContacts.length > 0 ? `Save & finish →` : 'Finish setup →'}

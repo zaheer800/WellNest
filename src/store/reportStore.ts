@@ -34,7 +34,7 @@ interface ReportState {
 interface ReportActions {
   fetchLabReports: (patientId: string) => Promise<void>
   fetchImagingReports: (patientId: string) => Promise<void>
-  processReport: (patientId: string, fileUrl: string, pipeline: 'lab' | 'imaging', userAge?: number, userGender?: string) => Promise<void>
+  processReport: (patientId: string, fileUrl: string, pipeline: 'lab' | 'imaging', userAge?: number, userGender?: string, filePath?: string) => Promise<void>
   selectReport: (report: any | null) => void
   fetchReportDetails: (reportId: string, pipeline: 'lab' | 'imaging') => Promise<void>
   deleteReport: (reportId: string, pipeline: 'lab' | 'imaging') => Promise<void>
@@ -76,7 +76,7 @@ export const useReportStore = create<ReportStore>((set, get) => ({
     }
   },
 
-  processReport: async (patientId, fileUrl, pipeline, userAge, userGender) => {
+  processReport: async (patientId, fileUrl, pipeline, userAge, userGender, filePath) => {
     set({ processingStatus: 'processing', processingError: null, criticalParameters: [] })
     const today = new Date().toISOString().split('T')[0]
 
@@ -89,6 +89,7 @@ export const useReportStore = create<ReportStore>((set, get) => ({
           report_date: today,
           report_type: 'pending',
           image_url: fileUrl,
+          file_path: filePath,
           processing_status: 'processing',
         })
       } catch {
@@ -199,6 +200,7 @@ export const useReportStore = create<ReportStore>((set, get) => ({
           report_date: today,
           imaging_type: 'pending',
           image_url: fileUrl,
+          file_path: filePath,
           processing_status: 'processing',
         })
       } catch {
