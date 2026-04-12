@@ -188,7 +188,7 @@ export default function LoginScreen() {
             className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-teal focus:border-transparent transition"
             autoFocus
           />
-          <p className="text-xs text-gray-400 mt-2">We'll email you a one-time sign-in code</p>
+          <p className="text-xs text-gray-400 mt-2">We'll email you a magic link to sign in instantly</p>
         </div>
 
         {error && (

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import type { Session } from '@supabase/supabase-js'
-import { supabase, getUser, upsertUser, generateMedicalIdToken, getFamilyMemberByUserId, getDoctorByUserId } from '@/services/supabase'
+import { supabase, getUser, upsertUser, generateMedicalIdToken, getFamilyMemberByUserId, getDoctorByUserId, setAccessToken } from '@/services/supabase'
 import type { User, UserProfile, FamilyMember } from '@/types/user.types'
 
 export type AppRole = 'patient' | 'family' | 'doctor' | null
@@ -54,6 +54,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
    * then subscribes to Supabase auth state changes for the lifetime of the app.
    */
   initialize: async () => {
+    // Guard against double-initialization (React Strict Mode runs effects twice in dev,
+    // which would stack two onAuthStateChange listeners and double all DB queries).
+    if (get().initialized) return
+
     try {
       const {
         data: { session },
@@ -62,13 +66,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       let user: User | null = null
       let familyMemberRecord: FamilyMember | null = null
       let role: AppRole = null
-
       const detectedRoles: AppRole[] = []
       let doctorRecord: Record<string, any> | null = null
 
       if (session?.user) {
         try {
-          // Check all three roles in parallel — a user can be patient, family member, and/or doctor
           const [familyRecord, existingUser, doctorRec] = await Promise.all([
             getFamilyMemberByUserId(session.user.id),
             getUser(session.user.id),
@@ -79,15 +81,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
             familyMemberRecord = familyRecord as unknown as FamilyMember
             detectedRoles.push('family')
           }
-
           if (doctorRec) {
             doctorRecord = doctorRec
             detectedRoles.push('doctor')
           }
 
-          // The DB trigger auto-creates a stub users row (name='') for every OTP signup,
-          // including doctors and family members. Only treat as patient if they have a
-          // non-empty name (completed onboarding) OR have no other role yet.
           const isOnboardedPatient = existingUser && (existingUser.name ?? '').trim() !== ''
           const hasOtherRole = !!familyRecord || !!doctorRec
 
@@ -95,12 +93,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
             user = existingUser!
             detectedRoles.push('patient')
           } else if (!hasOtherRole) {
-            // New user with no other roles — treat as patient, send through onboarding
             user = existingUser ?? await upsertUser(session.user.id, { email: session.user.email ?? '' })
             detectedRoles.push('patient')
           }
 
-          // Default active role priority: patient > doctor > family
           role = detectedRoles.includes('patient') ? 'patient'
             : detectedRoles.includes('doctor') ? 'doctor'
             : (detectedRoles[0] ?? null)
@@ -109,15 +105,30 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         }
       }
 
+      // Cache the token immediately so invokeFunction can use it without calling getSession()
+      setAccessToken(session?.access_token ?? null)
       set({ session, user, familyMemberRecord, doctorRecord, role, roles: detectedRoles, initialized: true })
 
-      // Keep state in sync with Supabase auth events (token refresh, sign-out, etc.)
+      // Keep state in sync with Supabase auth events.
       supabase.auth.onAuthStateChange(async (event, newSession) => {
+        // Always keep the cached token current — invokeFunction reads this instead of calling getSession()
+        setAccessToken(newSession?.access_token ?? null)
+
         if (event === 'SIGNED_OUT') {
           set({ session: null, user: null, familyMemberRecord: null, doctorRecord: null, role: null, roles: [] })
           return
         }
 
+        // TOKEN_REFRESHED fires every ~50 minutes automatically.
+        // Only the JWT changes — the user profile hasn't changed.
+        // Running 3 DB queries here causes race conditions with ongoing CRUD operations,
+        // because the subsequent set() can clobber in-flight optimistic state updates.
+        if (event === 'TOKEN_REFRESHED') {
+          set({ session: newSession })
+          return
+        }
+
+        // For SIGNED_IN and USER_UPDATED: re-fetch the full profile.
         if (newSession?.user) {
           let updatedUser: User | null = null
           let updatedFamilyRecord: FamilyMember | null = null
@@ -135,7 +146,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
               updatedFamilyRecord = familyRecord as unknown as FamilyMember
               updatedRoles.push('family')
             }
-
             if (doctorRec) {
               updatedDoctorRecord = doctorRec
               updatedRoles.push('doctor')
@@ -163,7 +173,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
           set({ session: newSession, user: null, familyMemberRecord: null, doctorRecord: null, role: null, roles: [] })
         }
       })
-    } catch (err) {
+    } catch {
       set({ initialized: true })
     }
   },
@@ -302,13 +312,13 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     const { session } = get()
     if (!session?.user) throw new Error('Not authenticated')
 
-    set({ loading: true })
-    try {
-      const updatedUser = await upsertUser(session.user.id, profile)
-      set({ user: updatedUser })
-    } finally {
-      set({ loading: false })
-    }
+    // Loading is managed by the calling component — updateProfile just performs the write
+    // and updates the store. This prevents the global loading flag from blocking unrelated UI.
+    const updatedUser = await upsertUser(session.user.id, {
+      ...profile,
+      email: session.user.email ?? undefined,
+    })
+    set({ user: updatedUser })
   },
 
   generateMedicalId: async () => {

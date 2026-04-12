@@ -14,7 +14,8 @@
       "mcp__plugin_playwright_playwright__browser_take_screenshot",
       "mcp__plugin_playwright_playwright__browser_evaluate",
       "Bash(node -e \"import\\('./tailwind.config.js'\\).then\\(m => console.log\\('LOADED OK:', JSON.stringify\\(Object.keys\\(m.default.theme?.extend ?? {}\\)\\)\\)\\).catch\\(e => console.error\\('LOAD ERROR:', e.message\\)\\)\")",
-      "Bash(npx tailwindcss:*)"
+      "Bash(npx tailwindcss:*)",
+      "Bash(npm --version)"
     ]
   }
 }

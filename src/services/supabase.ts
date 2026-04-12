@@ -9,7 +9,53 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables. Check VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+/**
+ * Fetch wrapper with a 10-second timeout for database/storage/function requests.
+ *
+ * Auth requests (/auth/v1/) are deliberately excluded — applying a timeout there
+ * causes the Supabase auth client to enter a broken state when a token refresh is
+ * aborted mid-flight, making ALL subsequent requests fail until page reload.
+ *
+ * For non-auth requests: if the request hangs beyond 10 seconds, abort it so the
+ * caller receives a clear error instead of waiting indefinitely.
+ */
+function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
+  const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url
+  // Let Supabase manage its own auth token refresh — never timeout those requests.
+  if (url.includes('/auth/v1/')) {
+    return fetch(input, init)
+  }
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 10_000)
+  // Merge signals: respect any existing signal AND our timeout signal.
+  const existingSignal = init.signal
+  if (existingSignal) {
+    existingSignal.addEventListener('abort', () => controller.abort(), { once: true })
+  }
+  return fetch(input, { ...init, signal: controller.signal }).finally(() => clearTimeout(timer))
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  global: { fetch: fetchWithTimeout },
+})
+
+/**
+ * In-memory cache of the current access token.
+ * Updated by the authStore via setAccessToken() on every auth state change.
+ *
+ * WHY: supabase.auth.getSession() can trigger a background token refresh which
+ * makes a network request to /auth/v1/token. If that request stalls (slow network,
+ * Supabase hiccup), every single invokeFunction call hangs before it even starts —
+ * because getSession() is the first thing invokeFunction does.
+ *
+ * Using a module-level cache means invokeFunction never waits on the network for
+ * the token — it reads from memory immediately.
+ */
+let _accessToken: string | null = null
+
+export function setAccessToken(token: string | null) {
+  _accessToken = token
+}
 
 /**
  * Invoke a Supabase Edge Function using raw fetch.
@@ -22,25 +68,42 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
  */
 export async function invokeFunction<T = any>(
   name: string,
-  body?: Record<string, any>
+  body?: Record<string, any>,
+  timeoutMs = 45_000,
 ): Promise<T> {
-  const { data: sessionData } = await supabase.auth.getSession()
-  const token = sessionData?.session?.access_token ?? supabaseAnonKey
+  // Use the cached access token (kept fresh by authStore) — never call getSession() here
+  // because it can hang if a token refresh is in progress.
+  const token = _accessToken ?? supabaseAnonKey
 
-  const response = await fetch(`${supabaseUrl}/functions/v1/${name}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      'apikey': supabaseAnonKey,
-    },
-    body: JSON.stringify(body ?? {}),
-  })
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+
+  let response: Response
+  try {
+    response = await fetch(`${supabaseUrl}/functions/v1/${name}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'apikey': supabaseAnonKey,
+      },
+      body: JSON.stringify(body ?? {}),
+      signal: controller.signal,
+    })
+  } catch (err: any) {
+    if (err?.name === 'AbortError') {
+      throw new Error(`${name} timed out after ${timeoutMs / 1000}s. The AI feature may be temporarily slow — please try again.`)
+    }
+    throw err
+  } finally {
+    clearTimeout(timer)
+  }
 
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}))
     console.error(`[invokeFunction] ${name} failed ${response.status}:`, payload)
     if (response.status === 401) throw new Error('SESSION_EXPIRED')
+    if (response.status === 429) throw new Error('RATE_LIMIT')
     throw new Error(payload?.error ?? payload?.message ?? `Function ${name} failed (${response.status})`)
   }
 
@@ -68,84 +131,37 @@ export async function getUser(uid: string): Promise<User | null> {
 }
 
 /**
- * Insert or update a user profile row.
- * 
- * On first sign-up: Creates a row with the provided profile + email.
- * On subsequent updates: Updates only the fields provided, preserving existing values.
+ * Insert or update a user profile row — single atomic upsert.
+ * Previously used SELECT + UPDATE/INSERT (2 round trips). If the SELECT stalled,
+ * loading stayed true forever and the entire app froze until reload.
+ * Now: one query, one round trip, atomically handled by Postgres ON CONFLICT.
  */
 export async function upsertUser(
   uid: string,
   profile: Partial<UserProfile> & { email?: string }
 ): Promise<User> {
-  const now = new Date().toISOString()
+  const payload: any = { id: uid, updated_at: new Date().toISOString() }
 
-  // First check if user exists
-  const { data: existing, error: fetchError } = await supabase
+  if (profile.email) payload.email = profile.email
+  if (profile.name !== undefined && profile.name !== '') payload.name = profile.name
+  if (profile.date_of_birth !== undefined) payload.date_of_birth = profile.date_of_birth
+  if (profile.gender !== undefined) payload.gender = profile.gender
+  if (profile.height_cm !== undefined) payload.height_cm = profile.height_cm
+  if (profile.weight_kg !== undefined) payload.weight_kg = profile.weight_kg
+  if (profile.blood_type !== undefined) payload.blood_type = profile.blood_type
+  if (profile.phone !== undefined) payload.phone = profile.phone
+  if (profile.consent_accepted_at !== undefined) payload.consent_accepted_at = profile.consent_accepted_at
+  if (profile.allergies !== undefined) payload.allergies = profile.allergies
+  if (profile.emergency_contacts !== undefined) payload.emergency_contacts = profile.emergency_contacts
+
+  const { data, error } = await supabase
     .from('users')
-    .select('id')
-    .eq('id', uid)
-    .maybeSingle()
+    .upsert(payload, { onConflict: 'id' })
+    .select('*')
+    .single()
 
-  if (fetchError) {
-    throw fetchError
-  }
-
-  if (existing) {
-    // User exists: update only provided fields
-    const updateData: any = { updated_at: now }
-    
-    if (profile.email) updateData.email = profile.email
-    if (profile.name !== undefined && profile.name !== '') updateData.name = profile.name
-    if (profile.date_of_birth !== undefined) updateData.date_of_birth = profile.date_of_birth
-    if (profile.gender !== undefined) updateData.gender = profile.gender
-    if (profile.height_cm !== undefined) updateData.height_cm = profile.height_cm
-    if (profile.weight_kg !== undefined) updateData.weight_kg = profile.weight_kg
-    if (profile.blood_type !== undefined) updateData.blood_type = profile.blood_type
-    if (profile.phone !== undefined) updateData.phone = profile.phone
-    if (profile.consent_accepted_at !== undefined) updateData.consent_accepted_at = profile.consent_accepted_at
-    if (profile.allergies !== undefined) updateData.allergies = profile.allergies
-    if (profile.emergency_contacts !== undefined) updateData.emergency_contacts = profile.emergency_contacts
-
-    const { data, error } = await supabase
-      .from('users')
-      .update(updateData)
-      .eq('id', uid)
-      .select('*')
-      .single()
-
-    if (error) {
-      throw error
-    }
-
-    return data as User
-  } else {
-    // User doesn't exist: create with all provided fields
-    const insertData: any = { id: uid, updated_at: now }
-    
-    if (profile.email) insertData.email = profile.email
-    if (profile.name !== undefined) insertData.name = profile.name || ''
-    if (profile.date_of_birth !== undefined) insertData.date_of_birth = profile.date_of_birth
-    if (profile.gender !== undefined) insertData.gender = profile.gender
-    if (profile.height_cm !== undefined) insertData.height_cm = profile.height_cm
-    if (profile.weight_kg !== undefined) insertData.weight_kg = profile.weight_kg
-    if (profile.blood_type !== undefined) insertData.blood_type = profile.blood_type
-    if (profile.phone !== undefined) insertData.phone = profile.phone
-    if (profile.consent_accepted_at !== undefined) insertData.consent_accepted_at = profile.consent_accepted_at
-    if (profile.allergies !== undefined) insertData.allergies = profile.allergies
-    if (profile.emergency_contacts !== undefined) insertData.emergency_contacts = profile.emergency_contacts
-
-    const { data, error } = await supabase
-      .from('users')
-      .insert(insertData)
-      .select('*')
-      .single()
-
-    if (error) {
-      throw error
-    }
-
-    return data as User
-  }
+  if (error) throw error
+  return data as User
 }
 
 // ─── Medical ID (public) ───────────────────────────────────────────────────────
@@ -164,7 +180,14 @@ export async function getMedicalIdData(token: string): Promise<{
 } | null> {
   const response = await fetch(
     `${supabaseUrl}/functions/v1/get-medical-id?token=${encodeURIComponent(token)}`,
-    { headers: { apikey: supabaseAnonKey } }
+    {
+      headers: {
+        apikey: supabaseAnonKey,
+        // Supabase Edge Functions require a Bearer token even for public endpoints.
+        // Using the anon key as the bearer passes JWT verification with the anon role.
+        Authorization: `Bearer ${supabaseAnonKey}`,
+      },
+    }
   )
   if (response.status === 404) return null
   if (!response.ok) throw new Error('Failed to load Medical ID')
@@ -172,17 +195,14 @@ export async function getMedicalIdData(token: string): Promise<{
 }
 
 /**
- * Generates a new random Medical ID token for the user and persists it.
- * Returns the generated token string.
+ * Rotates the Medical ID token via a SECURITY DEFINER RPC.
+ * The old token is immediately invalidated — any previously shared links stop working.
+ * Returns the new token string.
  */
-export async function generateMedicalIdToken(uid: string): Promise<string> {
-  const token = crypto.randomUUID()
-  const { error } = await supabase
-    .from('users')
-    .update({ medical_id_token: token })
-    .eq('id', uid)
+export async function generateMedicalIdToken(_uid: string): Promise<string> {
+  const { data, error } = await supabase.rpc('rotate_medical_id_token')
   if (error) throw error
-  return token
+  return data as string
 }
 
 // ─── Medications ───────────────────────────────────────────────────────────────
@@ -794,14 +814,12 @@ export async function addFamilyMember(member: {
 }
 
 export async function getFamilyMemberByToken(token: string) {
-  const { data, error } = await supabase
-    .from('family_members')
-    .select('*, users!patient_id(name, email)')
-    .eq('invite_token', token)
-    .eq('is_active', true)
-    .single()
+  // Direct SELECT is blocked by RLS for unauthenticated/unlinked users.
+  // Use a SECURITY DEFINER RPC so the token itself acts as the credential.
+  const { data, error } = await supabase.rpc('get_family_invite_details', { p_token: token })
   if (error) throw error
-  return data
+  if (!data) throw new Error('Invite not found')
+  return data as { id: string; name: string; patient_name: string }
 }
 
 export async function getFamilyMemberByUserId(userId: string) {
@@ -934,14 +952,12 @@ export async function removeDoctor(id: string) {
 }
 
 export async function getDoctorByToken(token: string) {
-  const { data, error } = await supabase
-    .from('doctors')
-    .select('*, users!patient_id(name, email)')
-    .eq('invite_token', token)
-    .eq('is_active', true)
-    .single()
+  // Direct SELECT is blocked by RLS for unauthenticated/unlinked users.
+  // Use a SECURITY DEFINER RPC so the token itself acts as the credential.
+  const { data, error } = await supabase.rpc('get_doctor_invite_details', { p_token: token })
   if (error) throw error
-  return data
+  if (!data) throw new Error('Invite not found')
+  return data as { id: string; name: string; specialty: string; patient_name: string }
 }
 
 export async function getDoctorByUserId(userId: string) {

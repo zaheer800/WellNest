@@ -1,10 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import Anthropic from 'npm:@anthropic-ai/sdk'
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { corsHeaders, requireAuth } from '../_shared/auth.ts'
 
 interface SideEffectGuidanceBody {
   medication_name: string
@@ -22,9 +18,11 @@ interface SideEffectGuidanceResult {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+
+  // ── Auth ────────────────────────────────────────────────────────────────────
+  const auth = await requireAuth(req)
+  if (auth instanceof Response) return auth
 
   try {
     const body: SideEffectGuidanceBody = await req.json()
@@ -54,7 +52,7 @@ Provide clear, reassuring but accurate guidance. Return a JSON object with exact
 - guidance: string — plain language explanation of this side effect and what it means
 - action: one of "continue" | "monitor" | "contact_doctor" | "stop_immediately"
 - is_expected: boolean — whether this is a known/common side effect of this medication
-- personalised_context: string — any specific considerations given their conditions (or general context if no conditions provided)
+- personalised_context: string — any specific considerations given their conditions
 
 Be empathetic, clear, and actionable. Do not be alarmist unless genuinely warranted.`
 
