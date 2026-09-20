@@ -44,3 +44,4 @@ test-results/
 client_secret*.json
 .claude/settings.local.json
 *.log
+npm-audit-report.txt
