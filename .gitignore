@@ -39,3 +39,8 @@ npm-debug.log*
 coverage/
 playwright-report/
 test-results/
+
+# Local secrets and tooling - never commit
+client_secret*.json
+.claude/settings.local.json
+*.log
