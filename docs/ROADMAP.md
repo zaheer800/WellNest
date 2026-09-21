@@ -39,7 +39,7 @@ Written 2026-09-21 for autonomous runs (`run WellNest: Do roadmap item N in docs
 
 ### Wave 1: make the core trustworthy
 
-- [ ] **1. Test the edge functions properly.** Deno is not installed and the functions have never been run or
+- [x] **1. Test the edge functions properly.** _Done 2026-09-21: Deno 2.9.7 installed; all 12 functions type-check (fixed image `media_type` typing in `_shared/document.ts`); 9 Deno tests added; base64 encoding sped up ~8 s → ~1 s for 20 MB._ Deno is not installed and the functions have never been run or
   type-checked. Install Deno for the `claude` user (no root), run `deno check` on every function, and add Deno
   tests for `supabase/functions/_shared/document.ts` (text file, PDF, PNG/JPEG, file over 20 MB rejected, a 5 MB
   image encodes without a stack overflow, non-2xx fetch). Fix what they find. Document how to run them in

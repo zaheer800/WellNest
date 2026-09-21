@@ -528,6 +528,27 @@ Logic lives in `src/utils/healthScore.ts`.
 - Run `npm test` before committing. Run `npm run type-check` and `npm run lint` as well.
 - Key areas to test: health score calculation (including posture component), lab report parameter extraction, imaging report finding extraction, auto report type detection accuracy, critical value alert triggering, condition connection logic, RLS policy correctness, medication compliance logic, injection course scheduling, symptom backdating logic, environmental trigger correlation, visit preparation generation, anomaly detection edge cases, surgical urgency detection.
 
+### Edge functions (Deno)
+
+Deno is installed for the `claude` user at `~/.deno/bin` (no root; install with
+`curl -fsSL https://deno.land/install.sh | sh -s -- --no-modify-path`, then `export PATH=$HOME/.deno/bin:$PATH`).
+
+Always pass `--node-modules-dir=none`: the repo root has a `package.json`, so without it Deno looks for
+`npm:@anthropic-ai/sdk` in `node_modules` and fails.
+
+```bash
+# type-check every function and the shared modules
+for f in supabase/functions/*/index.ts supabase/functions/_shared/*.ts; do
+  deno check --node-modules-dir=none "$f" || break
+done
+
+# run the Deno tests (currently _shared/document_test.ts)
+deno test --node-modules-dir=none supabase/functions/
+```
+
+Tests live next to the code as `*_test.ts` and mock `fetch`; they need no network beyond the first dependency
+download and no secrets. `deno.lock` is git-ignored.
+
 ---
 
 ## Git Workflow

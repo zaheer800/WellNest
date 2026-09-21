@@ -1,11 +1,25 @@
-import { encode } from 'https://deno.land/std@0.168.0/encoding/base64.ts'
 import { corsHeaders } from './auth.ts'
 
-const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const
+type ImageType = typeof IMAGE_TYPES[number]
+
+const isImageType = (type: string): type is ImageType => (IMAGE_TYPES as readonly string[]).includes(type)
+
+/** Base64 in 32 KB slices: spreading a whole photo into fromCharCode overflows the stack, and std's encoder takes ~8 s for 20 MB. */
+function toBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer)
+  const CHUNK = 0x8000
+  let binary = ''
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK))
+  }
+  return btoa(binary)
+}
+
 const MAX_BYTES = 20 * 1024 * 1024 // matches the `reports` bucket limit
 
 type MediaBlock =
-  | { type: 'image'; source: { type: 'base64'; media_type: string; data: string } }
+  | { type: 'image'; source: { type: 'base64'; media_type: ImageType; data: string } }
   | { type: 'document'; source: { type: 'base64'; media_type: 'application/pdf'; data: string } }
 
 export interface LoadedDocument {
@@ -32,15 +46,15 @@ export async function loadDocument(fileUrl: string): Promise<LoadedDocument> {
 
   const type = (res.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase()
 
-  if (type === 'application/pdf' || IMAGE_TYPES.includes(type)) {
-    const buffer = new Uint8Array(await res.arrayBuffer())
+  if (type === 'application/pdf' || isImageType(type)) {
+    const buffer = await res.arrayBuffer()
     if (buffer.byteLength > MAX_BYTES) {
       throw new Response(
         JSON.stringify({ error: 'File is too large to process (max 20 MB)' }),
         { status: 413, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
       )
     }
-    const data = encode(buffer) // chunk-safe; String.fromCharCode(...buf) overflows the stack on photos
+    const data = toBase64(buffer)
     return type === 'application/pdf'
       ? { block: { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data } } }
       : { block: { type: 'image', source: { type: 'base64', media_type: type, data } } }
