@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import Anthropic from 'npm:@anthropic-ai/sdk'
 import { corsHeaders, requireAuth, assertSupabaseUrl } from '../_shared/auth.ts'
+import { loadDocument, documentContent, type LoadedDocument } from '../_shared/document.ts'
 
 interface ProcessPrescriptionBody {
   file_url?: string
@@ -32,45 +33,20 @@ serve(async (req) => {
     }
     const anthropic = new Anthropic({ apiKey })
 
-    let text: string
+    let doc: LoadedDocument
 
     if (body.raw_text) {
-      text = body.raw_text
+      doc = { text: body.raw_text }
     } else {
       // ── SSRF guard ────────────────────────────────────────────────────────
       const ssrfError = assertSupabaseUrl(body.file_url!)
       if (ssrfError) return ssrfError
 
-      const fileResponse = await fetch(body.file_url!)
-      if (!fileResponse.ok) {
-        return new Response(
-          JSON.stringify({ error: `Failed to fetch file: ${fileResponse.statusText}` }),
-          { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-        )
-      }
-
-      const contentType = fileResponse.headers.get('content-type') ?? ''
-      if (contentType.startsWith('image/')) {
-        const buffer = await fileResponse.arrayBuffer()
-        const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)))
-        const message = await anthropic.messages.create({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 2048,
-          system: prescriptionSystem(),
-          messages: [{
-            role: 'user',
-            content: [
-              {
-                type: 'image',
-                source: { type: 'base64', media_type: contentType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp', data: base64 },
-              },
-              { type: 'text', text: prescriptionPrompt() },
-            ],
-          }],
-        })
-        return buildResponse(message)
-      } else {
-        text = await fileResponse.text()
+      try {
+        doc = await loadDocument(body.file_url!)
+      } catch (e) {
+        if (e instanceof Response) return e
+        throw e
       }
     }
 
@@ -78,7 +54,14 @@ serve(async (req) => {
       model: 'claude-sonnet-4-6',
       max_tokens: 2048,
       system: prescriptionSystem(),
-      messages: [{ role: 'user', content: `${prescriptionPrompt()}\n\n<document>\n${text}\n</document>` }],
+      messages: [{
+        role: 'user',
+        content: documentContent(doc, `${prescriptionPrompt()}
+
+<document>
+${doc.text ?? '(the document is attached above)'}
+</document>`),
+      }],
     })
 
     return buildResponse(message)

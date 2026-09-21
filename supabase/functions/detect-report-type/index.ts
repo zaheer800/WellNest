@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import Anthropic from 'npm:@anthropic-ai/sdk'
 import { corsHeaders, requireAuth, assertSupabaseUrl } from '../_shared/auth.ts'
+import { loadDocument, documentContent, type LoadedDocument } from '../_shared/document.ts'
 
 interface DetectReportTypeBody {
   file_url?: string
@@ -32,23 +33,21 @@ serve(async (req) => {
       )
     }
 
-    let text: string
+    let doc: LoadedDocument
 
     if (body.raw_text) {
-      text = body.raw_text
+      doc = { text: body.raw_text }
     } else {
       // ── SSRF guard ────────────────────────────────────────────────────────
       const ssrfError = assertSupabaseUrl(body.file_url!)
       if (ssrfError) return ssrfError
 
-      const fileResponse = await fetch(body.file_url!)
-      if (!fileResponse.ok) {
-        return new Response(
-          JSON.stringify({ error: `Failed to fetch file from URL: ${fileResponse.statusText}` }),
-          { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-        )
+      try {
+        doc = await loadDocument(body.file_url!)
+      } catch (e) {
+        if (e instanceof Response) return e
+        throw e
       }
-      text = await fileResponse.text()
     }
 
     const apiKey = Deno.env.get('CLAUDE_API_KEY')
@@ -91,7 +90,7 @@ pipeline: "lab" if numeric values to extract; "imaging" if descriptive findings.
 Patient context: Age ${body.age ?? 'unknown'}, Gender ${body.gender ?? 'unknown'}
 
 <document>
-${text}
+${doc.text ?? '(the document is attached above)'}
 </document>`
 
     let message
@@ -100,7 +99,7 @@ ${text}
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 512,
         system: systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }],
+        messages: [{ role: 'user', content: documentContent(doc, userPrompt) }],
       })
     } catch (apiError: any) {
       if (apiError?.status === 429) {

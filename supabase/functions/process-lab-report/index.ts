@@ -1,6 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import Anthropic from 'npm:@anthropic-ai/sdk'
 import { corsHeaders, requireAuth, assertSupabaseUrl } from '../_shared/auth.ts'
+import { loadDocument, documentContent, type LoadedDocument } from '../_shared/document.ts'
 
 interface ProcessLabReportBody {
   report_id: string
@@ -34,23 +35,21 @@ serve(async (req) => {
       )
     }
 
-    let text: string
+    let doc: LoadedDocument
 
     if (body.raw_text) {
-      text = body.raw_text
+      doc = { text: body.raw_text }
     } else {
       // ── SSRF guard ────────────────────────────────────────────────────────
       const ssrfError = assertSupabaseUrl(body.file_url!)
       if (ssrfError) return ssrfError
 
-      const fileResponse = await fetch(body.file_url!)
-      if (!fileResponse.ok) {
-        return new Response(
-          JSON.stringify({ error: `Failed to fetch file: ${fileResponse.statusText}` }),
-          { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-        )
+      try {
+        doc = await loadDocument(body.file_url!)
+      } catch (e) {
+        if (e instanceof Response) return e
+        throw e
       }
-      text = await fileResponse.text()
     }
 
     const apiKey = Deno.env.get('CLAUDE_API_KEY')
@@ -109,7 +108,7 @@ Patient context: Age ${body.age ?? 'unknown'}, Gender ${body.gender ?? 'unknown'
 Return JSON only. No preamble, no explanation.
 
 <document>
-${text}
+${doc.text ?? '(the document is attached above)'}
 </document>`
 
     let message
@@ -118,7 +117,7 @@ ${text}
         model: 'claude-sonnet-4-6',
         max_tokens: 3500,
         system: systemPrompt,
-        messages: [{ role: 'user', content: userPrompt }],
+        messages: [{ role: 'user', content: documentContent(doc, userPrompt) }],
       })
     } catch (apiError: any) {
       if (apiError?.status === 429) {
