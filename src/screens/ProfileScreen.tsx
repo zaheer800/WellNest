@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useAuthStore } from '@/store/authStore'
+import { useActivePatient } from '@/hooks/useActivePatient'
 import PageWrapper from '@/components/layout/PageWrapper'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -76,7 +77,8 @@ function bmiCategory(bmi: number): { label: string; color: string } {
 
 export default function ProfileScreen() {
   const navigate = useNavigate()
-  const { user, updateProfile, generateMedicalId, signOut, loading } = useAuthStore()
+  const { updateProfile, generateMedicalId, signOut, loading } = useAuthStore()
+  const { profile: user, isSelf } = useActivePatient()
   const [saving, setSaving] = useState(false)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -598,8 +600,8 @@ export default function ProfileScreen() {
           </Button>
         </form>
 
-        {/* Medical ID QR */}
-        <Card>
+        {/* Medical ID QR (tied to the signed-in login, so not available for managed profiles) */}
+        {isSelf && <Card>
           <div className="flex items-center gap-2 mb-3">
             <QrCode className="w-5 h-5 text-brand-teal" />
             <p className="text-sm font-bold text-gray-800">Medical ID</p>
@@ -654,7 +656,7 @@ export default function ProfileScreen() {
               <QrCode className="w-4 h-4 mr-2" /> Generate QR Code
             </Button>
           )}
-        </Card>
+        </Card>}
 
         {/* Sign out */}
         <Card>

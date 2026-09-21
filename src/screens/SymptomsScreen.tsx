@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useAuthStore } from '@/store/authStore'
 import { useHealthStore } from '@/store/healthStore'
 import { useSymptomProgressionStore } from '@/store/symptomProgressionStore'
 import PageWrapper from '@/components/layout/PageWrapper'
@@ -12,6 +11,7 @@ import { formatRelative } from '@/utils/dateHelpers'
 
 import { Droplets, Brain, Bone, ActivitySquare, HeartPulse, Stethoscope, Check, AlertCircle, Pencil, Trash2, X, ChevronDown } from 'lucide-react'
 import EnvironmentCapture from '@/components/features/symptoms/EnvironmentCapture'
+import { useActivePatient } from '@/hooks/useActivePatient'
 
 const CATEGORIES: { key: SymptomCategory; label: string; icon: React.ReactNode }[] = [
   { key: 'urinary', label: 'Urinary', icon: <Droplets className="w-5 h-5" /> },
@@ -36,7 +36,6 @@ const SEVERITY_LABELS: Record<number, { label: string; color: string }> = {
 }
 
 export default function SymptomsScreen() {
-  const { user } = useAuthStore()
   const { symptomLogs, logSymptom, editSymptom, deleteSymptom, fetchTodayData } = useHealthStore()
   const { syncProgression } = useSymptomProgressionStore()
 
@@ -58,7 +57,7 @@ export default function SymptomsScreen() {
   const [editTime, setEditTime] = useState('')
   const [editSaving, setEditSaving] = useState(false)
 
-  const patientId = user?.id ?? ''
+  const { patientId } = useActivePatient()
 
   useEffect(() => {
     if (patientId) fetchTodayData(patientId, new Date().toISOString().slice(0, 10))

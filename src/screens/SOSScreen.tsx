@@ -1,14 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useAuthStore } from '@/store/authStore'
+import { useActivePatient } from '@/hooks/useActivePatient'
 import { Phone, MessageCircle, ArrowLeft, ShieldCheck } from 'lucide-react'
 
 const HOLD_DURATION = 3000 // ms to hold before activating
 
 export default function SOSScreen() {
   const navigate = useNavigate()
-  const { user } = useAuthStore()
 
   const [activated, setActivated] = useState(false)
   const [holding, setHolding]     = useState(false)
@@ -18,7 +17,8 @@ export default function SOSScreen() {
   const rafRef      = useRef<number>(0)
   const timerRef    = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const contacts = user?.emergency_contacts ?? []
+  const { profile } = useActivePatient()
+  const contacts = profile?.emergency_contacts ?? []
 
   // Animate progress ring while holding
   const startHold = () => {
@@ -59,7 +59,7 @@ export default function SOSScreen() {
 
   const whatsappContact = (phone: string, name: string) => {
     const msg = encodeURIComponent(
-      `🆘 Emergency! ${user?.name ?? 'Someone'} needs help. Please call immediately.`
+      `🆘 Emergency! ${profile?.name ?? 'Someone'} needs help. Please call immediately.`
     )
     // Normalise phone: strip non-digits, keep leading +
     const cleaned = phone.replace(/[^\d+]/g, '')

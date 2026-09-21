@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useAuthStore } from '@/store/authStore'
 import { usePostureStore } from '@/store/postureStore'
 import PageWrapper from '@/components/layout/PageWrapper'
 import Card from '@/components/ui/Card'
@@ -7,6 +6,7 @@ import CircularProgress from '@/components/ui/CircularProgress'
 import ProgressBar from '@/components/ui/ProgressBar'
 import { today } from '@/utils/dateHelpers'
 import { UserCheck, BellRing, PersonStanding, Flag, Loader, CheckCircle } from 'lucide-react'
+import { useActivePatient } from '@/hooks/useActivePatient'
 
 const POSTURE_TIPS = [
   'Keep your lumbar spine supported — use a cushion or lumbar roll.',
@@ -21,7 +21,6 @@ const CHECKLIST_ITEMS = [
 ]
 
 export default function PostureScreen() {
-  const { user } = useAuthStore()
   const { isTracking, activeSession, lastStandBreak, standBreakGoal, postureLogs, startSitting, recordStandBreak, endSession, fetchTodayLogs, getSittingDurationMinutes } = usePostureStore()
 
   const [sittingMins, setSittingMins] = useState(0)
@@ -29,7 +28,7 @@ export default function PostureScreen() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const patientId = user?.id ?? ''
+  const { patientId } = useActivePatient()
   const date = today()
 
   const resetBreaks = async () => {

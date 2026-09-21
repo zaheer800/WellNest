@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import type { User, UserProfile } from '@/types/user.types'
+import type { User, UserProfile, ManagedProfile, FamilyMember } from '@/types/user.types'
 import type { VisitPreparation } from '@/types/appointment.types'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
@@ -823,21 +823,123 @@ export async function getFamilyMemberByToken(token: string) {
 }
 
 export async function getFamilyMemberByUserId(userId: string) {
+  // View-only circle membership. Guardian rows (can_edit) are loaded by getManagedProfiles,
+  // and a guardian can hold several rows, which would break .maybeSingle().
   const { data, error } = await supabase
     .from('family_members')
     .select('*, users!patient_id(id, name, email)')
     .eq('user_id', userId)
     .eq('is_active', true)
+    .eq('can_edit', false)
+    .order('accepted_at', { ascending: true })
+    .limit(1)
     .maybeSingle()
   if (error) return null
   return data
 }
 
-export async function acceptFamilyInvite(token: string, userId: string) {
+/**
+ * Claims a family invite through a SECURITY DEFINER function. The old direct UPDATE could
+ * not see unclaimed rows under RLS and let an invitee change any column of the row.
+ */
+export async function acceptFamilyInvite(token: string) {
+  const { data, error } = await supabase.rpc('claim_family_invite', { p_token: token })
+  if (error) throw error
+  return data as FamilyMember
+}
+
+/** People this account can manage: guardian rows, plus a claimed own profile. */
+export async function getManagedProfiles(userId: string): Promise<ManagedProfile[]> {
   const { data, error } = await supabase
     .from('family_members')
-    .update({ user_id: userId, accepted_at: new Date().toISOString() })
-    .eq('invite_token', token)
+    .select('patient_id, relationship, is_self, users!patient_id(id, name, date_of_birth, guardianship_ends_on)')
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .eq('can_edit', true)
+  if (error) return []
+  type Row = {
+    patient_id: string
+    relationship: string | null
+    is_self: boolean | null
+    users: { name: string | null; date_of_birth: string | null; guardianship_ends_on: string | null } | null
+  }
+  return ((data ?? []) as unknown as Row[]).map((row) => ({
+    patientId: row.patient_id,
+    name: row.users?.name ?? 'Unnamed',
+    dateOfBirth: row.users?.date_of_birth ?? null,
+    guardianshipEndsOn: row.users?.guardianship_ends_on ?? null,
+    isSelf: !!row.is_self,
+    relationship: row.relationship ?? null,
+  }))
+}
+
+export async function createManagedProfile(input: {
+  name: string
+  dateOfBirth?: string | null
+  gender?: 'male' | 'female' | 'other' | null
+  relationship?: string | null
+  isMinor: boolean
+}): Promise<string> {
+  const { data, error } = await supabase.rpc('create_managed_profile', {
+    p_name: input.name,
+    p_date_of_birth: input.dateOfBirth || null,
+    p_gender: input.gender ?? null,
+    p_relationship: input.relationship || null,
+    p_is_minor: input.isMinor,
+  })
+  if (error) throw error
+  return data as string
+}
+
+/** Link that lets the person themself take over a managed profile. */
+export async function createClaimInvite(patientId: string): Promise<string> {
+  const { data, error } = await supabase.rpc('create_claim_invite', { p_patient: patientId })
+  if (error) throw error
+  return data as string
+}
+
+/** Ends guardianship over anyone who has turned 18. Idempotent; fallback for the nightly job. */
+export async function expireGuardianships(): Promise<void> {
+  await supabase.rpc('expire_guardianships')
+}
+
+export async function getGuardians(patientId: string) {
+  const { data, error } = await supabase
+    .from('family_members')
+    .select('id, name, relationship, user_id, is_self, accepted_at, invite_token')
+    .eq('patient_id', patientId)
+    .eq('can_edit', true)
+    .eq('is_active', true)
+  if (error) throw error
+  return data ?? []
+}
+
+/** Invite another adult to manage a person alongside you (e.g. a spouse for a child). */
+export async function createGuardianInvite(patientId: string, name: string, relationship?: string | null) {
+  const token = crypto.randomUUID()
+  const { error } = await supabase.from('family_members').insert({
+    patient_id: patientId,
+    name,
+    relationship: relationship || null,
+    invite_token: token,
+    can_edit: true,
+    is_active: true,
+    visibility_config: {},
+  })
+  if (error) throw error
+  return token
+}
+
+export async function removeGuardian(id: string) {
+  const { error } = await supabase.from('family_members').delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function updateManagedProfile(patientId: string, updates: Partial<UserProfile>) {
+  const { data, error } = await supabase
+    .from('users')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', patientId)
     .select()
     .single()
   if (error) throw error

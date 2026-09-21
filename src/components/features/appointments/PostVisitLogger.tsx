@@ -4,6 +4,7 @@ import Button from '@/components/ui/Button'
 import { Plus, X, Paperclip, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { uploadPrescription, extractMedicationsFromPrescription } from '@/services/prescriptionParser'
 import { useAuthStore } from '@/store/authStore'
+import { useActivePatient } from '@/hooks/useActivePatient'
 
 export interface NewMedication {
   name: string
@@ -25,6 +26,7 @@ const emptyMed = (): NewMedication => ({ name: '', dose: '', unit: 'mg', frequen
 
 const PostVisitLogger: React.FC<PostVisitLoggerProps> = ({ appointment, onSave, loading = false }) => {
   const { user } = useAuthStore()
+  const { patientId } = useActivePatient()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [notes, setNotes] = useState(appointment.post_visit_notes ?? '')
@@ -48,12 +50,12 @@ const PostVisitLogger: React.FC<PostVisitLoggerProps> = ({ appointment, onSave, 
 
   const handlePrescriptionSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file || !user) return
+    if (!file || !user || !patientId) return
     setPrescriptionFile(file)
     setUploadError(null)
     setUploadState('uploading')
     try {
-      const url = await uploadPrescription(user.id, file)
+      const url = await uploadPrescription(patientId, file)
       setPrescriptionUrl(url)
       setUploadState('extracting')
       const extracted = await extractMedicationsFromPrescription(url)

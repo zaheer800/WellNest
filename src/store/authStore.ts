@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { Session } from '@supabase/supabase-js'
-import { supabase, getUser, upsertUser, generateMedicalIdToken, getFamilyMemberByUserId, getDoctorByUserId, setAccessToken } from '@/services/supabase'
-import type { User, UserProfile, FamilyMember } from '@/types/user.types'
+import { supabase, getUser, upsertUser, generateMedicalIdToken, getFamilyMemberByUserId, getDoctorByUserId, setAccessToken, getManagedProfiles, expireGuardianships, updateManagedProfile } from '@/services/supabase'
+import type { User, UserProfile, FamilyMember, ManagedProfile } from '@/types/user.types'
 
 export type AppRole = 'patient' | 'family' | 'doctor' | null
 
@@ -16,6 +16,11 @@ interface AuthState {
   session: Session | null
   loading: boolean
   initialized: boolean
+  /** People this account manages (children, parents, or its own claimed profile) */
+  managedProfiles: ManagedProfile[]
+  /** The person whose health data is on screen. Defaults to the signed-in user. */
+  activePatientId: string | null
+  activeProfile: User | null
 }
 
 interface AuthActions {
@@ -32,9 +37,86 @@ interface AuthActions {
   acceptDoctorInvite: (token: string) => Promise<void>
   /** Switch active view between patient, family, and doctor roles */
   switchRole: (newRole: AppRole) => void
+  /** Choose which managed person's data to view and edit */
+  setActivePatient: (patientId: string) => Promise<void>
+  /** Reload the list of managed people (after adding, removing or claiming one) */
+  refreshManagedProfiles: () => Promise<void>
 }
 
 type AuthStore = AuthState & AuthActions
+
+const ACTIVE_PATIENT_KEY = 'wn.activePatientId'
+
+interface ResolvedAccount {
+  user: User | null
+  familyMemberRecord: FamilyMember | null
+  doctorRecord: AuthState['doctorRecord']
+  role: AppRole
+  roles: AppRole[]
+  managedProfiles: ManagedProfile[]
+  activePatientId: string | null
+  activeProfile: User | null
+}
+
+/**
+ * Works out everything about a signed-in account: its roles, the people it manages and
+ * which person is currently being viewed. Shared by startup and auth-state changes.
+ */
+async function resolveAccount(authUser: { id: string; email?: string | null }): Promise<ResolvedAccount> {
+  // Ends guardianship over anyone who has turned 18. Idempotent; the nightly job does the same.
+  expireGuardianships().catch(() => {})
+
+  const [familyRecord, existingUser, doctorRec, managedProfiles] = await Promise.all([
+    getFamilyMemberByUserId(authUser.id),
+    getUser(authUser.id),
+    getDoctorByUserId(authUser.id),
+    getManagedProfiles(authUser.id),
+  ])
+
+  const roles: AppRole[] = []
+  let familyMemberRecord: FamilyMember | null = null
+  let doctorRecord: AuthState['doctorRecord'] = null
+  let user: User | null = null
+
+  if (familyRecord) {
+    familyMemberRecord = familyRecord as unknown as FamilyMember
+    roles.push('family')
+  }
+  if (doctorRec) {
+    doctorRecord = doctorRec
+    roles.push('doctor')
+  }
+
+  const isOnboardedPatient = !!existingUser && (existingUser.name ?? '').trim() !== ''
+  const hasOtherRole = !!familyRecord || !!doctorRec
+  const managesOthers = managedProfiles.length > 0
+
+  if (isOnboardedPatient) {
+    user = existingUser!
+    roles.push('patient')
+  } else if (managesOthers || !hasOtherRole) {
+    user = existingUser ?? await upsertUser(authUser.id, { email: authUser.email ?? '' })
+    roles.push('patient')
+  }
+
+  const role: AppRole = roles.includes('patient') ? 'patient'
+    : roles.includes('doctor') ? 'doctor'
+    : (roles[0] ?? null)
+
+  // Who is being viewed: the remembered choice if still valid, else yourself, else the first managed person.
+  const candidates = [...(isOnboardedPatient ? [authUser.id] : []), ...managedProfiles.map((m) => m.patientId)]
+  const remembered = typeof localStorage !== 'undefined' ? localStorage.getItem(ACTIVE_PATIENT_KEY) : null
+  const activePatientId = roles.includes('patient')
+    ? (remembered && candidates.includes(remembered) ? remembered : (candidates[0] ?? authUser.id))
+    : null
+
+  let activeProfile: User | null = user
+  if (activePatientId && activePatientId !== authUser.id) {
+    try { activeProfile = await getUser(activePatientId) } catch { activeProfile = null }
+  }
+
+  return { user, familyMemberRecord, doctorRecord, role, roles, managedProfiles, activePatientId, activeProfile }
+}
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
   // ─── Initial state ──────────────────────────────────────────────────────────
@@ -46,6 +128,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   session: null,
   loading: false,
   initialized: false,
+  managedProfiles: [],
+  activePatientId: null,
+  activeProfile: null,
 
   // ─── Actions ────────────────────────────────────────────────────────────────
 
@@ -63,51 +148,29 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         data: { session },
       } = await supabase.auth.getSession()
 
-      let user: User | null = null
-      let familyMemberRecord: FamilyMember | null = null
-      let role: AppRole = null
-      const detectedRoles: AppRole[] = []
-      let doctorRecord: Record<string, any> | null = null
-
+      let resolved: ResolvedAccount | null = null
       if (session?.user) {
         try {
-          const [familyRecord, existingUser, doctorRec] = await Promise.all([
-            getFamilyMemberByUserId(session.user.id),
-            getUser(session.user.id),
-            getDoctorByUserId(session.user.id),
-          ])
-
-          if (familyRecord) {
-            familyMemberRecord = familyRecord as unknown as FamilyMember
-            detectedRoles.push('family')
-          }
-          if (doctorRec) {
-            doctorRecord = doctorRec
-            detectedRoles.push('doctor')
-          }
-
-          const isOnboardedPatient = existingUser && (existingUser.name ?? '').trim() !== ''
-          const hasOtherRole = !!familyRecord || !!doctorRec
-
-          if (isOnboardedPatient) {
-            user = existingUser!
-            detectedRoles.push('patient')
-          } else if (!hasOtherRole) {
-            user = existingUser ?? await upsertUser(session.user.id, { email: session.user.email ?? '' })
-            detectedRoles.push('patient')
-          }
-
-          role = detectedRoles.includes('patient') ? 'patient'
-            : detectedRoles.includes('doctor') ? 'doctor'
-            : (detectedRoles[0] ?? null)
+          resolved = await resolveAccount(session.user)
         } catch {
-          user = null
+          resolved = null
         }
       }
 
       // Cache the token immediately so invokeFunction can use it without calling getSession()
       setAccessToken(session?.access_token ?? null)
-      set({ session, user, familyMemberRecord, doctorRecord, role, roles: detectedRoles, initialized: true })
+      set({
+        session,
+        user: resolved?.user ?? null,
+        familyMemberRecord: resolved?.familyMemberRecord ?? null,
+        doctorRecord: resolved?.doctorRecord ?? null,
+        role: resolved?.role ?? null,
+        roles: resolved?.roles ?? [],
+        managedProfiles: resolved?.managedProfiles ?? [],
+        activePatientId: resolved?.activePatientId ?? null,
+        activeProfile: resolved?.activeProfile ?? null,
+        initialized: true,
+      })
 
       // Keep state in sync with Supabase auth events.
       supabase.auth.onAuthStateChange(async (event, newSession) => {
@@ -115,7 +178,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         setAccessToken(newSession?.access_token ?? null)
 
         if (event === 'SIGNED_OUT') {
-          set({ session: null, user: null, familyMemberRecord: null, doctorRecord: null, role: null, roles: [] })
+          set({ session: null, user: null, familyMemberRecord: null, doctorRecord: null, role: null, roles: [], managedProfiles: [], activePatientId: null, activeProfile: null })
           return
         }
 
@@ -130,47 +193,24 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
         // For SIGNED_IN and USER_UPDATED: re-fetch the full profile.
         if (newSession?.user) {
-          let updatedUser: User | null = null
-          let updatedFamilyRecord: FamilyMember | null = null
-          let updatedDoctorRecord: Record<string, any> | null = null
-          let updatedRole: AppRole = null
-          const updatedRoles: AppRole[] = []
           try {
-            const [familyRecord, existingUser, doctorRec] = await Promise.all([
-              getFamilyMemberByUserId(newSession.user.id),
-              getUser(newSession.user.id),
-              getDoctorByUserId(newSession.user.id),
-            ])
-
-            if (familyRecord) {
-              updatedFamilyRecord = familyRecord as unknown as FamilyMember
-              updatedRoles.push('family')
-            }
-            if (doctorRec) {
-              updatedDoctorRecord = doctorRec
-              updatedRoles.push('doctor')
-            }
-
-            const isOnboardedPatient = existingUser && (existingUser.name ?? '').trim() !== ''
-            const hasOtherRole = !!familyRecord || !!doctorRec
-
-            if (isOnboardedPatient) {
-              updatedUser = existingUser!
-              updatedRoles.push('patient')
-            } else if (!hasOtherRole) {
-              updatedUser = existingUser ?? await upsertUser(newSession.user.id, { email: newSession.user.email ?? '' })
-              updatedRoles.push('patient')
-            }
-
-            updatedRole = updatedRoles.includes('patient') ? 'patient'
-              : updatedRoles.includes('doctor') ? 'doctor'
-              : (updatedRoles[0] ?? null)
+            const r = await resolveAccount(newSession.user)
+            set({
+              session: newSession,
+              user: r.user,
+              familyMemberRecord: r.familyMemberRecord,
+              doctorRecord: r.doctorRecord,
+              role: r.role,
+              roles: r.roles,
+              managedProfiles: r.managedProfiles,
+              activePatientId: r.activePatientId,
+              activeProfile: r.activeProfile,
+            })
           } catch {
-            updatedUser = null
+            set({ session: newSession, user: null, familyMemberRecord: null, doctorRecord: null, role: null, roles: [], managedProfiles: [], activePatientId: null, activeProfile: null })
           }
-          set({ session: newSession, user: updatedUser, familyMemberRecord: updatedFamilyRecord, doctorRecord: updatedDoctorRecord, role: updatedRole, roles: updatedRoles })
         } else {
-          set({ session: newSession, user: null, familyMemberRecord: null, doctorRecord: null, role: null, roles: [] })
+          set({ session: newSession, user: null, familyMemberRecord: null, doctorRecord: null, role: null, roles: [], managedProfiles: [], activePatientId: null, activeProfile: null })
         }
       })
     } catch {
@@ -267,7 +307,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     try {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
-      set({ user: null, session: null })
+      if (typeof localStorage !== 'undefined') localStorage.removeItem(ACTIVE_PATIENT_KEY)
+      set({ user: null, session: null, managedProfiles: [], activePatientId: null, activeProfile: null })
     } finally {
       set({ loading: false })
     }
@@ -281,7 +322,26 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     const { session, roles } = get()
     if (!session?.user) throw new Error('Must be logged in to accept an invite')
     const { acceptFamilyInvite } = await import('@/services/supabase')
-    const record = await acceptFamilyInvite(token, session.user.id)
+    const record = await acceptFamilyInvite(token)
+
+    // A guardian / "claim your own profile" invite gives full access, not the read-only circle view.
+    if (record?.can_edit) {
+      const r = await resolveAccount(session.user)
+      if (typeof localStorage !== 'undefined' && record.patient_id) {
+        localStorage.setItem(ACTIVE_PATIENT_KEY, record.patient_id)
+      }
+      const activePatientId = record.patient_id ?? r.activePatientId
+      set({
+        user: r.user,
+        managedProfiles: r.managedProfiles,
+        activePatientId,
+        activeProfile: activePatientId && activePatientId !== session.user.id ? await getUser(activePatientId) : r.user,
+        role: 'patient',
+        roles: [...roles.filter((x) => x !== 'patient'), 'patient'],
+      })
+      return
+    }
+
     const newRoles: AppRole[] = [...roles.filter((r) => r !== 'family'), 'family']
     set({
       familyMemberRecord: record as unknown as FamilyMember,
@@ -299,6 +359,25 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     set({ doctorRecord: record, role: 'doctor', roles: newRoles })
   },
 
+  setActivePatient: async (patientId: string) => {
+    const { session, user, managedProfiles } = get()
+    if (!session?.user) return
+    const allowed = patientId === session.user.id || managedProfiles.some((m) => m.patientId === patientId)
+    if (!allowed) return
+    if (typeof localStorage !== 'undefined') localStorage.setItem(ACTIVE_PATIENT_KEY, patientId)
+    const profile = patientId === session.user.id ? user : await getUser(patientId)
+    set({ activePatientId: patientId, activeProfile: profile })
+  },
+
+  refreshManagedProfiles: async () => {
+    const { session } = get()
+    if (!session?.user) return
+    const managedProfiles = await getManagedProfiles(session.user.id)
+    const { activePatientId } = get()
+    const stillValid = !activePatientId || activePatientId === session.user.id || managedProfiles.some((m) => m.patientId === activePatientId)
+    set({ managedProfiles, ...(stillValid ? {} : { activePatientId: session.user.id, activeProfile: get().user }) })
+  },
+
   switchRole: (newRole: AppRole) => {
     const { roles } = get()
     if (!roles.includes(newRole)) return
@@ -309,8 +388,15 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
    * Persists profile changes to the `users` table and refreshes local state.
    */
   updateProfile: async (profile: Partial<UserProfile>) => {
-    const { session } = get()
+    const { session, activePatientId } = get()
     if (!session?.user) throw new Error('Not authenticated')
+
+    // Editing a managed person (child / parent): write to their record, not the signed-in user's.
+    if (activePatientId && activePatientId !== session.user.id) {
+      const updated = await updateManagedProfile(activePatientId, profile)
+      set({ activeProfile: updated as User })
+      return
+    }
 
     // Loading is managed by the calling component — updateProfile just performs the write
     // and updates the store. This prevents the global loading flag from blocking unrelated UI.
@@ -318,7 +404,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       ...profile,
       email: session.user.email ?? undefined,
     })
-    set({ user: updatedUser })
+    set({ user: updatedUser, activeProfile: updatedUser, activePatientId: session.user.id })
   },
 
   generateMedicalId: async () => {

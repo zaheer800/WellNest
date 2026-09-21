@@ -1,6 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import Anthropic from 'npm:@anthropic-ai/sdk'
-import { corsHeaders, requireAuth, assertOwnership } from '../_shared/auth.ts'
+import { corsHeaders, requireAuth, assertCanManage } from '../_shared/auth.ts'
 
 interface GenerateConditionConnectionsBody {
   patient_id: string
@@ -27,7 +27,7 @@ serve(async (req) => {
     }
 
     // ── Ownership check ───────────────────────────────────────────────────────
-    const ownershipError = assertOwnership(body.patient_id, auth.userId)
+    const ownershipError = await assertCanManage(req, body.patient_id, auth.userId)
     if (ownershipError) return ownershipError
 
     const apiKey = Deno.env.get('CLAUDE_API_KEY')

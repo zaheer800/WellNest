@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useAuthStore } from '@/store/authStore'
 import { useAppointmentStore } from '@/store/appointmentStore'
 import { useMedicationStore } from '@/store/medicationStore'
 import PageWrapper from '@/components/layout/PageWrapper'
@@ -13,6 +12,7 @@ import { generateVisitPreparation } from '@/services/visitPreparation'
 import { today } from '@/utils/dateHelpers'
 import type { Appointment } from '@/types/appointment.types'
 import { Calendar, X, ChevronDown, ChevronRight } from 'lucide-react'
+import { useActivePatient } from '@/hooks/useActivePatient'
 
 interface AddForm {
   appointment_date: string
@@ -21,7 +21,6 @@ interface AddForm {
 }
 
 export default function AppointmentsScreen() {
-  const { user } = useAuthStore()
   const {
     appointments,
     preparations,
@@ -47,7 +46,7 @@ export default function AppointmentsScreen() {
   const [savingLog, setSavingLog] = useState(false)
   const [showPast, setShowPast] = useState(false)
 
-  const patientId = user?.id ?? ''
+  const { patientId } = useActivePatient()
 
   useEffect(() => {
     if (patientId) fetchAppointments(patientId)

@@ -5,7 +5,7 @@ import WellNestIcon from '@/components/ui/WellNestIcon'
 
 export default function SplashScreen() {
   const navigate = useNavigate()
-  const { initialized, session, user, role } = useAuthStore()
+  const { initialized, session, user, role, managedProfiles } = useAuthStore()
 
   useEffect(() => {
     if (!initialized) return
@@ -15,12 +15,12 @@ export default function SplashScreen() {
       navigate('/doctor-dashboard', { replace: true })
     } else if (role === 'family') {
       navigate('/family-dashboard', { replace: true })
-    } else if (user?.name) {
+    } else if (user?.name || managedProfiles.length > 0) {
       navigate('/dashboard', { replace: true })
     } else {
       navigate('/onboarding', { replace: true })
     }
-  }, [initialized, session, user, role, navigate])
+  }, [initialized, session, user, role, managedProfiles, navigate])
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-brand-navy">

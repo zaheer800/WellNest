@@ -5,6 +5,7 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import { getDoctors, addDoctor, updateDoctor, removeDoctor } from '@/services/supabase'
 import { Stethoscope, Pencil, Trash2, X, Link2, Check, Loader2 } from 'lucide-react'
+import { useActivePatient } from '@/hooks/useActivePatient'
 
 const SPECIALTIES = [
   { value: 'nephrology', label: 'Nephrology', focus: 'Kidney function, electrolytes, fluid intake' },
@@ -57,7 +58,7 @@ function InviteLinkPanel({ link, label, copied, onCopy, color }: {
 
 export default function DoctorScreen() {
   const { user } = useAuthStore()
-  const patientId = user?.id ?? ''
+  const { patientId } = useActivePatient()
 
   const [doctors, setDoctors] = useState<any[]>([])
   const [loading, setLoading] = useState(true)

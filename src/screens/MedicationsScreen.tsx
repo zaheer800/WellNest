@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useAuthStore } from '@/store/authStore'
 import { useMedicationStore } from '@/store/medicationStore'
 import { useInjectionStore } from '@/store/injectionStore'
 import PageWrapper from '@/components/layout/PageWrapper'
@@ -13,6 +12,7 @@ import { today } from '@/utils/dateHelpers'
 import { shouldTakeMedicationToday } from '@/utils/healthScore'
 import type { TimeOfDay, MedicationScheduleConfig } from '@/types/health.types'
 import { Pill, Syringe, Clock, Pencil, X as XIcon } from 'lucide-react'
+import { useActivePatient } from '@/hooks/useActivePatient'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -65,7 +65,6 @@ function formatSchedule(config: MedicationScheduleConfig): string {
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 export default function MedicationsScreen() {
-  const { user } = useAuthStore()
   const { medications, loading, error, fetchMedications, markTaken, addMedication, updateMedication, removeMedication } = useMedicationStore()
   const { courses: injectionCourses, sideEffects, loading: injectionLoading, error: injectionError, fetchCourses, addCourse, logDose, editCourse, fetchSideEffects, addSideEffect, resolveSideEffect } = useInjectionStore()
 
@@ -105,7 +104,7 @@ export default function MedicationsScreen() {
   const [selectedMedicationForSideEffect, setSelectedMedicationForSideEffect] = useState<string | null>(null)
 
   const date = today()
-  const patientId = user?.id ?? ''
+  const { patientId } = useActivePatient()
 
   useEffect(() => {
     if (patientId) {

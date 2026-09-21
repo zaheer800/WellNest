@@ -10,6 +10,7 @@ import { useReportStore } from '@/store/reportStore'
 import { today } from '@/utils/dateHelpers'
 import { shouldTakeMedicationToday } from '@/utils/healthScore'
 import { Pill, CupSoda, Activity, UserCheck, Zap, Check, X } from 'lucide-react'
+import { useActivePatient } from '@/hooks/useActivePatient'
 
 export default function ProgressScreen() {
   const { user } = useAuthStore()
@@ -21,7 +22,7 @@ export default function ProgressScreen() {
   const [timeframe, setTimeframe] = useState<'week' | 'month' | 'all'>('month')
   const [selectedSymptom, setSelectedSymptom] = useState<string | null>(null)
 
-  const patientId = user?.id ?? ''
+  const { patientId } = useActivePatient()
   const date = today()
 
   const { fetchProgressions } = useSymptomProgressionStore()

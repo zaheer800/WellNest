@@ -198,7 +198,7 @@ const transition = { duration: 0.32, ease: [0.32, 0.72, 0, 1] as const }
 
 export default function OnboardingScreen() {
   const navigate  = useNavigate()
-  const { user, updateProfile, loading } = useAuthStore()
+  const { user, updateProfile, loading, managedProfiles } = useAuthStore()
 
   const [step,      setStep]      = useState(0)
   const [direction, setDirection] = useState(1)
@@ -228,10 +228,11 @@ export default function OnboardingScreen() {
   // Redirect if already onboarded — only fires at step 0 (before user starts),
   // so a profile save mid-flow doesn't race against goNext()
   useEffect(() => {
-    if (step === 0 && user?.name && user?.height_cm && user?.weight_kg) {
+    // A guardian, or someone who claimed a managed profile, skips their own onboarding
+    if (step === 0 && ((user?.name && user?.height_cm && user?.weight_kg) || managedProfiles.length > 0)) {
       navigate('/dashboard', { replace: true })
     }
-  }, [user, navigate, step])
+  }, [user, managedProfiles, navigate, step])
 
   // Clamp day when month/year changes
   useEffect(() => {

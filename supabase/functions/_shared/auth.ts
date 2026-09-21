@@ -40,11 +40,25 @@ export async function requireAuth(req: Request): Promise<{ userId: string } | Re
 }
 
 /**
- * Returns a 403 Response if bodyPatientId !== authenticatedUserId.
- * Returns null if ownership checks out.
+ * Returns a 403 Response unless the caller may act for `bodyPatientId`: either they are that
+ * patient, or a guardian who manages them (checked by the can_manage() database function under
+ * the caller's own JWT, so the same rules as row-level security apply).
+ * Returns null when the caller is allowed.
  */
-export function assertOwnership(bodyPatientId: string, userId: string): Response | null {
-  if (bodyPatientId !== userId) return forbidden()
+export async function assertCanManage(
+  req: Request,
+  bodyPatientId: string,
+  userId: string,
+): Promise<Response | null> {
+  if (bodyPatientId === userId) return null
+
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_ANON_KEY')!,
+    { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } },
+  )
+  const { data, error } = await supabase.rpc('can_manage', { pid: bodyPatientId })
+  if (error || data !== true) return forbidden()
   return null
 }
 

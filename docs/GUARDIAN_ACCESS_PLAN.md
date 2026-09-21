@@ -1,6 +1,12 @@
 # Guardian access & managed profiles — plan
 
-Status: **draft, nothing applied.** Migration: `supabase/drafts/017_guardian_access.sql` (kept out of `migrations/` so `db:push` cannot apply it by accident; move it there when approved).
+Status: **implemented.** Migration: `supabase/migrations/017_guardian_access.sql`. Database tests: `supabase/tests/` (run `supabase/tests/run-local.sh ../migrations/017_guardian_access.sql guardian_access_test.sql` — needs a local Postgres). Browser tests: `tests/e2e/guardian.spec.ts`.
+
+**Decisions:** guardianship of a child ends on their 18th birthday; guardians and the claimed person can remove each other, but the last guardian cannot leave; guardians manage the circle of the people they manage.
+
+**Also fixed:** the old invite-claim flow (`UPDATE ... WHERE invite_token`) matched no rows under RLS and let an invitee change any column of their invite row. It is replaced by `claim_family_invite()`.
+
+**Not done yet:** medical ID for managed profiles (the rotation function is tied to the signed-in login); reminders to guardians; age-aware lab reference ranges for children.
 
 ## Why
 

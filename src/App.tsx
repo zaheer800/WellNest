@@ -32,6 +32,7 @@ import FamilyDashboardScreen from '@/screens/FamilyDashboardScreen'
 import DoctorDashboardScreen from '@/screens/DoctorDashboardScreen'
 import PrivacyScreen from '@/screens/PrivacyScreen'
 import TermsScreen from '@/screens/TermsScreen'
+import PeopleScreen from '@/screens/PeopleScreen'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, initialized } = useAuthStore()
@@ -132,6 +133,7 @@ export default function App() {
         <Route path="/conditions" element={<PatientRoute><ConditionsScreen /></PatientRoute>} />
         <Route path="/progress" element={<PatientRoute><ProgressScreen /></PatientRoute>} />
         <Route path="/family" element={<PatientRoute><FamilyScreen /></PatientRoute>} />
+        <Route path="/people" element={<PatientRoute><PeopleScreen /></PatientRoute>} />
         <Route path="/doctor" element={<PatientRoute><DoctorScreen /></PatientRoute>} />
         <Route path="/more" element={<PatientRoute><MoreScreen /></PatientRoute>} />
         <Route path="/profile" element={<PatientRoute><ProfileScreen /></PatientRoute>} />

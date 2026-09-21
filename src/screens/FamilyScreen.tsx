@@ -15,6 +15,7 @@ import {
 import { today } from '@/utils/dateHelpers'
 import { shouldTakeMedicationToday } from '@/utils/healthScore'
 import { Users, Pencil, Trash2, X, MessageCircle, Sparkles, Loader2, Link2, Check } from 'lucide-react'
+import { useActivePatient } from '@/hooks/useActivePatient'
 
 interface FamilyMember {
   id: string
@@ -104,7 +105,7 @@ export default function FamilyScreen() {
   const [editForm, setEditForm] = useState({ name: '', relationship: '', visibility: { ...defaultVisibility } })
   const [editSaving, setEditSaving] = useState(false)
 
-  const patientId = user?.id ?? ''
+  const { patientId } = useActivePatient()
   const date = today()
 
   useEffect(() => {

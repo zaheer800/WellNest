@@ -1,7 +1,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import Anthropic from 'npm:@anthropic-ai/sdk'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { corsHeaders, requireAuth, assertOwnership } from '../_shared/auth.ts'
+import { corsHeaders, requireAuth, assertCanManage } from '../_shared/auth.ts'
 
 interface GenerateVisitPreparationBody {
   appointment_id: string
@@ -26,7 +26,7 @@ serve(async (req) => {
     }
 
     // ── Ownership check: caller must own the patient_id they're requesting ────
-    const ownershipError = assertOwnership(body.patient_id, auth.userId)
+    const ownershipError = await assertCanManage(req, body.patient_id, auth.userId)
     if (ownershipError) return ownershipError
 
     const supabase = createClient(

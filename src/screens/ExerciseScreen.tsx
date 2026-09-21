@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useAuthStore } from '@/store/authStore'
 import { useHealthStore } from '@/store/healthStore'
 import PageWrapper from '@/components/layout/PageWrapper'
 import Card from '@/components/ui/Card'
@@ -7,11 +6,11 @@ import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import { today, formatTime } from '@/utils/dateHelpers'
 import { Ban, AlertTriangle, Check, Activity, PersonStanding } from 'lucide-react'
+import { useActivePatient } from '@/hooks/useActivePatient'
 
 const EXERCISE_TYPES = ['Walking', 'Running', 'Swimming', 'Cycling', 'Yoga', 'Stretching', 'Physiotherapy', 'Weight training', 'Other']
 
 export default function ExerciseScreen() {
-  const { user } = useAuthStore()
   const { exerciseLogs, activityRestrictions, logExercise, fetchTodayData } = useHealthStore()
 
   const [exerciseType, setExerciseType] = useState('Walking')
@@ -20,7 +19,7 @@ export default function ExerciseScreen() {
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
 
-  const patientId = user?.id ?? ''
+  const { patientId } = useActivePatient()
   const date = today()
 
   useEffect(() => {

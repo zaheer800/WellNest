@@ -48,6 +48,25 @@ export interface FamilyMember {
   accepted_at: string | null
   last_seen_at: string | null
   is_active: boolean
+  /** Guardian: may read and write the patient's data */
+  can_edit?: boolean
+  /** The person themself (claimed their own managed profile) */
+  is_self?: boolean
+  /** Guardian whose rights ended when the person turned 18 */
+  former_guardian?: boolean
+}
+
+/** A person the signed-in account manages (own record, child, parent...) */
+export interface ManagedProfile {
+  patientId: string
+  name: string
+  dateOfBirth: string | null
+  /** Guardianship over a child ends on this date (their 18th birthday) */
+  guardianshipEndsOn: string | null
+  /** True when this person has claimed the profile and is the signed-in account */
+  isSelf: boolean
+  /** The guardian's relationship to this person, e.g. "Mother" */
+  relationship: string | null
 }
 
 export type DoctorSpecialty =

@@ -10,6 +10,7 @@ import CriticalValueAlert from '@/components/features/reports/CriticalValueAlert
 import WholeSpineMap from '@/components/features/reports/WholeSpineMap'
 import { getReportDownloadUrl } from '@/services/supabase'
 import { Download } from 'lucide-react'
+import { useActivePatient } from '@/hooks/useActivePatient'
 
 export default function ReportsScreen() {
   const { user } = useAuthStore()
@@ -34,23 +35,25 @@ export default function ReportsScreen() {
   const [viewMode, setViewMode] = useState<'upload' | 'lab' | 'imaging'>('upload')
   const [acknowledgedCriticals, setAcknowledgedCriticals] = useState<Set<string>>(new Set())
 
-  useEffect(() => {
-    if (!user?.id) return
-    fetchLabReports(user.id)
-    fetchImagingReports(user.id)
-  }, [user?.id])
+  const { patientId, profile } = useActivePatient()
 
-  if (!user) return null
+  useEffect(() => {
+    if (!patientId) return
+    fetchLabReports(patientId)
+    fetchImagingReports(patientId)
+  }, [patientId])
+
+  if (!user || !profile) return null
 
   const getUserAge = () => {
-    if (!user.date_of_birth) return undefined
-    const dob = new Date(user.date_of_birth)
+    if (!profile.date_of_birth) return undefined
+    const dob = new Date(profile.date_of_birth)
     return Math.floor((Date.now() - dob.getTime()) / (1000 * 60 * 60 * 24 * 365.25))
   }
 
   const handleUploadComplete = (fileUrl: string, pipeline: 'lab' | 'imaging', filePath: string) => {
     clearProcessingState()
-    processReport(user.id, fileUrl, pipeline, getUserAge(), user.gender ?? undefined, filePath)
+    processReport(patientId, fileUrl, pipeline, getUserAge(), profile.gender ?? undefined, filePath)
     setViewMode(pipeline === 'lab' ? 'lab' : 'imaging')
   }
 
@@ -167,7 +170,7 @@ export default function ReportsScreen() {
 
         {/* Upload */}
         {viewMode === 'upload' && (
-          <ReportUpload patientId={user.id} onUploadComplete={handleUploadComplete} />
+          <ReportUpload patientId={patientId} onUploadComplete={handleUploadComplete} />
         )}
 
         {/* Lab results */}
@@ -313,7 +316,7 @@ export default function ReportsScreen() {
                   </Card>
                 )}
                 {isSpinalReport(selectedReport) && (
-                  <WholeSpineMap patientId={user.id} />
+                  <WholeSpineMap patientId={patientId} />
                 )}
               </>
             )}

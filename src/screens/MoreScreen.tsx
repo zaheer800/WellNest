@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import PageWrapper from '@/components/layout/PageWrapper'
-import { Activity, Utensils, Calendar, LineChart, ChevronRight, UserCircle, LogOut } from 'lucide-react'
+import { Activity, Utensils, Calendar, LineChart, ChevronRight, UserCircle, LogOut, Users } from 'lucide-react'
 import { useState } from 'react'
 
 interface Feature {
@@ -21,6 +21,13 @@ const SECTIONS: { title: string; features: Feature[] }[] = [
         icon: <UserCircle className="w-5 h-5 text-brand-teal" />,
         path: '/profile',
         description: 'Edit name, height, weight and personal details',
+        color: 'bg-brand-teal-light border-indigo-100',
+      },
+      {
+        label: 'People I manage',
+        icon: <Users className="w-5 h-5 text-brand-teal" />,
+        path: '/people',
+        description: 'Add children or parents and manage their health',
         color: 'bg-brand-teal-light border-indigo-100',
       },
     ],

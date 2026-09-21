@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useAuthStore } from '@/store/authStore'
 import { useHealthStore } from '@/store/healthStore'
 import PageWrapper from '@/components/layout/PageWrapper'
 import Card from '@/components/ui/Card'
@@ -8,11 +7,11 @@ import Button from '@/components/ui/Button'
 import { Droplet, PartyPopper } from 'lucide-react'
 import { today, formatTime } from '@/utils/dateHelpers'
 import { formatMl } from '@/utils/formatters'
+import { useActivePatient } from '@/hooks/useActivePatient'
 
 const QUICK_AMOUNTS = [150, 250, 500, 750]
 
 export default function WaterScreen() {
-  const { user } = useAuthStore()
   const { waterLogs, waterGoalMl, addWater, removeWater, editWater, setWaterGoal, fetchTodayData } = useHealthStore()
   const [customMl, setCustomMl] = useState('')
   const [editingGoal, setEditingGoal] = useState(false)
@@ -36,7 +35,7 @@ export default function WaterScreen() {
   const [editingLog, setEditingLog] = useState<{ id: string; value: string; time: string } | null>(null)
   const [saving, setSaving] = useState(false)
 
-  const patientId = user?.id ?? ''
+  const { patientId } = useActivePatient()
   const date = today()
 
   useEffect(() => {

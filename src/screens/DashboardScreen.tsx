@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '@/store/authStore'
 import { useHealthStore } from '@/store/healthStore'
 import { useMedicationStore } from '@/store/medicationStore'
 import { usePostureStore } from '@/store/postureStore'
@@ -13,17 +12,17 @@ import PageWrapper from '@/components/layout/PageWrapper'
 import { today, getGreeting, formatDate } from '@/utils/dateHelpers'
 import { formatMl, getScoreColor } from '@/utils/formatters'
 import { shouldTakeMedicationToday } from '@/utils/healthScore'
+import { useActivePatient } from '@/hooks/useActivePatient'
 
 export default function DashboardScreen() {
   const navigate = useNavigate()
-  const { user } = useAuthStore()
   const { waterLogs, waterGoalMl, activityRestrictions, dailyScore, fetchTodayData } = useHealthStore()
   const { medications, fetchMedications } = useMedicationStore()
   const { postureLogs, activeSession, standBreakGoal, fetchTodayLogs } = usePostureStore()
   const { appointments, fetchAppointments } = useAppointmentStore()
 
   const date = today()
-  const patientId = user?.id ?? ''
+  const { patientId, profile, isSelf } = useActivePatient()
 
   useEffect(() => {
     if (!patientId) return
@@ -83,7 +82,7 @@ export default function DashboardScreen() {
         <div className="flex items-start justify-between pb-1">
           <div>
             <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-3">
-              {getGreeting()}{user?.name ? `, ${user.name.split(' ')[0]}` : ''}
+              {isSelf ? getGreeting() : 'Health of'}{profile?.name ? `${isSelf ? ', ' : ' '}${profile.name.split(' ')[0]}` : ''}
             </h1>
             <div className="flex items-center gap-3">
               <span className="text-sm font-semibold text-gray-400 uppercase tracking-wider">{formatDate(date)}</span>

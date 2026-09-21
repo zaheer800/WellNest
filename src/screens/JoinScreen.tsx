@@ -14,6 +14,7 @@ export default function JoinScreen() {
   const [inviteError, setInviteError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [step, setStep] = useState<'loading' | 'login' | 'sent' | 'accepting' | 'done' | 'error'>('loading')
+  const [managing, setManaging] = useState(false)
   const [email, setEmail] = useState('')
 
   // Load invite details. If already authenticated (magic link return), go straight to accepting.
@@ -44,14 +45,17 @@ export default function JoinScreen() {
 
   // Once the family role is active, redirect to family dashboard
   useEffect(() => {
-    if (roles.includes('family')) navigate('/family-dashboard', { replace: true })
-  }, [roles])
+    if (step === 'done' && !managing && roles.includes('family')) navigate('/family-dashboard', { replace: true })
+  }, [roles, step, managing])
 
   const runAccept = async () => {
     setStep('accepting')
     try {
       await acceptInvite(token)
-      switchRole('family')
+      // Guardian / claim invites give full access and leave the user in the patient role
+      const isManaging = useAuthStore.getState().role === 'patient'
+      setManaging(isManaging)
+      if (!isManaging) switchRole('family')
       setStep('done')
     } catch (e: any) {
       setInviteError(e.message ?? 'Could not accept invite.')
@@ -153,8 +157,12 @@ export default function JoinScreen() {
           <div className="text-center py-4 space-y-3">
             <p className="text-2xl">🎉</p>
             <p className="font-semibold text-gray-800">You're in!</p>
-            <p className="text-sm text-gray-500">You can now see {invite?.patient_name}'s health updates.</p>
-            <button onClick={() => navigate('/family-dashboard', { replace: true })} className="w-full py-3 bg-brand-teal text-white rounded-xl font-semibold text-sm">
+            <p className="text-sm text-gray-500">
+              {managing
+                ? `You can now view and update ${invite?.patient_name}'s health records.`
+                : `You can now see ${invite?.patient_name}'s health updates.`}
+            </p>
+            <button onClick={() => navigate(managing ? '/dashboard' : '/family-dashboard', { replace: true })} className="w-full py-3 bg-brand-teal text-white rounded-xl font-semibold text-sm">
               Go to dashboard
             </button>
           </div>
