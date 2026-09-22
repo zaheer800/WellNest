@@ -2,6 +2,8 @@
 
 > This file provides AI assistants (Claude, Copilot, etc.) with the context needed to contribute effectively to the WellNest codebase.
 
+> **Note:** `docs/*.md` changes in commits are auto-mirrored to ContextForge (project "wellnest") via the `.githooks/post-commit` hook, which reads an upload token from `~/.config/contextforge/upload_token` (not in the repo — placed manually on this VM outside of any Claude session, per explicit owner instruction) and no-ops silently if that file does not exist yet.
+
 ---
 
 ## Project Overview
