@@ -1,0 +1,106 @@
+name: PR Review
+
+on:
+  pull_request:
+  push:
+    branches:
+      - '**'
+
+permissions:
+  contents: read
+
+jobs:
+  # Semgrep, Gitleaks, and Trivy are independent scans that don't depend on each other's
+  # output. GitHub Actions runs steps within a job sequentially (there's no step-level
+  # parallelism), so they're kept as three steps in one job here; continue-on-error on each
+  # scan/upload pair means one tool erroring doesn't stop the other two from running.
+  code-quality-gateway:
+    name: Code Quality Gateway
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # --- Semgrep: SAST, default free OSS ruleset (p/ci), no Semgrep Cloud token needed ---
+      - name: Semgrep scan
+        run: |
+          python3 -m pip install --quiet semgrep
+          semgrep ci --config=p/ci --sarif --output=semgrep-results.sarif
+        continue-on-error: true
+
+      - name: Upload Semgrep SARIF
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep-results.sarif
+          category: semgrep
+
+      # --- Gitleaks: secrets scanning via the open-source CLI directly. The gitleaks-action
+      # marketplace wrapper requires a paid license for private repositories; the underlying
+      # gitleaks CLI is MIT-licensed and free regardless of repo visibility, so it's run
+      # directly here to avoid needing a license secret. ---
+      - name: Gitleaks scan
+        run: |
+          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest detect \
+            --source=/repo --report-format=sarif --report-path=/repo/gitleaks-results.sarif \
+            --exit-code=0 --redact
+        continue-on-error: true
+
+      - name: Upload Gitleaks SARIF
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: gitleaks-results.sarif
+          category: gitleaks
+
+      # --- Trivy: filesystem / dependency scan (no container image to scan, this is a web app repo) ---
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH,MEDIUM
+          exit-code: 0
+
+      - name: Upload Trivy SARIF
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy
+
+  pr-agent:
+    name: PR Agent (OpenRouter)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    # OPENROUTER__KEY needs to be added under repo Settings > Secrets and variables > Actions
+    # before this job activates. GitHub doesn't allow the `secrets` context inside any `if:`
+    # condition (job- or step-level — only github/needs/vars/inputs at job level, plus
+    # env/steps/etc at step level), so the secret is surfaced into job-level `env:` first
+    # (which does allow `secrets`) and steps are gated on `env.*` instead. Until the secret
+    # exists, env.OPENROUTER__KEY is empty, the steps below evaluate to false and are skipped
+    # cleanly rather than failing the run.
+    env:
+      OPENROUTER__KEY: ${{ secrets.OPENROUTER__KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        if: ${{ env.OPENROUTER__KEY != '' }}
+
+      - name: PR Agent
+        if: ${{ env.OPENROUTER__KEY != '' }}
+        uses: qodo-ai/pr-agent@main
+        env:
+          CONFIG__MODEL: openrouter/nvidia/nemotron-3-super-120b-a12b:free
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
