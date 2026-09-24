@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import Button from '@/components/ui/Button'
@@ -75,12 +75,22 @@ export default function LoginScreen() {
   const canSubmitEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
   const canVerify = otp.replace(/\s/g, '').length === 6
 
+  const handleVerify = useCallback(async () => {
+    setError('')
+    try {
+      await verifyOtp(email, otp.trim())
+      navigate('/onboarding', { replace: true })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Incorrect code. Please try again.')
+    }
+  }, [email, otp, verifyOtp, navigate])
+
   // Auto-submit OTP when all 6 digits are entered
   useEffect(() => {
     if (canVerify && flowStep === 'otp') {
       handleVerify()
     }
-  }, [otp])
+  }, [otp, canVerify, flowStep, handleVerify])
 
   const handleSendOtp = async () => {
     setError('')
@@ -89,16 +99,6 @@ export default function LoginScreen() {
       setFlowStep('otp')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not send code. Please try again.')
-    }
-  }
-
-  const handleVerify = async () => {
-    setError('')
-    try {
-      await verifyOtp(email, otp.trim())
-      navigate('/onboarding', { replace: true })
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Incorrect code. Please try again.')
     }
   }
 

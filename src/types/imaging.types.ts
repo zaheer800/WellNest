@@ -7,6 +7,8 @@ export interface ImagingReport {
   patient_id: string
   report_date: string
   imaging_type: string
+  detected_type: string | null
+  detection_confidence: number | null
   body_region: string | null
   referring_doctor: string | null
   reporting_radiologist: string | null
@@ -20,6 +22,7 @@ export interface ImagingReport {
   follow_up_recommended: boolean
   follow_up_timeline: string | null
   image_url: string | null
+  file_path: string | null
   processing_status: 'pending' | 'processing' | 'completed' | 'failed'
   uploaded_at: string
   processed_at: string | null

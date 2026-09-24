@@ -34,7 +34,7 @@ export async function processImagingReport(
   reportId: string,
   options: { fileUrl?: string; rawText?: string; age?: number; gender?: string }
 ): Promise<ImagingReportParseResult> {
-  const data = await invokeFunction('process-imaging-report', {
+  const data = await invokeFunction<ImagingReportParseResult & { error?: string }>('process-imaging-report', {
     report_id: reportId,
     file_url: options.fileUrl,
     raw_text: options.rawText,
@@ -44,5 +44,5 @@ export async function processImagingReport(
 
   if (data?.error === 'RATE_LIMIT') throw new Error('RATE_LIMIT')
 
-  return data as ImagingReportParseResult
+  return data
 }

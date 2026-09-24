@@ -42,7 +42,7 @@ export async function processLabReport(
   reportId: string,
   options: { fileUrl?: string; rawText?: string; age?: number; gender?: string }
 ): Promise<LabReportParseResult> {
-  const data = await invokeFunction('process-lab-report', {
+  const data = await invokeFunction<LabReportParseResult & { error?: string }>('process-lab-report', {
     report_id: reportId,
     file_url: options.fileUrl,
     raw_text: options.rawText,
@@ -52,5 +52,5 @@ export async function processLabReport(
 
   if (data?.error === 'RATE_LIMIT') throw new Error('RATE_LIMIT')
 
-  return data as LabReportParseResult
+  return data
 }

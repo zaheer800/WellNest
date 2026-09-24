@@ -1,5 +1,5 @@
 import { invokeFunction } from '@/services/supabase'
-import type { LabParameter } from '@/types/report.types'
+import type { LabParameter } from '@/services/labReportParser'
 
 export interface CriticalParameter {
   name: string
@@ -19,7 +19,7 @@ export async function checkCriticalValues(
   reportId: string,
   parameters: LabParameter[],
 ): Promise<CriticalValueCheckResult> {
-  const data = await invokeFunction('check-critical-values', {
+  const data = await invokeFunction<CriticalValueCheckResult & { error?: string }>('check-critical-values', {
     patient_id: patientId, report_id: reportId, parameters,
   })
 
@@ -29,7 +29,7 @@ export async function checkCriticalValues(
     return { critical_found: false, critical_parameters: [] }
   }
 
-  return data as CriticalValueCheckResult
+  return data
 }
 
 export function isCriticalStatus(status: string): boolean {

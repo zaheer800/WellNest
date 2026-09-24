@@ -65,7 +65,7 @@ export function calcExerciseScore(exerciseLogs: ExerciseLog[]): number {
   return hasExerciseToday ? 20 : 0
 }
 
-export function calcDietScore(dietLogs: any[] = []): number {
+export function calcDietScore(): number {
   // Diet tracking not yet implemented - return 0 until feature is added
   // When implemented, this will check if user logged compliant meals
   return 0
@@ -95,12 +95,11 @@ export function calcHealthScore(data: {
   postureLogs: PostureLog[]
   postureGoalBreaks: number
   activePostureBreaks?: number
-  dietLogs?: any[]
 }): HealthScoreBreakdown {
   const medication = calcMedicationScore(data.medications)
   const water = calcWaterScore(data.waterLogs, data.waterGoalMl)
   const exercise = calcExerciseScore(data.exerciseLogs)
-  const diet = calcDietScore(data.dietLogs)
+  const diet = calcDietScore()
   const posture = calcPostureScore(data.postureLogs, data.postureGoalBreaks, data.activePostureBreaks)
   const total = calcTotalScore({ medication, water, exercise, diet, posture })
 

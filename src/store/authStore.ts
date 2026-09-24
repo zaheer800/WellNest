@@ -1,14 +1,14 @@
 import { create } from 'zustand'
 import type { Session } from '@supabase/supabase-js'
 import { supabase, getUser, upsertUser, generateMedicalIdToken, getFamilyMemberByUserId, getDoctorByUserId, setAccessToken, getManagedProfiles, expireGuardianships, updateManagedProfile } from '@/services/supabase'
-import type { User, UserProfile, FamilyMember, ManagedProfile } from '@/types/user.types'
+import type { User, UserProfile, ManagedProfile, FamilyMemberWithUser, DoctorWithUser } from '@/types/user.types'
 
 export type AppRole = 'patient' | 'family' | 'doctor' | null
 
 interface AuthState {
   user: User | null
-  familyMemberRecord: FamilyMember | null
-  doctorRecord: Record<string, any> | null
+  familyMemberRecord: FamilyMemberWithUser | null
+  doctorRecord: DoctorWithUser | null
   /** Currently active view role */
   role: AppRole
   /** All roles this auth account has access to */
@@ -49,7 +49,7 @@ const ACTIVE_PATIENT_KEY = 'wn.activePatientId'
 
 interface ResolvedAccount {
   user: User | null
-  familyMemberRecord: FamilyMember | null
+  familyMemberRecord: FamilyMemberWithUser | null
   doctorRecord: AuthState['doctorRecord']
   role: AppRole
   roles: AppRole[]
@@ -74,12 +74,12 @@ async function resolveAccount(authUser: { id: string; email?: string | null }): 
   ])
 
   const roles: AppRole[] = []
-  let familyMemberRecord: FamilyMember | null = null
+  let familyMemberRecord: FamilyMemberWithUser | null = null
   let doctorRecord: AuthState['doctorRecord'] = null
   let user: User | null = null
 
   if (familyRecord) {
-    familyMemberRecord = familyRecord as unknown as FamilyMember
+    familyMemberRecord = familyRecord
     roles.push('family')
   }
   if (doctorRec) {
@@ -344,7 +344,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
     const newRoles: AppRole[] = [...roles.filter((r) => r !== 'family'), 'family']
     set({
-      familyMemberRecord: record as unknown as FamilyMember,
+      familyMemberRecord: record as unknown as FamilyMemberWithUser,
       role: 'family',
       roles: newRoles,
     })
@@ -413,7 +413,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
 
     set({ loading: true })
     try {
-      const token = await generateMedicalIdToken(session.user.id)
+      const token = await generateMedicalIdToken()
       set({ user: user ? { ...user, medical_id_token: token } : user })
     } finally {
       set({ loading: false })

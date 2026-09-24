@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAuthStore } from '@/store/authStore'
 import { useHealthStore } from '@/store/healthStore'
 import { useMedicationStore } from '@/store/medicationStore'
@@ -108,12 +108,33 @@ export default function FamilyScreen() {
   const { patientId } = useActivePatient()
   const date = today()
 
-  useEffect(() => {
-    if (!patientId) return
-    loadData()
-  }, [patientId])
+  const generateAiMessage = useCallback(async () => {
+    setAiLoading(true)
+    try {
+      const todayDate = new Date(date)
+      const dueTodayMeds = medications.filter((m) => m.is_active && shouldTakeMedicationToday(m, todayDate))
+      const medCompliance = dueTodayMeds.length > 0
+        ? Math.round((dueTodayMeds.filter((m) => m.log?.taken).length / dueTodayMeds.length) * 100)
+        : 100
 
-  const loadData = async () => {
+      const { invokeFunction } = await import('@/services/supabase')
+      const data = await invokeFunction<{ message?: string }>('generate-motivational-message', {
+        health_score: dailyScore?.total,
+        medication_compliance: medCompliance,
+        name: user?.name?.split(' ')[0],
+      })
+      if (data?.message) {
+        setAiMessage(data.message)
+        sessionStorage.setItem(`ai_msg_${patientId}`, data.message)
+      }
+    } catch {
+      setAiMessage("You're doing great — every small step in managing your health counts. Keep going!")
+    } finally {
+      setAiLoading(false)
+    }
+  }, [date, medications, dailyScore, user, patientId])
+
+  const loadData = useCallback(async () => {
     setLoadingMembers(true)
     try {
       const [mems, msgs] = await Promise.all([
@@ -137,33 +158,12 @@ export default function FamilyScreen() {
     } finally {
       setLoadingMembers(false)
     }
-  }
+  }, [patientId, generateAiMessage])
 
-  const generateAiMessage = async () => {
-    setAiLoading(true)
-    try {
-      const todayDate = new Date(date)
-      const dueTodayMeds = medications.filter((m) => m.is_active && shouldTakeMedicationToday(m, todayDate))
-      const medCompliance = dueTodayMeds.length > 0
-        ? Math.round((dueTodayMeds.filter((m) => m.log?.taken).length / dueTodayMeds.length) * 100)
-        : 100
-
-      const { invokeFunction } = await import('@/services/supabase')
-      const data = await invokeFunction('generate-motivational-message', {
-        health_score: dailyScore?.total,
-        medication_compliance: medCompliance,
-        name: user?.name?.split(' ')[0],
-      })
-      if (data?.message) {
-        setAiMessage(data.message)
-        sessionStorage.setItem(`ai_msg_${patientId}`, data.message)
-      }
-    } catch {
-      setAiMessage("You're doing great — every small step in managing your health counts. Keep going!")
-    } finally {
-      setAiLoading(false)
-    }
-  }
+  useEffect(() => {
+    if (!patientId) return
+    loadData()
+  }, [patientId, loadData])
 
   const handleAdd = async () => {
     if (!addForm.name.trim() || !patientId) return
@@ -177,7 +177,7 @@ export default function FamilyScreen() {
         visibility_config: addForm.visibility,
       })
       setMembers((prev) => [...prev, newMember as FamilyMember])
-      const token = (newMember as any).invite_token
+      const token = newMember.invite_token
       if (token) setNewInviteLink(`${(import.meta.env.VITE_APP_URL ?? window.location.origin)}/join?token=${token}`)
       setAddForm({ name: '', email: '', relationship: '', visibility: { ...defaultVisibility } })
       setShowAdd(false)

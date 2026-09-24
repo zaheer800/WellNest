@@ -1,12 +1,18 @@
-import React, { useState } from 'react'
+import React from 'react'
 import PageWrapper from '@/components/layout/PageWrapper'
 import Card from '@/components/ui/Card'
-import Button from '@/components/ui/Button'
 import { useAuthStore } from '@/store/authStore'
+
+interface StubImagingReport {
+  id: string
+  type: string
+  date: string
+  findings_count?: number
+}
 
 export default function ImagingScreen() {
   const { user } = useAuthStore()
-  const [imagingReports, setImagingReports] = useState<any[]>([])
+  const imagingReports: StubImagingReport[] = []
 
   if (!user) return null
 

@@ -57,7 +57,7 @@ export default function SOSScreen() {
     window.location.href = `tel:${phone}`
   }
 
-  const whatsappContact = (phone: string, name: string) => {
+  const whatsappContact = (phone: string) => {
     const msg = encodeURIComponent(
       `🆘 Emergency! ${profile?.name ?? 'Someone'} needs help. Please call immediately.`
     )
@@ -202,7 +202,7 @@ export default function SOSScreen() {
                       <Phone className="w-4 h-4" /> Call
                     </button>
                     <button
-                      onClick={() => whatsappContact(c.phone, c.name)}
+                      onClick={() => whatsappContact(c.phone)}
                       className="flex-1 flex items-center justify-center gap-2 bg-green-500 text-white font-bold py-3.5 rounded-2xl text-sm shadow-lg hover:bg-green-400 active:scale-95 transition-all"
                     >
                       <MessageCircle className="w-4 h-4" /> WhatsApp

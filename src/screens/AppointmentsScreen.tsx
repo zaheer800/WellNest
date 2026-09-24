@@ -50,7 +50,7 @@ export default function AppointmentsScreen() {
 
   useEffect(() => {
     if (patientId) fetchAppointments(patientId)
-  }, [patientId])
+  }, [patientId, fetchAppointments])
 
   const now = new Date().toISOString()
   const upcoming = appointments.filter((a) => !a.completed && a.appointment_date >= now)

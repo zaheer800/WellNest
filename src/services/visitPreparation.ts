@@ -9,9 +9,9 @@ export async function generateVisitPreparation(
   appointmentId: string,
   patientId: string,
 ): Promise<VisitPreparation> {
-  const data = await invokeFunction('generate-visit-preparation', {
+  const data = await invokeFunction<VisitPreparation>('generate-visit-preparation', {
     appointment_id: appointmentId, patient_id: patientId,
   })
 
-  return data as VisitPreparation
+  return data
 }

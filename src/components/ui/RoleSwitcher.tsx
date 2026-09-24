@@ -1,24 +1,6 @@
 import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '@/store/authStore'
+import { useAuthStore, type AppRole } from '@/store/authStore'
 import { User, Users, Stethoscope } from 'lucide-react'
-
-const ROLE_CONFIG = {
-  patient: {
-    icon: <User className="w-3.5 h-3.5" />,
-    label: 'My Health',
-    path: '/dashboard',
-  },
-  family: {
-    icon: <Users className="w-3.5 h-3.5" />,
-    label: null, // filled in dynamically with patient name
-    path: '/family-dashboard',
-  },
-  doctor: {
-    icon: <Stethoscope className="w-3.5 h-3.5" />,
-    label: null, // filled in dynamically with patient name
-    path: '/doctor-dashboard',
-  },
-}
 
 /**
  * Shown when the logged-in user has more than one role.
@@ -31,8 +13,8 @@ export default function RoleSwitcher() {
   // Only render when there are multiple roles
   if (roles.filter(Boolean).length < 2) return null
 
-  const familyPatientName = (familyMemberRecord as any)?.users?.name ?? 'Family'
-  const doctorPatientName = (doctorRecord as any)?.users?.name ?? 'Patient'
+  const familyPatientName = familyMemberRecord?.users?.name ?? 'Family'
+  const doctorPatientName = doctorRecord?.users?.name ?? 'Patient'
 
   const roleLabel = (r: string) => {
     if (r === 'patient') return 'My Health'
@@ -55,7 +37,7 @@ export default function RoleSwitcher() {
     return '/dashboard'
   }
 
-  const availableRoles = roles.filter(Boolean) as string[]
+  const availableRoles = roles.filter((r): r is Exclude<AppRole, null> => r !== null)
 
   return (
     <div className="flex items-center gap-1.5 bg-gray-100 rounded-2xl p-1 mx-4 mb-2">
@@ -66,7 +48,7 @@ export default function RoleSwitcher() {
             key={r}
             onClick={() => {
               if (active) return
-              switchRole(r as any)
+              switchRole(r)
               navigate(rolePath(r), { replace: true })
             }}
             className={[

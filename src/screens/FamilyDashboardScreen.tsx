@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { getPatientDataForFamily, getMessages } from '@/services/supabase'
@@ -43,16 +43,11 @@ export default function FamilyDashboardScreen() {
   const [sendingMessage, setSendingMessage] = useState(false)
   const [messageSent, setMessageSent] = useState(false)
 
-  const visibility: Record<string, boolean> = (familyMemberRecord as any)?.visibility_config ?? {}
-  const patientId: string = (familyMemberRecord as any)?.patient_id ?? ''
-  const linkedPatient = (familyMemberRecord as any)?.users
+  const visibility: Record<string, boolean> = familyMemberRecord?.visibility_config ?? {}
+  const patientId: string = familyMemberRecord?.patient_id ?? ''
+  const linkedPatient = familyMemberRecord?.users
 
-  useEffect(() => {
-    if (!patientId) return
-    loadData()
-  }, [patientId])
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true)
     try {
       const [patientData, msgs] = await Promise.all([
@@ -66,7 +61,12 @@ export default function FamilyDashboardScreen() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [patientId])
+
+  useEffect(() => {
+    if (!patientId) return
+    loadData()
+  }, [patientId, loadData])
 
   const handleSendMessage = async () => {
     if (!messageText.trim() || !patientId) return
@@ -75,7 +75,7 @@ export default function FamilyDashboardScreen() {
       const { supabase } = await import('@/services/supabase')
       await supabase.from('messages').insert({
         patient_id: patientId,
-        sender_family_id: (familyMemberRecord as any)?.id,
+        sender_family_id: familyMemberRecord?.id,
         message: messageText.trim(),
         sent_at: new Date().toISOString(),
       })
@@ -107,7 +107,7 @@ export default function FamilyDashboardScreen() {
   }
 
   const patientName = linkedPatient?.name ?? patient?.name ?? 'your family member'
-  const relationship = (familyMemberRecord as any)?.relationship
+  const relationship = familyMemberRecord?.relationship
 
   const hasAnySection = visibility.health_score || visibility.medications || visibility.critical_alerts || visibility.reports
 
@@ -260,7 +260,7 @@ function SectionCard({ icon, title, patientId }: { icon: React.ReactNode; title:
         .limit(1)
         .single()
         .then(({ data }) => {
-          if (data) setScore((data as any).total_score)
+          if (data) setScore((data as { total_score: number }).total_score)
         })
     })
   }, [patientId])
@@ -303,7 +303,7 @@ function MedicationSection({ patientId }: { patientId: string }) {
         .then(({ data }) => {
           if (data) {
             setTotal(data.length)
-            setTaken(data.filter((d: any) => d.taken).length)
+            setTaken(data.filter((d: { taken: boolean }) => d.taken).length)
           }
         })
     })
@@ -339,8 +339,16 @@ function MedicationSection({ patientId }: { patientId: string }) {
   )
 }
 
+interface CriticalAlert {
+  id: string
+  title: string
+  body: string | null
+  created_at: string
+  acknowledged_at: string | null
+}
+
 function CriticalAlertsSection({ patientId }: { patientId: string }) {
-  const [alerts, setAlerts] = useState<any[]>([])
+  const [alerts, setAlerts] = useState<CriticalAlert[]>([])
 
   useEffect(() => {
     if (!patientId) return
@@ -387,11 +395,40 @@ function CriticalAlertsSection({ patientId }: { patientId: string }) {
   )
 }
 
+interface ReportSummary {
+  id: string
+  ai_summary: string | null
+  report_date: string | null
+  detected_type: string | null
+  imaging_type?: string | null
+  surgical_urgency?: boolean
+  processing_status: string | null
+  file_path: string | null
+}
+
+interface LabParameterSummary {
+  id: string
+  parameter_name: string
+  value: number | null
+  unit: string | null
+  status: string | null
+  plain_language_explanation: string | null
+}
+
+interface ImagingFindingSummary {
+  id: string
+  location: string | null
+  finding_type: string | null
+  severity: string | null
+  plain_language: string | null
+  spinal_level: string | null
+}
+
 function ReportsSection({ patientId }: { patientId: string }) {
-  const [labReports, setLabReports] = useState<any[]>([])
-  const [imagingReports, setImagingReports] = useState<any[]>([])
+  const [labReports, setLabReports] = useState<ReportSummary[]>([])
+  const [imagingReports, setImagingReports] = useState<ReportSummary[]>([])
   const [expandedId, setExpandedId] = useState<string | null>(null)
-  const [expandedData, setExpandedData] = useState<any[]>([])
+  const [expandedData, setExpandedData] = useState<(LabParameterSummary | ImagingFindingSummary)[]>([])
   const [expandedType, setExpandedType] = useState<'lab' | 'imaging'>('lab')
   const [loadingDetails, setLoadingDetails] = useState(false)
 
@@ -459,7 +496,7 @@ function ReportsSection({ patientId }: { patientId: string }) {
   const allReports = [
     ...labReports.map((r) => ({ ...r, _pipeline: 'lab' as const })),
     ...imagingReports.map((r) => ({ ...r, _pipeline: 'imaging' as const })),
-  ].sort((a, b) => new Date(b.report_date).getTime() - new Date(a.report_date).getTime())
+  ].sort((a, b) => new Date(b.report_date ?? 0).getTime() - new Date(a.report_date ?? 0).getTime())
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-4">
@@ -494,7 +531,7 @@ function ReportsSection({ patientId }: { patientId: string }) {
                     {r.surgical_urgency && <span className="text-xs text-red-600 font-semibold">Urgent</span>}
                   </div>
                 </div>
-                <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 font-medium ${statusDot(r.processing_status)}`}>
+                <span className={`text-xs px-2 py-1 rounded-full flex-shrink-0 font-medium ${statusDot(r.processing_status ?? '')}`}>
                   {r.processing_status ?? 'pending'}
                 </span>
               </button>
@@ -503,9 +540,11 @@ function ReportsSection({ patientId }: { patientId: string }) {
                 <button
                   onClick={async () => {
                     try {
-                      const url = await getReportDownloadUrl(r.file_path)
+                      const url = await getReportDownloadUrl(r.file_path!)
                       window.open(url, '_blank', 'noopener,noreferrer')
-                    } catch {}
+                    } catch {
+                      // Non-fatal — user can retry the download
+                    }
                   }}
                   className="ml-12 mb-1 flex items-center gap-1 text-xs text-brand-teal font-medium hover:underline"
                 >
@@ -521,10 +560,10 @@ function ReportsSection({ patientId }: { patientId: string }) {
                     <p className="text-xs text-gray-400">No details available</p>
                   ) : expandedType === 'lab' ? (
                     <div className="space-y-1.5">
-                      {expandedData.map((p: any) => (
+                      {(expandedData as LabParameterSummary[]).map((p) => (
                         <div key={p.id} className="flex items-center justify-between gap-2">
                           <span className="text-xs text-gray-600 flex-1 truncate">{p.parameter_name}</span>
-                          <span className={`text-xs font-medium ${paramColor(p.status)}`}>
+                          <span className={`text-xs font-medium ${paramColor(p.status ?? '')}`}>
                             {p.value} {p.unit}
                           </span>
                         </div>
@@ -532,7 +571,7 @@ function ReportsSection({ patientId }: { patientId: string }) {
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {expandedData.map((f: any) => (
+                      {(expandedData as ImagingFindingSummary[]).map((f) => (
                         <div key={f.id}>
                           <p className="text-xs font-medium text-gray-700">
                             {f.spinal_level ? `${f.spinal_level} · ` : ''}{f.finding_type?.replace(/_/g, ' ')}

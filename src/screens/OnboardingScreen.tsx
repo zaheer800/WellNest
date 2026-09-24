@@ -35,8 +35,6 @@ const GOALS = [
   { id: 'recovery',   emoji: '💊', title: 'Post-treatment recovery',    sub: 'Monitor progress after treatment' },
 ]
 
-const TOTAL_STEPS = 9 // 0 = welcome, 8 = finale
-
 const RELATIONSHIPS = ['Parent', 'Spouse', 'Child', 'Sibling', 'Friend', 'Other']
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -238,7 +236,7 @@ export default function OnboardingScreen() {
   useEffect(() => {
     const maxDay = daysInMonth(month, year)
     if (day > maxDay) setDay(maxDay)
-  }, [month, year])
+  }, [month, year, day])
 
   const goNext = () => { setDirection(1);  setStep((s) => s + 1) }
   const goBack = () => { setDirection(-1); setStep((s) => s - 1) }
@@ -273,26 +271,6 @@ export default function OnboardingScreen() {
   }
 
   const handleSkip = () => navigate('/dashboard', { replace: true })
-
-  const handleSaveContacts = async () => {
-    if (contacts.length === 0) { goNext(); return }
-    setSaving(true)
-    try {
-      const mapped = contacts
-        .filter((c) => c.name.trim() && c.phone_local.trim())
-        .map(({ country_code, phone_local, ...rest }) => ({
-          ...rest,
-          phone: `${country_code}${phone_local.replace(/\D/g, '')}`,
-        }))
-      await updateProfile({ emergency_contacts: mapped })
-      goNext()
-    } catch {
-      // Non-critical — skip silently and move forward
-      goNext()
-    } finally {
-      setSaving(false)
-    }
-  }
 
   // Progress bar fill (steps 1–7 are "data" steps)
   const progress = step === 0 ? 0 : step >= 8 ? 100 : Math.round((step / 7) * 100)

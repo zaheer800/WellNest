@@ -40,7 +40,7 @@ export default function WaterScreen() {
 
   useEffect(() => {
     if (patientId) fetchTodayData(patientId, date)
-  }, [patientId, date])
+  }, [patientId, date, fetchTodayData])
 
   const totalMl = waterLogs.reduce((s, l) => s + l.amount_ml, 0)
   const pct = Math.min(100, Math.round((totalMl / waterGoalMl) * 100))

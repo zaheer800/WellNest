@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
-import type { User, UserProfile, ManagedProfile, FamilyMember } from '@/types/user.types'
+import type { User, UserProfile, ManagedProfile, FamilyMember, FamilyMemberWithUser, DoctorWithUser, Doctor } from '@/types/user.types'
 import type { VisitPreparation } from '@/types/appointment.types'
+import type { LabReport, LabParameter } from '@/types/report.types'
+import type { ImagingReport, ImagingFinding } from '@/types/imaging.types'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
@@ -66,9 +68,12 @@ export function setAccessToken(token: string | null) {
  *   Authorization: Bearer <access_token>   — identifies the user
  *   apikey: <anon_key>                     — identifies the project
  */
-export async function invokeFunction<T = any>(
+/** Edge functions return arbitrary JSON, but always surface failures via an optional `error` field. */
+type InvokeFunctionResult = { error?: string; [key: string]: unknown }
+
+export async function invokeFunction<T = InvokeFunctionResult>(
   name: string,
-  body?: Record<string, any>,
+  body?: Record<string, unknown>,
   timeoutMs = 45_000,
 ): Promise<T> {
   // Use the cached access token (kept fresh by authStore) — never call getSession() here
@@ -90,8 +95,8 @@ export async function invokeFunction<T = any>(
       body: JSON.stringify(body ?? {}),
       signal: controller.signal,
     })
-  } catch (err: any) {
-    if (err?.name === 'AbortError') {
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
       throw new Error(`${name} timed out after ${timeoutMs / 1000}s. The AI feature may be temporarily slow — please try again.`)
     }
     throw err
@@ -140,7 +145,10 @@ export async function upsertUser(
   uid: string,
   profile: Partial<UserProfile> & { email?: string }
 ): Promise<User> {
-  const payload: any = { id: uid, updated_at: new Date().toISOString() }
+  const payload: Partial<UserProfile> & { id: string; updated_at: string; email?: string } = {
+    id: uid,
+    updated_at: new Date().toISOString(),
+  }
 
   if (profile.email) payload.email = profile.email
   if (profile.name !== undefined && profile.name !== '') payload.name = profile.name
@@ -199,7 +207,7 @@ export async function getMedicalIdData(token: string): Promise<{
  * The old token is immediately invalidated — any previously shared links stop working.
  * Returns the new token string.
  */
-export async function generateMedicalIdToken(_uid: string): Promise<string> {
+export async function generateMedicalIdToken(): Promise<string> {
   const { data, error } = await supabase.rpc('rotate_medical_id_token')
   if (error) throw error
   return data as string
@@ -475,28 +483,24 @@ export async function debugInjectionCoursesAccess() {
 }
 
 export async function getInjectionCourses(patientId: string) {
-  try {
-    const { data, error } = await supabase
-      .from('injection_courses')
-      .select(`
-        *,
-        medication:medications!medication_id(name)
-      `)
-      .eq('patient_id', patientId)
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
+  const { data, error } = await supabase
+    .from('injection_courses')
+    .select(`
+      *,
+      medication:medications!medication_id(name)
+    `)
+    .eq('patient_id', patientId)
+    .eq('is_active', true)
+    .order('created_at', { ascending: false })
 
-    if (error) {
-      if (error.message.includes('permission denied') || error.message.includes('policy')) {
-        throw new Error(`RLS policy blocking access to injection_courses. Check Row Level Security policies. Error: ${error.message}`)
-      }
-      throw new Error(`Database query failed: ${error.message}`)
+  if (error) {
+    if (error.message.includes('permission denied') || error.message.includes('policy')) {
+      throw new Error(`RLS policy blocking access to injection_courses. Check Row Level Security policies. Error: ${error.message}`)
     }
-
-    return data ?? []
-  } catch (err) {
-    throw err
+    throw new Error(`Database query failed: ${error.message}`)
   }
+
+  return data ?? []
 }
 
 export async function addInjectionCourse(course: {
@@ -797,7 +801,7 @@ export async function addFamilyMember(member: {
   phone?: string | null
   relationship?: string | null
   visibility_config?: Record<string, boolean>
-}) {
+}): Promise<FamilyMember> {
   const inviteToken = crypto.randomUUID()
   const { data, error } = await supabase
     .from('family_members')
@@ -810,7 +814,7 @@ export async function addFamilyMember(member: {
     .select()
     .single()
   if (error) throw error
-  return data
+  return data as FamilyMember
 }
 
 export async function getFamilyMemberByToken(token: string) {
@@ -822,7 +826,7 @@ export async function getFamilyMemberByToken(token: string) {
   return data as { id: string; name: string; patient_name: string }
 }
 
-export async function getFamilyMemberByUserId(userId: string) {
+export async function getFamilyMemberByUserId(userId: string): Promise<FamilyMemberWithUser | null> {
   // View-only circle membership. Guardian rows (can_edit) are loaded by getManagedProfiles,
   // and a guardian can hold several rows, which would break .maybeSingle().
   const { data, error } = await supabase
@@ -835,7 +839,7 @@ export async function getFamilyMemberByUserId(userId: string) {
     .limit(1)
     .maybeSingle()
   if (error) return null
-  return data
+  return data as FamilyMemberWithUser | null
 }
 
 /**
@@ -997,7 +1001,7 @@ export async function getMessages(patientId: string, limit = 20) {
 
 // ─── Doctors ──────────────────────────────────────────────────────────────────
 
-export async function getDoctors(patientId: string) {
+export async function getDoctors(patientId: string): Promise<Doctor[]> {
   const { data, error } = await supabase
     .from('doctors')
     .select('*')
@@ -1005,7 +1009,7 @@ export async function getDoctors(patientId: string) {
     .eq('is_active', true)
     .order('added_at', { ascending: true })
   if (error) throw error
-  return data ?? []
+  return (data as Doctor[]) ?? []
 }
 
 export async function addDoctor(doctor: {
@@ -1016,7 +1020,7 @@ export async function addDoctor(doctor: {
   phone?: string | null
   email?: string | null
   notes?: string | null
-}) {
+}): Promise<Doctor> {
   const inviteToken = crypto.randomUUID()
   const { data, error } = await supabase
     .from('doctors')
@@ -1024,7 +1028,7 @@ export async function addDoctor(doctor: {
     .select()
     .single()
   if (error) throw error
-  return data
+  return data as Doctor
 }
 
 export async function updateDoctor(id: string, updates: {
@@ -1034,7 +1038,7 @@ export async function updateDoctor(id: string, updates: {
   phone?: string | null
   email?: string | null
   notes?: string | null
-}) {
+}): Promise<Doctor> {
   const { data, error } = await supabase
     .from('doctors')
     .update(updates)
@@ -1042,7 +1046,7 @@ export async function updateDoctor(id: string, updates: {
     .select()
     .single()
   if (error) throw error
-  return data
+  return data as Doctor
 }
 
 export async function removeDoctor(id: string) {
@@ -1062,7 +1066,7 @@ export async function getDoctorByToken(token: string) {
   return data as { id: string; name: string; specialty: string; patient_name: string }
 }
 
-export async function getDoctorByUserId(userId: string) {
+export async function getDoctorByUserId(userId: string): Promise<DoctorWithUser | null> {
   const { data, error } = await supabase
     .from('doctors')
     .select('*, users!patient_id(id, name, email)')
@@ -1070,7 +1074,7 @@ export async function getDoctorByUserId(userId: string) {
     .eq('is_active', true)
     .maybeSingle()
   if (error) return null
-  return data
+  return data as DoctorWithUser | null
 }
 
 export async function acceptDoctorInvite(token: string, userId: string) {
@@ -1084,23 +1088,33 @@ export async function acceptDoctorInvite(token: string, userId: string) {
   return data
 }
 
+export interface DoctorNote {
+  id: string
+  patient_id: string
+  doctor_id: string
+  note: string
+  note_type: string | null
+  is_visible_to_patient: boolean
+  created_at: string
+}
+
 export async function addDoctorNote(note: {
   patient_id: string
   doctor_id: string
   note: string
   note_type?: string
   is_visible_to_patient?: boolean
-}) {
+}): Promise<DoctorNote> {
   const { data, error } = await supabase
     .from('doctor_notes')
     .insert({ ...note, created_at: new Date().toISOString() })
     .select()
     .single()
   if (error) throw error
-  return data
+  return data as DoctorNote
 }
 
-export async function getDoctorNotes(patientId: string, doctorId: string) {
+export async function getDoctorNotes(patientId: string, doctorId: string): Promise<DoctorNote[]> {
   const { data, error } = await supabase
     .from('doctor_notes')
     .select('*')
@@ -1108,13 +1122,10 @@ export async function getDoctorNotes(patientId: string, doctorId: string) {
     .eq('doctor_id', doctorId)
     .order('created_at', { ascending: false })
   if (error) throw error
-  return data ?? []
+  return (data as DoctorNote[]) ?? []
 }
 
-export async function getPatientDataForDoctor(patientId: string, specialty: string | null) {
-  // Fetch clinical data relevant to the doctor's specialty
-  const base = { patient_id: patientId }
-
+export async function getPatientDataForDoctor(patientId: string) {
   const [labReports, imagingReports, symptomLogs, medicationLogs, notes] = await Promise.all([
     supabase
       .from('lab_reports')
@@ -1188,14 +1199,14 @@ export async function getFamilyImpactScores(patientId: string, limit = 30) {
 }
 // ─── Lab Reports ───────────────────────────────────────────────────────────────
 
-export async function getLabReports(patientId: string) {
+export async function getLabReports(patientId: string): Promise<LabReport[]> {
   const { data, error } = await supabase
     .from('lab_reports')
     .select('*')
     .eq('patient_id', patientId)
     .order('report_date', { ascending: false })
   if (error) throw error
-  return data ?? []
+  return (data as LabReport[]) ?? []
 }
 
 export async function insertLabReport(row: {
@@ -1205,17 +1216,20 @@ export async function insertLabReport(row: {
   image_url: string
   file_path?: string
   processing_status: string
-}) {
+}): Promise<LabReport> {
   const { data, error } = await supabase
     .from('lab_reports')
     .insert(row)
     .select()
     .single()
   if (error) throw error
-  return data
+  return data as LabReport
 }
 
-export async function updateLabReport(id: string, updates: Record<string, any>) {
+export async function updateLabReport(
+  id: string,
+  updates: Partial<LabReport>
+) {
   const { error } = await supabase
     .from('lab_reports')
     .update(updates)
@@ -1241,26 +1255,26 @@ export async function insertLabParameters(params: {
   if (error) throw error
 }
 
-export async function getLabParameters(reportId: string) {
+export async function getLabParameters(reportId: string): Promise<LabParameter[]> {
   const { data, error } = await supabase
     .from('lab_parameters')
     .select('*')
     .eq('report_id', reportId)
     .order('parameter_name', { ascending: true })
   if (error) throw error
-  return data ?? []
+  return (data as LabParameter[]) ?? []
 }
 
 // ─── Imaging Reports ───────────────────────────────────────────────────────────
 
-export async function getImagingReports(patientId: string) {
+export async function getImagingReports(patientId: string): Promise<ImagingReport[]> {
   const { data, error } = await supabase
     .from('imaging_reports')
     .select('*')
     .eq('patient_id', patientId)
     .order('report_date', { ascending: false })
   if (error) throw error
-  return data ?? []
+  return (data as ImagingReport[]) ?? []
 }
 
 export async function insertImagingReport(row: {
@@ -1270,17 +1284,20 @@ export async function insertImagingReport(row: {
   image_url: string
   file_path?: string
   processing_status: string
-}) {
+}): Promise<ImagingReport> {
   const { data, error } = await supabase
     .from('imaging_reports')
     .insert(row)
     .select()
     .single()
   if (error) throw error
-  return data
+  return data as ImagingReport
 }
 
-export async function updateImagingReport(id: string, updates: Record<string, any>) {
+export async function updateImagingReport(
+  id: string,
+  updates: Partial<ImagingReport>
+) {
   const { error } = await supabase
     .from('imaging_reports')
     .update(updates)
@@ -1316,14 +1333,14 @@ export async function insertImagingFindings(findings: {
   if (error) throw error
 }
 
-export async function getImagingFindings(reportId: string) {
+export async function getImagingFindings(reportId: string): Promise<ImagingFinding[]> {
   const { data, error } = await supabase
     .from('imaging_findings')
     .select('*')
     .eq('imaging_report_id', reportId)
     .order('severity', { ascending: false })
   if (error) throw error
-  return data ?? []
+  return (data as ImagingFinding[]) ?? []
 }
 
 export async function deleteTodayPostureLogs(patientId: string, date: string) {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { getDoctorByToken } from '@/services/supabase'
@@ -16,11 +16,23 @@ export default function JoinDoctorScreen() {
   const [step, setStep] = useState<'loading' | 'login' | 'sent' | 'accepting' | 'done' | 'error'>('loading')
   const [email, setEmail] = useState('')
 
+  const runAccept = useCallback(async () => {
+    setStep('accepting')
+    try {
+      await acceptDoctorInvite(token)
+      switchRole('doctor')
+      setStep('done')
+    } catch (e) {
+      setInviteError(e instanceof Error ? e.message : 'Could not accept invite.')
+      setStep('error')
+    }
+  }, [token, acceptDoctorInvite, switchRole])
+
   // Load invite details. If already authenticated (magic link return), go straight to accepting.
   useEffect(() => {
     if (!token) { setStep('error'); setInviteError('No invite token found in link.'); return }
     getDoctorByToken(token)
-      .then((record: any) => {
+      .then((record) => {
         setInvite({
           name: record.name,
           specialty: record.specialty,
@@ -36,29 +48,20 @@ export default function JoinDoctorScreen() {
         setInviteError('This invite link is invalid or has already been used.')
         setStep('error')
       })
-  }, [token])
+    // `session` is intentionally read only as a one-time check at fetch time — the effect
+    // below already reacts to session changes, so depending on it here would fire runAccept twice.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, runAccept])
 
   // Also react when session arrives after the magic link redirect
   useEffect(() => {
     if (session && step === 'login') runAccept()
     if (session && step === 'sent') runAccept()
-  }, [session])
+  }, [session, step, runAccept])
 
   useEffect(() => {
     if (roles.includes('doctor')) navigate('/doctor-dashboard', { replace: true })
-  }, [roles])
-
-  const runAccept = async () => {
-    setStep('accepting')
-    try {
-      await acceptDoctorInvite(token)
-      switchRole('doctor')
-      setStep('done')
-    } catch (e: any) {
-      setInviteError(e.message ?? 'Could not accept invite.')
-      setStep('error')
-    }
-  }
+  }, [roles, navigate])
 
   const handleSendLink = async () => {
     if (!email.trim()) return
@@ -68,8 +71,8 @@ export default function JoinDoctorScreen() {
       const redirectTo = `${appUrl}/auth/callback?returnTo=${encodeURIComponent(`/join-doctor?token=${token}`)}`
       await signInWithOtp(email.trim(), redirectTo)
       setStep('sent')
-    } catch (e: any) {
-      setFormError(e.message ?? 'Could not send sign-in link. Please try again.')
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : 'Could not send sign-in link. Please try again.')
     }
   }
 

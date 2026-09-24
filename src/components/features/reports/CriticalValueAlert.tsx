@@ -4,7 +4,6 @@ interface CriticalParameter {
   name: string
   status: 'critical_low' | 'critical_high'
   value: number
-  unit: string
   action: string
 }
 
@@ -44,7 +43,7 @@ const CriticalValueAlert: React.FC<CriticalValueAlertProps> = ({
 
         <div className="flex items-baseline gap-2">
           <span className={`text-2xl font-bold ${acknowledged ? 'text-green-600' : 'text-red-600'}`}>
-            {parameter.value} {parameter.unit}
+            {parameter.value}
           </span>
           <span className={`text-sm font-medium ${acknowledged ? 'text-green-500' : 'text-red-500'}`}>
             {direction}

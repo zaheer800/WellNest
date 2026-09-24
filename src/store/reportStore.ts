@@ -1,5 +1,7 @@
 import { create } from 'zustand'
-import type { LabReport } from '@/types/report.types'
+import type { LabReport, LabParameter } from '@/types/report.types'
+import type { ImagingReport, ImagingFinding } from '@/types/imaging.types'
+import type { CriticalParameter } from '@/services/criticalValueChecker'
 import {
   getLabReports,
   getImagingReports,
@@ -20,12 +22,12 @@ import { supabase, invokeFunction } from '@/services/supabase'
 export type ProcessingStatus = 'idle' | 'processing' | 'completed' | 'failed' | 'rate_limited'
 
 interface ReportState {
-  labReports: any[]
-  imagingReports: any[]
-  selectedReport: any | null
-  selectedParameters: any[]
-  selectedFindings: any[]
-  criticalParameters: any[]
+  labReports: LabReport[]
+  imagingReports: ImagingReport[]
+  selectedReport: LabReport | ImagingReport | null
+  selectedParameters: LabParameter[]
+  selectedFindings: ImagingFinding[]
+  criticalParameters: CriticalParameter[]
   loading: boolean
   processingStatus: ProcessingStatus
   processingError: string | null
@@ -35,7 +37,7 @@ interface ReportActions {
   fetchLabReports: (patientId: string) => Promise<void>
   fetchImagingReports: (patientId: string) => Promise<void>
   processReport: (patientId: string, fileUrl: string, pipeline: 'lab' | 'imaging', userAge?: number, userGender?: string, filePath?: string) => Promise<void>
-  selectReport: (report: any | null) => void
+  selectReport: (report: LabReport | ImagingReport | null) => void
   fetchReportDetails: (reportId: string, pipeline: 'lab' | 'imaging') => Promise<void>
   deleteReport: (reportId: string, pipeline: 'lab' | 'imaging') => Promise<void>
   clearProcessingState: () => void
@@ -45,7 +47,7 @@ type ReportStore = ReportState & ReportActions
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
-export const useReportStore = create<ReportStore>((set, get) => ({
+export const useReportStore = create<ReportStore>((set) => ({
   labReports: [],
   imagingReports: [],
   selectedReport: null,
@@ -82,7 +84,7 @@ export const useReportStore = create<ReportStore>((set, get) => ({
 
     if (pipeline === 'lab') {
       // ── Step 1: create pending record ──────────────────────────────
-      let reportRow: any
+      let reportRow: LabReport
       try {
         reportRow = await insertLabReport({
           patient_id: patientId,
@@ -101,11 +103,12 @@ export const useReportStore = create<ReportStore>((set, get) => ({
       let parsed: Awaited<ReturnType<typeof processLabReport>>
       try {
         parsed = await processLabReport(reportRow.id, { fileUrl, age: userAge, gender: userGender })
-      } catch (err: any) {
+      } catch (err) {
         await updateLabReport(reportRow.id, { processing_status: 'failed' })
-        if (err?.message === 'RATE_LIMIT') {
+        const message = err instanceof Error ? err.message : undefined
+        if (message === 'RATE_LIMIT') {
           set({ processingStatus: 'rate_limited', processingError: 'Too many requests — please wait a minute and try again.' })
-        } else if (err?.message === 'SESSION_EXPIRED') {
+        } else if (message === 'SESSION_EXPIRED') {
           set({ processingStatus: 'failed', processingError: 'Your session expired. Please sign out and sign in again, then retry.' })
         } else {
           set({ processingStatus: 'failed', processingError: 'We could not read this report automatically. Please enter values manually.' })
@@ -163,7 +166,7 @@ export const useReportStore = create<ReportStore>((set, get) => ({
       if (criticalParams.length > 0) {
         await delay(12000)
         try {
-          const criticalResult = await checkCriticalValues(patientId, reportRow.id, criticalParams as any)
+          const criticalResult = await checkCriticalValues(patientId, reportRow.id, criticalParams)
           if (criticalResult.critical_found) {
             set({ criticalParameters: criticalResult.critical_parameters })
           }
@@ -193,7 +196,7 @@ export const useReportStore = create<ReportStore>((set, get) => ({
       // ── IMAGING pipeline ─────────────────────────────────────────────
 
       // ── Step 1: create pending record ──────────────────────────────
-      let reportRow: any
+      let reportRow: ImagingReport
       try {
         reportRow = await insertImagingReport({
           patient_id: patientId,
@@ -212,11 +215,12 @@ export const useReportStore = create<ReportStore>((set, get) => ({
       let parsed: Awaited<ReturnType<typeof processImagingReport>>
       try {
         parsed = await processImagingReport(reportRow.id, { fileUrl, age: userAge, gender: userGender })
-      } catch (err: any) {
+      } catch (err) {
         await updateImagingReport(reportRow.id, { processing_status: 'failed' })
-        if (err?.message === 'RATE_LIMIT') {
+        const message = err instanceof Error ? err.message : undefined
+        if (message === 'RATE_LIMIT') {
           set({ processingStatus: 'rate_limited', processingError: 'Too many requests — please wait a minute and try again.' })
-        } else if (err?.message === 'SESSION_EXPIRED') {
+        } else if (message === 'SESSION_EXPIRED') {
           set({ processingStatus: 'failed', processingError: 'Your session expired. Please sign out and sign in again, then retry.' })
         } else {
           set({ processingStatus: 'failed', processingError: 'We could not read this report automatically. Please try again.' })

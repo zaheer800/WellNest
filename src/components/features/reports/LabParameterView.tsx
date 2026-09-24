@@ -22,7 +22,7 @@ const LabParameterView: React.FC<LabParameterViewProps> = ({ parameter }) => {
             <p className="text-xs text-gray-500 mt-0.5">{parameter.parameter_category}</p>
           )}
         </div>
-        <Badge label={statusLabel} color={statusColor as any} size="sm" />
+        <Badge label={statusLabel} color={statusColor} size="sm" />
       </div>
       
       <div className="bg-gray-50 rounded-lg p-3 space-y-2 text-sm">

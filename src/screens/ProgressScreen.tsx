@@ -4,7 +4,6 @@ import Card from '@/components/ui/Card'
 import { useAuthStore } from '@/store/authStore'
 import { useHealthStore } from '@/store/healthStore'
 import { useMedicationStore } from '@/store/medicationStore'
-import { usePostureStore } from '@/store/postureStore'
 import { useSymptomProgressionStore } from '@/store/symptomProgressionStore'
 import { useReportStore } from '@/store/reportStore'
 import { today } from '@/utils/dateHelpers'
@@ -16,11 +15,9 @@ export default function ProgressScreen() {
   const { user } = useAuthStore()
   const { dailyScore } = useHealthStore()
   const { medications } = useMedicationStore()
-  const { postureLogs } = usePostureStore()
   const { progressions } = useSymptomProgressionStore()
   const { labReports } = useReportStore()
   const [timeframe, setTimeframe] = useState<'week' | 'month' | 'all'>('month')
-  const [selectedSymptom, setSelectedSymptom] = useState<string | null>(null)
 
   const { patientId } = useActivePatient()
   const date = today()
@@ -31,19 +28,7 @@ export default function ProgressScreen() {
     if (patientId) {
       fetchProgressions(patientId)
     }
-  }, [patientId])
-
-  // Calculate date range based on timeframe
-  const getDateRange = () => {
-    const endDate = date
-    const daysToSubtract = timeframe === 'week' ? 7 : timeframe === 'month' ? 30 : 365
-    const startDateObj = new Date(date)
-    startDateObj.setDate(startDateObj.getDate() - daysToSubtract)
-    const startDate = startDateObj.toISOString().slice(0, 10)
-    return { startDate, endDate }
-  }
-
-  const { startDate, endDate } = getDateRange()
+  }, [patientId, fetchProgressions])
 
   // Calculate streaks (simplified - in real app would fetch from database)
   const calculateStreaks = () => {

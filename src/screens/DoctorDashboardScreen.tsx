@@ -1,14 +1,73 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
-import { getDoctorNotes, addDoctorNote } from '@/services/supabase'
+import { getDoctorNotes, addDoctorNote, type DoctorNote } from '@/services/supabase'
 import {
-  Stethoscope, LogOut, Loader2, FileText, Activity, Pill,
-  AlertTriangle, CheckCircle2, FlaskConical, Scan, ClipboardList,
+  Stethoscope, LogOut, Loader2, FileText, Activity,
+  AlertTriangle, FlaskConical, Scan, ClipboardList,
   ChevronDown, ChevronUp, Send, Download,
 } from 'lucide-react'
 import { getReportDownloadUrl } from '@/services/supabase'
 import RoleSwitcher from '@/components/ui/RoleSwitcher'
+
+interface PatientSummary {
+  id: string
+  name: string
+  email: string
+}
+
+interface DashboardLabParameter {
+  id: string
+  parameter_name: string
+  value: number | null
+  unit: string | null
+  status: string | null
+  reference_min: number | null
+  reference_max: number | null
+  parameter_category: string | null
+  plain_language_explanation: string | null
+  created_at: string
+}
+
+interface DashboardLabReport {
+  id: string
+  ai_summary: string | null
+  report_date: string | null
+  detected_type: string | null
+  processing_status: string | null
+  file_path: string | null
+}
+
+interface DashboardImagingReport {
+  id: string
+  ai_summary: string | null
+  report_date: string | null
+  imaging_type: string | null
+  detected_type: string | null
+  surgical_urgency: boolean | null
+  processing_status: string | null
+  file_path: string | null
+}
+
+interface DashboardSymptomLog {
+  id: string
+  symptom_name: string | null
+  severity: number | null
+  notes: string | null
+  logged_at: string
+}
+
+interface DashboardImagingFinding {
+  id: string
+  location: string | null
+  spinal_level: string | null
+  finding_type: string | null
+  severity: string | null
+  laterality: string | null
+  plain_language: string | null
+  nerves_affected: string[] | null
+  linked_symptoms: string[] | null
+}
 
 const SPECIALTY_CATEGORIES: Record<string, string[]> = {
   nephrology: ['kidney', 'electrolytes', 'urine'],
@@ -43,12 +102,12 @@ export default function DoctorDashboardScreen() {
   const { doctorRecord, signOut } = useAuthStore()
   const navigate = useNavigate()
 
-  const [patient, setPatient] = useState<any>(null)
-  const [labParameters, setLabParameters] = useState<any[]>([])
-  const [labReports, setLabReports] = useState<any[]>([])
-  const [imagingReports, setImagingReports] = useState<any[]>([])
-  const [symptomLogs, setSymptomLogs] = useState<any[]>([])
-  const [notes, setNotes] = useState<any[]>([])
+  const [, setPatient] = useState<PatientSummary | null>(null)
+  const [labParameters, setLabParameters] = useState<DashboardLabParameter[]>([])
+  const [labReports, setLabReports] = useState<DashboardLabReport[]>([])
+  const [imagingReports, setImagingReports] = useState<DashboardImagingReport[]>([])
+  const [symptomLogs, setSymptomLogs] = useState<DashboardSymptomLog[]>([])
+  const [notes, setNotes] = useState<DoctorNote[]>([])
   const [loading, setLoading] = useState(true)
 
   const [newNote, setNewNote] = useState('')
@@ -58,20 +117,15 @@ export default function DoctorDashboardScreen() {
 
   const [expandedSection, setExpandedSection] = useState<string | null>('labs')
 
-  const patientId: string = doctorRecord?.patient_id ?? (doctorRecord as any)?.users?.id ?? ''
+  const patientId: string = doctorRecord?.patient_id ?? doctorRecord?.users?.id ?? ''
   const specialty: string = doctorRecord?.specialty ?? 'general'
-  const patientName: string = (doctorRecord as any)?.users?.name ?? 'Patient'
+  const patientName: string = doctorRecord?.users?.name ?? 'Patient'
   const doctorName: string = doctorRecord?.name ?? 'Doctor'
   const doctorId: string = doctorRecord?.id ?? ''
 
   const relevantCategories = SPECIALTY_CATEGORIES[specialty] ?? SPECIALTY_CATEGORIES.general
 
-  useEffect(() => {
-    if (!patientId || !doctorId) return
-    loadData()
-  }, [patientId, doctorId])
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true)
     try {
       const { supabase } = await import('@/services/supabase')
@@ -117,7 +171,12 @@ export default function DoctorDashboardScreen() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [patientId, doctorId, relevantCategories])
+
+  useEffect(() => {
+    if (!patientId || !doctorId) return
+    loadData()
+  }, [patientId, doctorId, loadData])
 
   const handleAddNote = async () => {
     if (!newNote.trim() || !patientId || !doctorId) return
@@ -164,7 +223,7 @@ export default function DoctorDashboardScreen() {
 
   const specialtyLabel = specialty.charAt(0).toUpperCase() + specialty.slice(1)
 
-  const paramsByCategory = labParameters.reduce<Record<string, any[]>>((acc, p) => {
+  const paramsByCategory = labParameters.reduce<Record<string, DashboardLabParameter[]>>((acc, p) => {
     const cat = p.parameter_category ?? 'other'
     if (!acc[cat]) acc[cat] = []
     acc[cat].push(p)
@@ -233,7 +292,7 @@ export default function DoctorDashboardScreen() {
                 <div className="space-y-1">
                   {criticalParams.map((p) => (
                     <p key={p.id} className="text-sm text-red-700">
-                      <span className="font-medium">{p.parameter_name}</span>: {p.value} {p.unit} — {STATUS_LABELS[p.status]}
+                      <span className="font-medium">{p.parameter_name}</span>: {p.value} {p.unit} — {STATUS_LABELS[p.status ?? '']}
                     </p>
                   ))}
                 </div>
@@ -266,8 +325,8 @@ export default function DoctorDashboardScreen() {
                               <p className="text-sm font-semibold text-gray-800">
                                 {p.value} <span className="text-xs font-normal text-gray-400">{p.unit}</span>
                               </p>
-                              <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${STATUS_COLORS[p.status] ?? 'text-gray-500 bg-gray-100'}`}>
-                                {STATUS_LABELS[p.status] ?? p.status}
+                              <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${STATUS_COLORS[p.status ?? ''] ?? 'text-gray-500 bg-gray-100'}`}>
+                                {STATUS_LABELS[p.status ?? ''] ?? p.status}
                               </span>
                             </div>
                           </div>
@@ -314,7 +373,7 @@ export default function DoctorDashboardScreen() {
                     {r.report_date && <p className="text-xs text-gray-400">{new Date(r.report_date).toLocaleDateString()}</p>}
                     {r.file_path && (
                       <button
-                        onClick={() => handleDownload(r.file_path, r.ai_summary || 'lab-report')}
+                        onClick={() => handleDownload(r.file_path!, r.ai_summary || 'lab-report')}
                         className="mt-1.5 flex items-center gap-1 text-xs text-teal-600 font-medium hover:underline"
                       >
                         <Download className="w-3 h-3" /> Download original
@@ -338,7 +397,7 @@ export default function DoctorDashboardScreen() {
                 <p className="text-sm text-gray-400 py-3 text-center">No imaging reports uploaded</p>
               ) : (
                 imagingReports.map((r) => (
-                  <ImagingReportRow key={r.id} report={r} patientId={patientId ?? ''} onDownload={handleDownload} />
+                  <ImagingReportRow key={r.id} report={r} onDownload={handleDownload} />
                 ))
               )}
             </Section>
@@ -424,7 +483,7 @@ export default function DoctorDashboardScreen() {
                 {notes.length === 0 ? (
                   <p className="text-sm text-gray-400 text-center py-4">No notes yet</p>
                 ) : (
-                  notes.map((n: any) => (
+                  notes.map((n) => (
                     <div key={n.id} className="px-4 py-3">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className="text-xs text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full font-medium capitalize">
@@ -451,9 +510,9 @@ export default function DoctorDashboardScreen() {
 
 // ─── Imaging report row with expandable findings ─────────────────────────────
 
-function ImagingReportRow({ report, patientId, onDownload }: { report: any; patientId: string; onDownload: (path: string, label: string) => void }) {
+function ImagingReportRow({ report, onDownload }: { report: DashboardImagingReport; onDownload: (path: string, label: string) => void }) {
   const [expanded, setExpanded] = useState(false)
-  const [findings, setFindings] = useState<any[]>([])
+  const [findings, setFindings] = useState<DashboardImagingFinding[]>([])
   const [loading, setLoading] = useState(false)
 
   const handleExpand = async () => {
@@ -500,7 +559,7 @@ function ImagingReportRow({ report, patientId, onDownload }: { report: any; pati
 
       {report.file_path && (
         <button
-          onClick={() => onDownload(report.file_path, report.ai_summary || 'imaging-report')}
+          onClick={() => onDownload(report.file_path!, report.ai_summary || 'imaging-report')}
           className="mb-2 flex items-center gap-1 text-xs text-teal-600 font-medium hover:underline"
         >
           <Download className="w-3 h-3" /> Download original
@@ -518,12 +577,12 @@ function ImagingReportRow({ report, patientId, onDownload }: { report: any; pati
               <div key={f.id}>
                 <div className="flex items-center gap-2 flex-wrap">
                   {f.spinal_level && <span className="text-xs font-semibold text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded">{f.spinal_level}</span>}
-                  <span className={`text-xs font-semibold ${severityColor(f.severity)}`}>{f.severity}</span>
+                  <span className={`text-xs font-semibold ${severityColor(f.severity ?? '')}`}>{f.severity}</span>
                   <span className="text-xs text-gray-600">{f.finding_type?.replace(/_/g, ' ')}</span>
                   {f.laterality && f.laterality !== 'not_applicable' && <span className="text-xs text-gray-400">{f.laterality}</span>}
                 </div>
                 {f.plain_language && <p className="text-xs text-gray-500 mt-1 leading-relaxed">{f.plain_language}</p>}
-                {f.nerves_affected?.length > 0 && (
+                {f.nerves_affected && f.nerves_affected.length > 0 && (
                   <p className="text-xs text-gray-400 mt-0.5">Nerves: {f.nerves_affected.join(', ')}</p>
                 )}
               </div>
@@ -538,7 +597,7 @@ function ImagingReportRow({ report, patientId, onDownload }: { report: any; pati
 // ─── Collapsible section ──────────────────────────────────────────────────────
 
 function Section({
-  id, icon, title, count, expanded, onToggle, children,
+  icon, title, count, expanded, onToggle, children,
 }: {
   id: string
   icon: React.ReactNode

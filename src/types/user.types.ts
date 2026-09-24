@@ -44,6 +44,7 @@ export interface FamilyMember {
   relationship: string | null
   access_level: 1 | 2 | 3
   visibility_config: Record<string, boolean>
+  invite_token: string | null
   invited_at: string
   accepted_at: string | null
   last_seen_at: string | null
@@ -81,12 +82,29 @@ export type DoctorSpecialty =
 export interface Doctor {
   id: string
   patient_id: string
+  user_id: string | null
   name: string
   specialty: DoctorSpecialty | null
   hospital: string | null
   phone: string | null
   email: string | null
   notes: string | null
+  invite_token: string | null
   added_at: string
   is_active: boolean
+}
+
+/** Minimal user fields returned by the `users!patient_id(id, name, email)` join */
+export interface JoinedPatientUser {
+  id: string
+  name: string
+  email: string
+}
+
+export interface FamilyMemberWithUser extends FamilyMember {
+  users: JoinedPatientUser | null
+}
+
+export interface DoctorWithUser extends Doctor {
+  users: JoinedPatientUser | null
 }

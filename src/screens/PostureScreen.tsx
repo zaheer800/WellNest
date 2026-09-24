@@ -1,18 +1,11 @@
 import { useEffect, useState } from 'react'
 import { usePostureStore } from '@/store/postureStore'
 import PageWrapper from '@/components/layout/PageWrapper'
-import Card from '@/components/ui/Card'
 import CircularProgress from '@/components/ui/CircularProgress'
 import ProgressBar from '@/components/ui/ProgressBar'
 import { today } from '@/utils/dateHelpers'
-import { UserCheck, BellRing, PersonStanding, Flag, Loader, CheckCircle } from 'lucide-react'
+import { UserCheck, BellRing, PersonStanding, Flag, Loader } from 'lucide-react'
 import { useActivePatient } from '@/hooks/useActivePatient'
-
-const POSTURE_TIPS = [
-  'Keep your lumbar spine supported — use a cushion or lumbar roll.',
-  'Screen should be at eye level — your neck should not tilt down.',
-  'Feet flat on the floor, knees at 90° — no crossing legs.',
-]
 
 const CHECKLIST_ITEMS = [
   { key: 'lumbar', label: 'Lumbar support in use' },
@@ -21,7 +14,7 @@ const CHECKLIST_ITEMS = [
 ]
 
 export default function PostureScreen() {
-  const { isTracking, activeSession, lastStandBreak, standBreakGoal, postureLogs, startSitting, recordStandBreak, endSession, fetchTodayLogs, getSittingDurationMinutes } = usePostureStore()
+  const { isTracking, activeSession, standBreakGoal, postureLogs, startSitting, recordStandBreak, endSession, fetchTodayLogs, getSittingDurationMinutes } = usePostureStore()
 
   const [sittingMins, setSittingMins] = useState(0)
   const [checklist, setChecklist] = useState<Record<string, boolean>>({ lumbar: false, screen: false, feet: false })
@@ -48,7 +41,7 @@ export default function PostureScreen() {
 
   useEffect(() => {
     if (patientId) fetchTodayLogs(patientId, date)
-  }, [patientId, date])
+  }, [patientId, date, fetchTodayLogs])
 
   // Live sitting timer
   useEffect(() => {
@@ -56,12 +49,10 @@ export default function PostureScreen() {
     const interval = setInterval(() => setSittingMins(getSittingDurationMinutes()), 30000)
     setSittingMins(getSittingDurationMinutes())
     return () => clearInterval(interval)
-  }, [isTracking])
+  }, [isTracking, getSittingDurationMinutes])
 
   const breaksTaken = postureLogs.reduce((s, l) => s + l.stand_breaks_taken, 0) + (activeSession?.stand_breaks_taken ?? 0)
   const compliancePct = Math.min(100, Math.round((breaksTaken / standBreakGoal) * 100))
-
-  const lastBreakMins = lastStandBreak ? Math.floor((Date.now() - lastStandBreak.getTime()) / 60000) : null
 
   const toggleCheck = (key: string) => setChecklist((prev) => ({ ...prev, [key]: !prev[key] }))
 

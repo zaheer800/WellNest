@@ -36,11 +36,11 @@ const PostVisitLogger: React.FC<PostVisitLoggerProps> = ({ appointment, onSave, 
       : [''],
   )
   const [medications, setMedications] = useState<NewMedication[]>([])
-  const [showMedForm, setShowMedForm] = useState(false)
+  const [, setShowMedForm] = useState(false)
 
   // Prescription upload state
   const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null)
-  const [prescriptionUrl, setPrescriptionUrl] = useState<string | null>(null)
+  const [, setPrescriptionUrl] = useState<string | null>(null)
   const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'extracting' | 'done' | 'error'>('idle')
   const [uploadError, setUploadError] = useState<string | null>(null)
 
@@ -68,8 +68,9 @@ const PostVisitLogger: React.FC<PostVisitLoggerProps> = ({ appointment, onSave, 
         })
       }
       setUploadState('done')
-    } catch (err: any) {
-      setUploadError(err?.message ?? 'Failed to process prescription')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : undefined
+      setUploadError(message ?? 'Failed to process prescription')
       setUploadState('error')
     }
   }

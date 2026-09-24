@@ -25,10 +25,13 @@ export interface LabReport {
   patient_id: string
   report_date: string
   report_type: string
+  detected_type: string | null
+  detection_confidence: number | null
   lab_name: string | null
   doctor_name: string | null
   raw_text: string | null
   image_url: string | null
+  file_path: string | null
   ai_summary: string | null
   anomaly_count: number
   processing_status: 'pending' | 'processing' | 'completed' | 'failed'

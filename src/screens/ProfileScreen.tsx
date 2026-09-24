@@ -99,7 +99,7 @@ export default function ProfileScreen() {
   const [contacts, setContacts] = useState<EmergencyContact[]>([])
   const [contactErrors, setContactErrors] = useState<ContactErrors>([])
 
-  const { register, handleSubmit, watch, reset, formState: { errors, isDirty } } = useForm<ProfileForm>({
+  const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<ProfileForm>({
     defaultValues: {
       name: '',
       date_of_birth: '',
@@ -256,12 +256,13 @@ export default function ProfileScreen() {
       })
       setSuccessMsg('Profile updated')
       setTimeout(() => setSuccessMsg(null), 2500)
-    } catch (e: any) {
+    } catch (e) {
       // AbortError fires when our 10s fetch timeout triggers
-      const isTimeout = e?.name === 'AbortError' || e?.message?.toLowerCase().includes('abort')
+      const message = e instanceof Error ? e.message : undefined
+      const isTimeout = (e instanceof Error && e.name === 'AbortError') || message?.toLowerCase().includes('abort')
       setSubmitError(isTimeout
         ? 'Request timed out. Check your connection and try again.'
-        : (e?.message ?? 'Could not save changes. Please try again.'))
+        : (message ?? 'Could not save changes. Please try again.'))
     } finally {
       setSaving(false)
     }

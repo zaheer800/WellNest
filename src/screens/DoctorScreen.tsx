@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button'
 import { getDoctors, addDoctor, updateDoctor, removeDoctor } from '@/services/supabase'
 import { Stethoscope, Pencil, Trash2, X, Link2, Check, Loader2 } from 'lucide-react'
 import { useActivePatient } from '@/hooks/useActivePatient'
+import type { Doctor } from '@/types/user.types'
 
 const SPECIALTIES = [
   { value: 'nephrology', label: 'Nephrology', focus: 'Kidney function, electrolytes, fluid intake' },
@@ -60,7 +61,7 @@ export default function DoctorScreen() {
   const { user } = useAuthStore()
   const { patientId } = useActivePatient()
 
-  const [doctors, setDoctors] = useState<any[]>([])
+  const [doctors, setDoctors] = useState<Doctor[]>([])
   const [loading, setLoading] = useState(true)
   const [showAdd, setShowAdd] = useState(false)
   const [addForm, setAddForm] = useState({ name: '', specialty: '', hospital: '', email: '', notes: '' })
@@ -96,7 +97,7 @@ export default function DoctorScreen() {
         notes: addForm.notes.trim() || null,
       })
       setDoctors((prev) => [...prev, newDoctor])
-      const token = (newDoctor as any).invite_token
+      const token = newDoctor.invite_token
       if (token) setNewInviteLink(`${(import.meta.env.VITE_APP_URL ?? window.location.origin)}/join-doctor?token=${token}`)
       setAddForm({ name: '', specialty: '', hospital: '', email: '', notes: '' })
       setShowAdd(false)
@@ -107,7 +108,7 @@ export default function DoctorScreen() {
     }
   }
 
-  const startEdit = (doc: any) => {
+  const startEdit = (doc: Doctor) => {
     setEditingId(doc.id)
     setEditForm({ name: doc.name, specialty: doc.specialty ?? '', hospital: doc.hospital ?? '', email: doc.email ?? '', notes: doc.notes ?? '' })
   }
@@ -136,7 +137,7 @@ export default function DoctorScreen() {
     setDoctors((prev) => prev.filter((d) => d.id !== id))
   }
 
-  const toggleInvitePanel = (doc: any) => {
+  const toggleInvitePanel = (doc: Doctor) => {
     setViewingInviteId((prev) => (prev === doc.id ? null : doc.id))
   }
 

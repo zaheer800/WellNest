@@ -6,11 +6,10 @@ import { usePostureStore } from '@/store/postureStore'
 import { useAppointmentStore } from '@/store/appointmentStore'
 import { Star, Pill, Droplet, Activity, Salad, Armchair, Stethoscope, Ban, AlertTriangle, MapPin, Users, UserRoundCog, FlaskConical, HeartPulse, Link2, Sparkles, Bell, Calendar, Utensils, LineChart, ChevronRight } from 'lucide-react'
 import CircularProgress from '@/components/ui/CircularProgress'
-import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import PageWrapper from '@/components/layout/PageWrapper'
 import { today, getGreeting, formatDate } from '@/utils/dateHelpers'
-import { formatMl, getScoreColor } from '@/utils/formatters'
+import { formatMl } from '@/utils/formatters'
 import { shouldTakeMedicationToday } from '@/utils/healthScore'
 import { useActivePatient } from '@/hooks/useActivePatient'
 
@@ -37,7 +36,7 @@ export default function DashboardScreen() {
       await fetchTodayData(patientId, date, meds, pLogs)
     }
     load()
-  }, [patientId, date])
+  }, [patientId, date, fetchMedications, fetchTodayLogs, fetchAppointments, fetchTodayData])
 
   const waterTotal = waterLogs.reduce((s, l) => s + l.amount_ml, 0)
   const todayDate = new Date(date)

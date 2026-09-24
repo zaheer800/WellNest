@@ -61,7 +61,7 @@ export default function SymptomsScreen() {
 
   useEffect(() => {
     if (patientId) fetchTodayData(patientId, new Date().toISOString().slice(0, 10))
-  }, [patientId])
+  }, [patientId, fetchTodayData])
 
   const filteredSymptoms = SymptomLibrary.filter((s) => s.category === selectedCategory)
 
@@ -87,8 +87,8 @@ export default function SymptomsScreen() {
       setShowEnvironment(false)
       setSuccess(true)
       setTimeout(() => setSuccess(false), 2000)
-    } catch (err: any) {
-      setSaveError(err?.message ?? 'Failed to save symptom. Please try again.')
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save symptom. Please try again.')
     } finally {
       setSubmitting(false)
     }

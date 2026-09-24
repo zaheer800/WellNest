@@ -21,14 +21,14 @@ export async function detectReportType(
   fileUrl: string,
   options?: { age?: number; gender?: string }
 ): Promise<ReportTypeDetectionResult> {
-  const data = await invokeFunction('detect-report-type', {
+  const data = await invokeFunction<Partial<ReportTypeDetectionResult> & { error?: string }>('detect-report-type', {
     file_url: fileUrl, age: options?.age, gender: options?.gender,
   })
 
   if (data?.error === 'RATE_LIMIT') throw new Error('RATE_LIMIT')
 
   return {
-    detected_type: data.detected_type,
+    detected_type: data.detected_type ?? '',
     detection_confidence: data.detection_confidence ?? 0,
     suggested_label: data.suggested_label ?? '',
     pipeline: data.pipeline ?? 'lab',

@@ -77,7 +77,6 @@ export const useHealthStore = create<HealthStore>((set, get) => ({
         postureLogs,
         postureGoalBreaks: 8,
         activePostureBreaks: activeBreaks,
-        dietLogs: [], // Diet tracking not yet implemented
       })
 
       set({

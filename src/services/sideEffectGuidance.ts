@@ -18,7 +18,7 @@ export async function getSideEffectGuidance(
   source: 'experienced' | 'read_about',
   patientConditions: string[] = [],
 ): Promise<SideEffectGuidanceResult> {
-  const data = await invokeFunction('generate-side-effect-guidance', {
+  const data = await invokeFunction<SideEffectGuidanceResult>('generate-side-effect-guidance', {
     medication_name: medicationName,
     side_effect: sideEffect,
     severity,
@@ -26,5 +26,5 @@ export async function getSideEffectGuidance(
     patient_conditions: patientConditions,
   })
 
-  return data as SideEffectGuidanceResult
+  return data
 }

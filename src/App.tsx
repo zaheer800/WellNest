@@ -34,13 +34,6 @@ import PrivacyScreen from '@/screens/PrivacyScreen'
 import TermsScreen from '@/screens/TermsScreen'
 import PeopleScreen from '@/screens/PeopleScreen'
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { session, initialized } = useAuthStore()
-  if (!initialized) return null
-  if (!session) return <Navigate to="/login" replace />
-  return <>{children}</>
-}
-
 /** Only accessible to users who have the family role */
 function FamilyRoute({ children }: { children: React.ReactNode }) {
   const { session, roles, initialized } = useAuthStore()

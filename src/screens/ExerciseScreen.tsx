@@ -24,7 +24,7 @@ export default function ExerciseScreen() {
 
   useEffect(() => {
     if (patientId) fetchTodayData(patientId, date)
-  }, [patientId, date])
+  }, [patientId, date, fetchTodayData])
 
   const handleLog = async () => {
     if (!patientId) return

@@ -112,7 +112,7 @@ export default function MedicationsScreen() {
       if (tab === 'injections') fetchCourses(patientId)
       if (tab === 'sideeffects') fetchSideEffects(patientId)
     }
-  }, [patientId, date, tab])
+  }, [patientId, date, tab, fetchMedications, fetchCourses, fetchSideEffects])
 
   const todayDate = new Date(date)
   const dueTodayMeds = medications.filter((m) => m.is_active && shouldTakeMedicationToday(m, todayDate))
@@ -167,8 +167,8 @@ export default function MedicationsScreen() {
       dose: med.dose ?? '',
       unit: med.unit ?? 'tablet',
       frequency: med.frequency as Frequency,
-      times_per_day: ((sc as any).times_per_day ?? 1) as 1 | 2 | 3 | 4,
-      times_of_day: ((sc as any).times_of_day ?? []) as TimeOfDay[],
+      times_per_day: sc.times_per_day ?? 1,
+      times_of_day: sc.times_of_day ?? [],
       start_date: med.start_date ?? today(),
       notes: med.notes ?? '',
     })

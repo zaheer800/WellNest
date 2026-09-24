@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react'
+import type { LabReport } from '@/types/report.types'
+import type { ImagingReport } from '@/types/imaging.types'
 import PageWrapper from '@/components/layout/PageWrapper'
 import Card from '@/components/ui/Card'
 import { useAuthStore } from '@/store/authStore'
@@ -41,7 +43,7 @@ export default function ReportsScreen() {
     if (!patientId) return
     fetchLabReports(patientId)
     fetchImagingReports(patientId)
-  }, [patientId])
+  }, [patientId, fetchLabReports, fetchImagingReports])
 
   if (!user || !profile) return null
 
@@ -74,12 +76,12 @@ export default function ReportsScreen() {
     }
   }
 
-  const handleSelectReport = async (report: any, pipeline: 'lab' | 'imaging') => {
+  const handleSelectReport = async (report: LabReport | ImagingReport, pipeline: 'lab' | 'imaging') => {
     selectReport(report)
     await fetchReportDetails(report.id, pipeline)
   }
 
-  const isSpinalReport = (report: any) =>
+  const isSpinalReport = (report: ImagingReport) =>
     report?.detected_type?.startsWith('mri') ||
     report?.imaging_type?.startsWith('mri') ||
     report?.detected_type === 'xray_spine'
@@ -91,7 +93,7 @@ export default function ReportsScreen() {
         {/* Critical alerts — always visible */}
         {criticalParameters.length > 0 && (
           <div className="space-y-2">
-            {criticalParameters.map((p: any) => (
+            {criticalParameters.map((p) => (
               <CriticalValueAlert
                 key={p.name}
                 parameter={p}
@@ -223,7 +225,7 @@ export default function ReportsScreen() {
                 </div>
                 {report.file_path && (
                   <button
-                    onClick={(e) => { e.stopPropagation(); handleDownload(report.file_path, report.ai_summary || 'lab-report') }}
+                    onClick={(e) => { e.stopPropagation(); handleDownload(report.file_path!, report.ai_summary || 'lab-report') }}
                     className="mt-3 flex items-center gap-1.5 text-xs text-brand-teal font-medium hover:underline"
                   >
                     <Download className="w-3.5 h-3.5" /> Download original file
@@ -236,7 +238,7 @@ export default function ReportsScreen() {
               <Card>
                 <h3 className="font-semibold text-gray-800 mb-3">Parameters</h3>
                 <div className="space-y-3">
-                  {selectedParameters.map((p: any) => (
+                  {selectedParameters.map((p) => (
                     <LabReportView key={p.id} parameter={p} />
                   ))}
                 </div>
@@ -262,7 +264,7 @@ export default function ReportsScreen() {
                 </button>
               </Card>
             )}
-            {imagingReports.map((report: any) => (
+            {imagingReports.map((report) => (
               <Card key={report.id} className="hover:shadow-md transition">
                 <div
                   className="flex justify-between items-start cursor-pointer"
@@ -294,7 +296,7 @@ export default function ReportsScreen() {
                 </div>
                 {report.file_path && (
                   <button
-                    onClick={(e) => { e.stopPropagation(); handleDownload(report.file_path, report.ai_summary || 'imaging-report') }}
+                    onClick={(e) => { e.stopPropagation(); handleDownload(report.file_path!, report.ai_summary || 'imaging-report') }}
                     className="mt-3 flex items-center gap-1.5 text-xs text-brand-teal font-medium hover:underline"
                   >
                     <Download className="w-3.5 h-3.5" /> Download original file
@@ -309,13 +311,13 @@ export default function ReportsScreen() {
                   <Card>
                     <h3 className="font-semibold text-gray-800 mb-3">Findings</h3>
                     <div className="space-y-3">
-                      {selectedFindings.map((f: any) => (
+                      {selectedFindings.map((f) => (
                         <ImagingReportView key={f.id} finding={f} />
                       ))}
                     </div>
                   </Card>
                 )}
-                {isSpinalReport(selectedReport) && (
+                {isSpinalReport(selectedReport as ImagingReport) && (
                   <WholeSpineMap patientId={patientId} />
                 )}
               </>
